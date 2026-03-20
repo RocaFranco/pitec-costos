@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Costos Rafia PITEC v3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#0e0f11;--surf:#16181c;--surf2:#1e2127;--surf3:#23272f;
+  --b:#2a2d35;--b2:#353942;
+  --acc:#e8ff47;--acc2:#47c8ff;--acc3:#ff6b47;
+  --ok:#47ffb2;--warn:#ffb347;--text:#f0f2f5;--t2:#8b909e;--t3:#555b6a;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Syne',sans-serif;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
+
+/* HEADER */
+header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:50px;position:sticky;top:0;z-index:300;}
+.logo{font-family:var(--disp);font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px;}
+.pulse{width:7px;height:7px;background:var(--acc);border-radius:50%;animation:p 2s ease-in-out infinite;}
+@keyframes p{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
+.hbadge{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid;}
+.hbadge.blue{color:var(--acc2);border-color:rgba(71,200,255,.25);background:rgba(71,200,255,.07);}
+.hbadge.green{color:var(--ok);border-color:rgba(71,255,178,.25);background:rgba(71,255,178,.07);}
+.hbadge.warn{color:var(--warn);border-color:rgba(255,179,71,.25);background:rgba(255,179,71,.07);}
+.hbadge.red{color:var(--acc3);border-color:rgba(255,107,71,.25);background:rgba(255,107,71,.07);}
+
+/* LAYOUT */
+.wrap{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 50px);}
+.side{background:var(--surf);border-right:1px solid var(--b);overflow-y:auto;display:flex;flex-direction:column;}
+.content{overflow-y:auto;background:var(--bg);}
+
+/* SIDEBAR TABS */
+.side-tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;}
+.side-tab{flex:1;padding:10px 4px;text-align:center;font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.side-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
+.side-panel{padding:16px;display:none;flex-direction:column;gap:12px;}
+.side-panel.active{display:flex;}
+
+/* FIELDS */
+.s-head{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);padding-bottom:5px;border-bottom:1px solid var(--b);margin-bottom:2px;}
+.field{display:flex;flex-direction:column;gap:3px;}
+.field label{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);}
+.iu{position:relative;}
+.iu input{padding-right:38px;}
+.iu .u{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:9px;color:var(--t3);pointer-events:none;}
+input,select,textarea{background:var(--surf2);border:1px solid var(--b);border-radius:6px;color:var(--text);font-family:var(--sans);font-size:12px;padding:7px 10px;outline:none;width:100%;transition:border-color .15s;}
+input:focus,select:focus{border-color:var(--acc2);}
+input[type=file]{padding:6px;cursor:pointer;font-size:11px;}
+
+/* UPLOAD ZONE */
+.upload-zone{border:1px dashed var(--b2);border-radius:var(--r);padding:12px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surf2);}
+.upload-zone:hover{border-color:var(--acc2);background:rgba(71,200,255,.04);}
+.upload-zone.loaded{border-color:var(--ok);background:rgba(71,255,178,.04);}
+.upload-zone.loading{border-color:var(--warn);background:rgba(255,179,71,.04);}
+.upload-zone.error{border-color:var(--acc3);background:rgba(255,107,71,.04);}
+.uz-icon{font-size:20px;margin-bottom:4px;}
+.uz-label{font-family:var(--mono);font-size:10px;color:var(--t2);}
+.uz-val{font-family:var(--mono);font-size:13px;color:var(--ok);margin-top:4px;}
+.uz-err{font-family:var(--mono);font-size:10px;color:var(--acc3);margin-top:4px;}
+
+/* NOTA */
+.nota{background:rgba(255,179,71,.06);border:1px solid rgba(255,179,71,.2);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:9px;color:var(--warn);line-height:1.5;}
+.nota.ok{background:rgba(71,255,178,.06);border-color:rgba(71,255,178,.2);color:var(--ok);}
+.nota.info{background:rgba(71,200,255,.05);border-color:rgba(71,200,255,.2);color:var(--acc2);}
+.nota.red{background:rgba(255,107,71,.06);border-color:rgba(255,107,71,.2);color:var(--acc3);}
+
+/* ALERTS */
+.alerts-bar{padding:10px 20px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--b);}
+.alert{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-family:var(--mono);font-size:10px;}
+.alert.red{background:rgba(255,107,71,.1);border:1px solid rgba(255,107,71,.25);color:var(--acc3);}
+.alert.warn{background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.25);color:var(--warn);}
+.alert.ok{background:rgba(71,255,178,.07);border:1px solid rgba(71,255,178,.2);color:var(--ok);}
+.alert-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:16px 20px 0;}
+.kpi{background:var(--surf);border:1px solid var(--b);border-radius:var(--r);padding:14px 16px;}
+.kpi-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:4px;}
+.kpi-val{font-family:var(--mono);font-size:18px;font-weight:500;}
+.kpi-sub{font-family:var(--mono);font-size:9px;color:var(--t2);margin-top:2px;}
+
+/* CARDS */
+.main{padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
+.card{background:var(--surf);border:1px solid var(--b);border-radius:var(--r);padding:16px;}
+.card-hd{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:7px;}
+.card-hd-left{display:flex;align-items:center;gap:7px;}
+.dot6{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;}
+th{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);text-align:left;padding:5px 8px;border-bottom:1px solid var(--b);}
+th.r{text-align:right;}
+td{padding:7px 8px;font-size:12px;border-bottom:1px solid rgba(42,45,53,.5);}
+td.r{text-align:right;font-family:var(--mono);}
+td.c{text-align:center;}
+tr:last-child td{border-bottom:none;}
+tr.tot td{background:var(--surf2);font-weight:500;}
+tr.hi td{background:rgba(71,255,178,.04);}
+
+/* CHIP */
+.chip{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--mono);}
+.chip.g{background:rgba(71,255,178,.1);color:var(--ok);border:1px solid rgba(71,255,178,.2);}
+.chip.r{background:rgba(255,107,71,.1);color:var(--acc3);border:1px solid rgba(255,107,71,.2);}
+.chip.w{background:rgba(255,179,71,.1);color:var(--warn);border:1px solid rgba(255,179,71,.2);}
+.chip.b{background:rgba(71,200,255,.1);color:var(--acc2);border:1px solid rgba(71,200,255,.2);}
+
+/* COMPOSICION */
+.comp-row{display:grid;grid-template-columns:1fr 80px 100px 36px;gap:6px;align-items:center;margin-bottom:6px;}
+.comp-pct-bar{height:4px;background:var(--b2);border-radius:2px;overflow:hidden;margin-top:3px;}
+.comp-pct-fill{height:100%;border-radius:2px;background:var(--acc2);transition:width .3s;}
+.pct-total{font-family:var(--mono);font-size:11px;padding:8px 10px;background:var(--surf2);border-radius:6px;border:1px solid var(--b);text-align:center;}
+.pct-total.ok{color:var(--ok);border-color:rgba(71,255,178,.3);}
+.pct-total.err{color:var(--acc3);border-color:rgba(255,107,71,.3);}
+
+/* BTN */
+.btn{padding:8px 16px;border-radius:6px;font-family:var(--mono);font-size:10px;cursor:pointer;border:none;transition:all .2s;}
+.btn.acc{background:var(--acc);color:#0e0f11;font-weight:500;}
+.btn.acc:hover{background:#d4e83f;}
+.btn.ghost{background:none;border:1px solid var(--b2);color:var(--t2);}
+.btn.ghost:hover{border-color:var(--acc2);color:var(--acc2);}
+.btn.danger{background:rgba(255,107,71,.1);border:1px solid rgba(255,107,71,.3);color:var(--acc3);}
+.btn.sm{padding:4px 10px;font-size:9px;}
+
+/* INVERSION MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center;display:none;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surf);border:1px solid var(--b2);border-radius:12px;padding:24px;width:460px;max-width:90vw;}
+.modal-title{font-family:var(--disp);font-weight:700;font-size:16px;margin-bottom:16px;color:var(--warn);}
+
+/* BAR CHART */
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:110px;}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
+.bar-grp{display:flex;gap:2px;align-items:flex-end;width:100%;}
+.bar{flex:1;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s;}
+.bar-lbl{font-family:var(--mono);font-size:8px;color:var(--t3);}
+
+/* SENS */
+.sens-row{display:flex;border-bottom:1px solid rgba(42,45,53,.4);}
+.sens-row:last-child{border-bottom:none;}
+.sens-cell{padding:7px 10px;font-family:var(--mono);font-size:11px;flex:1;}
+.sens-row.cur{background:rgba(232,255,71,.04);}
+.sens-row.cur .sens-cell{color:var(--acc);}
+
+/* SPINNER */
+.spinner{width:14px;height:14px;border:2px solid var(--b2);border-top-color:var(--acc2);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="pulse"></div>Costos Rafia <span style="color:var(--t3);font-weight:400;font-size:12px;margin-left:4px;">PITEC v3</span></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span id="mesLabel" class="hbadge blue">-</span>
+    <span id="tipoLabel" class="hbadge green">-</span>
+    <span id="alertLabel" class="hbadge warn" style="display:none;"></span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--t3);" id="tsLabel">-</span>
+    <button id="btnLogin" onclick="handleLogin()" class="btn acc" style="font-size:10px;padding:5px 14px;"> Conectar Drive</button>
+    <button id="btnLogout" onclick="handleLogout()" class="btn ghost" style="font-size:10px;padding:5px 14px;display:none;">x Desconectar</button>
+    <span id="userLabel" style="font-family:var(--mono);font-size:10px;color:var(--ok);display:none;"></span>
+  </div>
+</header>
+
+<!-- MODAL INVERSION -->
+<div class="modal-overlay" id="invModal">
+  <div class="modal">
+    <div class="modal-title">! Compra grande detectada</div>
+    <div id="invModalContent"></div>
+    <div style="display:flex;gap:8px;margin-top:20px;">
+      <button class="btn ghost" onclick="classifyInv('gasto')">Es gasto del mes</button>
+      <button class="btn acc" onclick="showInvForm()">Es inversion - prorratear</button>
+    </div>
+    <div id="invForm" style="display:none;margin-top:14px;">
+      <div class="field" style="margin-bottom:10px;">
+        <label>Vida util (meses)</label>
+        <input type="number" id="invVidaUtil" value="60" min="1" max="360">
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label>Descripcion</label>
+        <input type="text" id="invDesc" placeholder="Ej: Chiller hiladora 2">
+      </div>
+      <button class="btn acc" style="width:100%;" onclick="confirmInv()">Confirmar inversion</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+<!-- ========== SIDEBAR ========== -->
+<div class="side">
+  <div class="side-tabs">
+    <div class="side-tab active" onclick="showSidePanel('datos',this)">Datos</div>
+    <div class="side-tab" onclick="showSidePanel('formula',this)">Formula</div>
+    <div class="side-tab" onclick="showSidePanel('nav',this)">Navegante</div>
+    <div class="side-tab" onclick="showSidePanel('inv',this)">Inversiones</div>
+    <div class="side-tab" onclick="showSidePanel('fac',this)">Facturas</div>
+  </div>
+
+  <!-- PANEL DATOS -->
+  <div class="side-panel active" id="panel-datos">
+
+    <div>
+      <div class="s-head">Estado Drive</div>
+      <div id="driveStatus" style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-bottom:8px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--t3);text-align:center;">Sin conectar</div>
+      </div>
+      <button onclick="loadAllFromDrive()" id="btnRefresh" class="btn ghost" style="width:100%;font-size:10px;display:none;">refresh Actualizar desde Drive</button>
+    </div>
+
+    <div>
+      <div class="s-head">Configuracion</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <button class="btn ghost" style="flex:1;" id="btnLam" onclick="setTipo('lam',this)">Laminada</button>
+        <button class="btn ghost" style="flex:1;" id="btnConv" onclick="setTipo('conv',this)">Convencional</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+        <select id="selMes" onchange="recalc()">
+          <option>Enero</option><option>Febrero</option><option selected>Marzo</option>
+          <option>Abril</option><option>Mayo</option><option>Junio</option>
+          <option>Julio</option><option>Agosto</option><option>Septiembre</option>
+          <option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
+        </select>
+        <input type="number" id="selAnio" value="2026" oninput="recalc()">
+      </div>
+      <div class="field">
+        <label>Dolar BNA venta</label>
+        <div class="iu"><input type="number" id="dolar" value="1415" step="10" oninput="recalc()"><span class="u">ARS</span></div>
+      </div>
+      <div id="dolarStatus" style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:3px;">refresh Obteniendo cotizacion...</div>
+    </div>
+
+    <!-- SUELDOS -->
+    <div>
+      <div class="s-head">Sueldos - hoja "Sueldos" celda M26</div>
+      <div class="upload-zone" id="uzSueldos" onclick="document.getElementById('fileSueldos').click()">
+        <div class="uz-icon"></div>
+        <div class="uz-label">Subir Excel de sueldos del mes</div>
+        <div class="uz-label" style="color:var(--t3);font-size:9px;">Ej: 3_MARZO.xlsx</div>
+        <div class="uz-val" id="valSueldos"></div>
+        <div class="uz-err" id="errSueldos"></div>
+      </div>
+      <input type="file" id="fileSueldos" accept=".xlsx,.xls" style="display:none" onchange="processSueldos(this)">
+      <div class="field" style="margin-top:6px;">
+        <label>O cargar manual</label>
+        <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div>
+      </div>
+    </div>
+
+    <!-- PRODUCCION -->
+    <div>
+      <div class="s-head">Produccion del mes (desde Dinamica)</div>
+      <div class="field"><label>Mts totales producidos</label><div class="iu"><input type="number" id="totMts" value="627083" oninput="recalc()"><span class="u">mts</span></div></div>
+      <div class="field"><label>Kg hilo producidos</label><div class="iu"><input type="number" id="totKg" value="35972" oninput="recalc()"><span class="u">kg</span></div></div>
+      <div id="grumoLamField"><div class="field"><label>Kg grumo laminado (coating)</label><div class="iu"><input type="number" id="grumoLam" value="10266" oninput="recalc()"><span class="u">kg</span></div></div>
+      <div class="field"><label>Kg PE laminado</label><div class="iu"><input type="number" id="peLam" value="1800" oninput="recalc()"><span class="u">kg</span></div></div></div>
+    </div>
+
+    <!-- FACTURAS PDF -->
+    <div>
+      <div class="s-head">Facturas PDF - IA extrae el valor</div>
+      <div id="facturasGrid"></div>
+    </div>
+
+    <!-- GASTOS MANUALES -->
+    <div>
+      <div class="s-head">Gastos manuales del mes</div>
+      <div class="field"><label>Gasoil</label><div class="iu"><input type="number" id="cGasoil" value="98000" oninput="recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Almuerzos</label><div class="iu"><input type="number" id="cAlmuerzos" value="360000" oninput="recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Fletes internos</label><div class="iu"><input type="number" id="cFletes" value="550000" oninput="recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Gastos varios</label><div class="iu"><input type="number" id="cVarios" value="41000" oninput="recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Mantenimiento extra</label><div class="iu"><input type="number" id="cMant" value="300000" oninput="recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Otros</label><div class="iu"><input type="number" id="cOtros" value="0" oninput="recalc()"><span class="u">ARS</span></div></div>
+    </div>
+
+    <!-- PRORRATEOS -->
+    <div>
+      <div class="s-head">Prorrateos mensuales</div>
+      <div class="field"><label>Seguro (suma total / 12)</label><div class="iu"><input type="number" id="prSeguro" value="194044" oninput="recalc()"><span class="u">ARS/mes</span></div></div>
+      <div class="field"><label>Pararrayos (anual / 12)</label><div class="iu"><input type="number" id="prParar" value="80833" oninput="recalc()"><span class="u">ARS/mes</span></div></div>
+      <div class="field"><label>Matafuegos (anual / 12)</label><div class="iu"><input type="number" id="prMata" value="38415" oninput="recalc()"><span class="u">ARS/mes</span></div></div>
+      <div class="field"><label>Ropa personal (suma anual / 12)</label><div class="iu"><input type="number" id="prRopa" value="278393" oninput="recalc()"><span class="u">ARS/mes</span></div></div>
+    </div>
+
+    <!-- PRECIOS MP -->
+    <div>
+      <div class="s-head">Precios MP (ultimo precio OC - sin IVA)</div>
+      <div class="field"><label>Grumo hilo KYD/LYD ($/kg)</label><div class="iu"><input type="number" id="pGH" value="1880" oninput="recalc()"><span class="u">$/kg</span></div></div>
+      <div class="field"><label>Grumo laminado XSD ($/kg)</label><div class="iu"><input type="number" id="pGL" value="1880" oninput="recalc()"><span class="u">$/kg</span></div></div>
+      <div class="field"><label>Polietileno BC818/APP ($/kg)</label><div class="iu"><input type="number" id="pPE" value="1920" oninput="recalc()"><span class="u">$/kg</span></div></div>
+      <div class="field"><label>Carbonato 1001BR/APC ($/kg)</label><div class="iu"><input type="number" id="pCarb" value="1061" oninput="recalc()"><span class="u">$/kg</span></div></div>
+      <div class="field"><label>Masterbatch promedio ($/kg)</label><div class="iu"><input type="number" id="pMast" value="3325" oninput="recalc()"><span class="u">$/kg</span></div></div>
+    </div>
+
+  </div><!-- /panel-datos -->
+
+  <!-- PANEL FORMULA -->
+  <div class="side-panel" id="panel-formula">
+    <div>
+      <div class="s-head">Composicion del hilo (debe sumar 100%)</div>
+      <div id="compRows"></div>
+      <div id="compTotal" class="pct-total">Total: 0%</div>
+      <button class="btn ghost sm" style="margin-top:8px;width:100%;" onclick="addCompRow()">+ Agregar componente</button>
+    </div>
+    <div class="nota info">Cada componente se costea con el precio del grupo MP asignado. El costo de coating laminado se calcula por separado en base a los kg reales de la Dinamica.</div>
+  </div>
+
+  <!-- PANEL NAVEGANTE -->
+  <div class="side-panel" id="panel-nav">
+    <div>
+      <div class="s-head">Precios Navegante ($/mts)</div>
+      <div id="navInputs"></div>
+    </div>
+  </div>
+
+  <!-- PANEL INVERSIONES -->
+  <div class="side-panel" id="panel-inv">
+    <div>
+      <div class="s-head">Inversiones en amortizacion</div>
+      <div id="invList"></div>
+      <button class="btn ghost sm" style="margin-top:8px;width:100%;" onclick="openAddInv()">+ Agregar inversion manual</button>
+    </div>
+    <div id="addInvForm" style="display:none;margin-top:8px;">
+      <div class="field" style="margin-bottom:6px;"><label>Descripcion</label><input type="text" id="newInvDesc" placeholder="Ej: Chiller hiladora"></div>
+      <div class="field" style="margin-bottom:6px;"><label>Importe total (sin IVA)</label><div class="iu"><input type="number" id="newInvMonto" placeholder="0"><span class="u">ARS</span></div></div>
+      <div class="field" style="margin-bottom:6px;"><label>Mes inicio</label><input type="text" id="newInvMesInicio" placeholder="Ej: Enero 2026"></div>
+      <div class="field" style="margin-bottom:8px;"><label>Vida util (meses)</label><input type="number" id="newInvVida" value="60" min="1"></div>
+      <button class="btn acc sm" style="width:100%;" onclick="addInvManual()">Agregar</button>
+    </div>
+    <div class="nota info" style="margin-top:8px;">La cuota mensual de cada inversion se suma automaticamente al costo del mes.</div>
+  </div>
+
+<div class="side-panel" id="panel-fac">
+    <div>
+      <div class="s-head">Facturas del mes seleccionado</div>
+      <div class="nota info" style="margin-bottom:10px;">La app busca cada PDF en Drive, la IA extrae el valor y lo guarda en el Sheet. Solo procesa las facturas faltantes (vacias o en 0).</div>
+      <button class="btn acc" style="width:100%;margin-bottom:8px;" onclick="procesarFacturasFaltantes()">Buscar y procesar facturas faltantes</button>
+      <button class="btn ghost" style="width:100%;font-size:10px;" onclick="loadFacturasFromSheet()">Recargar desde Sheet</button>
+      <div id="facStatusDiv" style="margin-top:10px;"></div>
+    </div>
+    <div id="facGrid" style="margin-top:8px;"></div>
+  </div>
+
+</div><!-- /side -->
+
+<!-- ========== CONTENT ========== -->
+<div class="content">
+
+  <!-- ALERTS BAR -->
+  <div class="alerts-bar" id="alertsBar" style="display:none;"></div>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip" id="kpiStrip"></div>
+
+  <div class="main">
+
+    <!-- ROW 1 -->
+    <div class="grid2">
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc)"></div>Estructura de costos</div></div>
+        <div id="costBreakdown"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc2)"></div>Costo por formato - gr/m2 real</div></div>
+        <table id="ftoTable">
+          <thead><tr><th>Fto</th><th class="r">gr/m2</th><th class="r">$/mts</th><th class="r">Nav.</th><th class="r">Dif.</th><th class="r">$/kg</th></tr></thead>
+          <tbody id="ftoBody"></tbody>
+        </table>
+        <div style="margin-top:8px;" id="ftoInputsWrap">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:6px;">KG y MTS reales por formato (de la Dinamica):</div>
+          <table style="font-size:11px;">
+            <thead><tr><th>Fto</th><th>Mts</th><th>Kg</th></tr></thead>
+            <tbody id="ftoInputRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="grid2">
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--ok)"></div>Sensibilidad - costo vs volumen</div></div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">?Cuanto cambia el costo si producis mas o menos?</div>
+        <div id="sensDiv"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--warn)"></div>Comparativa vs Navegante</div></div>
+        <div id="navChart"></div>
+        <div style="display:flex;gap:14px;margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--t3);"><div style="width:8px;height:8px;background:var(--acc);border-radius:2px;"></div>PITEC</div>
+          <div style="display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--t3);"><div style="width:8px;height:8px;background:var(--acc2);border-radius:2px;"></div>NAVEGANTE</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3 -->
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc2)"></div>Analisis en USD - <span id="dolarHdr" style="color:var(--warn);margin-left:3px;"></span></div></div>
+      <table id="usdTable">
+        <thead><tr><th>Formato</th><th class="r">Costo/mts (u$s)</th><th class="r">Costo/kg (u$s)</th><th class="r">Nav. (u$s/mts)</th><th class="r">Margen (u$s)</th><th class="r">Margen %</th></tr></thead>
+        <tbody id="usdBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ROW 4 - Historial -->
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc3)"></div>Historial 2026</div><button class="btn ghost sm" onclick="saveCurrentMonth()"> Guardar mes actual</button></div>
+      <table id="histTable">
+        <thead><tr><th>Mes</th><th class="r">Mts</th><th class="r">Kg</th><th class="r">gr/m2</th><th class="r">$/kg</th><th class="r">$/mts F47</th><th class="r">Nav. F47</th><th class="r">Margen</th></tr></thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /content -->
+</div><!-- /wrap -->
+
+<script>
+// ==============================================================
+// ESTADO GLOBAL
+// ==============================================================
+let tipo = 'lam';
+const HIST = {};
+let inversiones = [];
+let invPending = null; // inversion detectada pendiente de clasificar
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// Facturas config
+const FACTURAS = [
+  {id:'edesur',  label:'Edesur',    tipo:'A', grupo:'vencido',    hint:'Subtotal cargos Netos del Mes', val:0, loaded:false},
+  {id:'expensas',label:'Expensas',  tipo:'A', grupo:'adelantado', hint:'Subtotal: $',                   val:0, loaded:false},
+  {id:'agua',    label:'Agua',      tipo:'A', grupo:'vencido',    hint:'SUBTOTAL',                      val:0, loaded:false},
+  {id:'residuos',label:'Residuos',  tipo:'A', grupo:'vencido',    hint:'Fila Pitec -> Subtotal',         val:0, loaded:false},
+  {id:'starlink',label:'Starlink',  tipo:'B', grupo:'adelantado', hint:'IMPORTE NETO',                  val:0, loaded:false},
+  {id:'ia',      label:'IA/Safar',  tipo:'C', grupo:'adelantado', hint:'Importe Total: $',              val:0, loaded:false},
+  {id:'gili',    label:'Gili',      tipo:'C', grupo:'vencido',    hint:'Importe Total: $ / 2',          val:0, loaded:false},
+  {id:'incendio',    label:'Incendio',      tipo:'A', grupo:'adelantado', hint:'Subtotal sin IVA',    val:0, loaded:false},
+  {id:'fumigaciones',label:'Fumigaciones', tipo:'C', grupo:'vencido',    hint:'Importe Total: $',   val:0, loaded:false},
+];
+
+// Composicion hilo (editable)
+let composicion = [
+  {nombre:'Grumo hilo (KYD/LYD/1102L)', pct:96, grupo:'pGH'},
+  {nombre:'Carbonato (1001BR/APC)',       pct:3,  grupo:'pCarb'},
+  {nombre:'Masterbatch',                  pct:1,  grupo:'pMast'},
+];
+
+// Formatos
+const FTOS = ['47','53','57','60','102','120','40','57','71'];
+const FTO_LIST = ['40','47','53','57','60','71','82','102','120'];
+
+// Navegante defaults
+const NAV_DEF = {40:196.78, 47:222.19, 53:240.82, 57:258.82, 60:270.13, 71:0, 82:0, 102:0, 120:0};
+
+// -- INIT ------------------------------------------------------
+
+// ============================================================
+// FACTURAS - leer Config, buscar PDFs en Drive, guardar Sheet
+// ============================================================
+
+// Leer IDs de carpetas desde hoja Config del Sheet Facturas
+async function loadFolderIdsFromConfig(){
+  try {
+    // Col A=Servicio(2-10), B=FolderID, C=Anio, D=Patron
+    const data = await readSheet(SHEET_IDS.facturas, 'Config!A3:D11');
+    data.forEach((row, i) => {
+      const svc = SERVICIOS_FAC[i];
+      if(svc && row[1]) svc.folderId = String(row[1]).trim();
+    });
+    console.log('Folder IDs cargados:', SERVICIOS_FAC.map(s=>s.id+':'+s.folderId.substring(0,10)));
+  } catch(e) { console.warn('Error cargando Config:', e.message); }
+}
+
+// Leer facturas ya guardadas en el Sheet para el mes/anio actual
+async function loadFacturasFromSheet(){
+  if(!accessToken){ return; }
+  const mes = document.getElementById('selMes').value;
+  const anio = document.getElementById('selAnio').value;
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesIdx = MESES.indexOf(mes); // 0-based
+  if(mesIdx < 0) return;
+  // Filas: 3=Enero, 4=Febrero... fila = 3 + mesIdx
+  const fila = 3 + mesIdx;
+  try {
+    // Leer fila completa B:K (cols 2-10 = 9 servicios)
+    const data = await readSheet(SHEET_IDS.facturas, `Facturas!B${fila}:J${fila}`);
+    const vals = data[0] || [];
+    SERVICIOS_FAC.forEach((svc, i) => {
+      const v = parseFloat(String(vals[i]||'0').replace(/[^0-9.]/g,''))||0;
+      svc.val = v;
+      svc.loaded = v > 0;
+      // Actualizar campo manual en panel facturas si existe
+      const inp = document.getElementById('finput_'+svc.id);
+      if(inp) inp.value = v;
+    });
+    renderFacturasGrid(mes, anio);
+    // Actualizar costos fijos con valores del sheet
+    recalc();
+    console.log('Facturas cargadas desde Sheet para', mes, anio);
+  } catch(e) { console.warn('Error leyendo Sheet facturas:', e.message); }
+}
+
+// Guardar un valor en el Sheet
+async function saveFacturaToSheet(svcId, valor){
+  if(!accessToken) return;
+  const mes = document.getElementById('selMes').value;
+  const anio = document.getElementById('selAnio').value;
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesIdx = MESES.indexOf(mes);
+  const svc = SERVICIOS_FAC.find(s=>s.id===svcId);
+  if(!svc || mesIdx<0) return;
+  const fila = 3 + mesIdx;
+  const col = svc.col; // col 2=B, 3=C... col letra
+  const colLetra = String.fromCharCode(64 + col); // B=66-64=2 -> 66 -> B
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_IDS.facturas}/values/Facturas!${colLetra}${fila}?valueInputOption=RAW`;
+    await fetch(url, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [[valor]] })
+    });
+    console.log('Guardado en Sheet:', svcId, valor, colLetra+fila);
+  } catch(e) { console.warn('Error guardando en Sheet:', e.message); }
+}
+
+// Buscar PDF en carpeta Drive
+async function findPDFInDrive(folderId, mes, anio){
+  if(!folderId || !accessToken) return null;
+  try {
+    // Buscar subcarpeta del anio dentro de la carpeta del servicio
+    const q1 = encodeURIComponent(`'${folderId}' in parents and mimeType='application/vnd.google-apps.folder' and name='${anio}' and trashed=false`);
+    const r1 = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q1}&fields=files(id,name)`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const d1 = await r1.json();
+    const anioFolder = d1.files?.[0];
+    const searchFolder = anioFolder ? anioFolder.id : folderId;
+
+    // Buscar el PDF con el patron Servicio_Mes_Anio.pdf (case insensitive)
+    const q2 = encodeURIComponent(`'${searchFolder}' in parents and mimeType='application/pdf' and name contains '${mes}' and trashed=false`);
+    const r2 = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q2}&fields=files(id,name,size)`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const d2 = await r2.json();
+    return d2.files?.[0] || null;
+  } catch(e) { console.warn('Error buscando PDF:', e.message); return null; }
+}
+
+// Descargar PDF de Drive y mandarlo a IA
+async function extractValueFromPDF(fileId, hint, dividir2){
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const ab = await r.arrayBuffer();
+    const bytes = new Uint8Array(ab);
+    let binary = '';
+    const chunk = 8192;
+    for(let i=0; i<bytes.length; i+=chunk){
+      binary += String.fromCharCode(...bytes.subarray(i, Math.min(i+chunk, bytes.length)));
+    }
+    const b64 = btoa(binary);
+
+    const prompt = `Busca "${hint}" en esta factura. Devuelve UNICAMENTE el numero sin puntos de miles ni signo $. Ejemplo: si dice 10.735.588,53 responde 10735588.53`;
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 100,
+        messages: [{ role: 'user', content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+          { type: 'text', text: prompt }
+        ]}]
+      })
+    });
+    const d = await res.json();
+    let raw = d.content?.[0]?.text?.trim() || '0';
+    raw = raw.replace(/[^0-9.]/g,'');
+    let val = parseFloat(raw) || 0;
+    if(dividir2) val = val / 2;
+    return val;
+  } catch(e) { console.warn('Error extrayendo PDF:', e.message); return null; }
+}
+
+// Renderizar grilla de facturas con estado de cada servicio
+function renderFacturasGrid(mes, anio){
+  const el = document.getElementById('facGrid');
+  if(!el) return;
+  el.innerHTML = SERVICIOS_FAC.map(svc => {
+    const v = svc.val;
+    const ok = v > 0;
+    const statusCls = ok ? 'ok' : 'red';
+    const statusTxt = ok ? '$'+Math.round(v).toLocaleString('es-AR') : 'Falta factura';
+    return `<div style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--t2);">${svc.label}</span>
+        <span class="chip ${statusCls}" style="font-size:9px;">${statusTxt}</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="number" id="finput_${svc.id}" value="${v||''}" placeholder="Valor manual (ARS)"
+          style="font-size:11px;padding:5px 8px;flex:1;"
+          onchange="setFacturaManual('${svc.id}',this.value)">
+        <button class="btn ghost sm" onclick="procesarUnaFactura('${svc.id}')" 
+          style="white-space:nowrap;" id="fbtn_${svc.id}">Buscar PDF</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Procesar UNA factura especifica
+async function procesarUnaFactura(svcId){
+  const svc = SERVICIOS_FAC.find(s=>s.id===svcId);
+  if(!svc){ return; }
+  const mes = document.getElementById('selMes').value;
+  const anio = document.getElementById('selAnio').value;
+  const btn = document.getElementById('fbtn_'+svcId);
+  if(btn) btn.textContent = '...';
+
+  const pdf = await findPDFInDrive(svc.folderId, mes, anio);
+  if(!pdf){
+    if(btn) btn.textContent = 'No encontrado';
+    return;
+  }
+  if(btn) btn.textContent = 'Procesando IA...';
+  const valor = await extractValueFromPDF(pdf.id, svc.hint, svc.dividir2);
+  if(valor && valor > 0){
+    svc.val = valor;
+    svc.loaded = true;
+    const inp = document.getElementById('finput_'+svcId);
+    if(inp) inp.value = valor;
+    await saveFacturaToSheet(svcId, valor);
+    renderFacturasGrid(mes, anio);
+    recalc();
+  }
+  if(btn) btn.textContent = valor > 0 ? 'OK' : 'Error';
+}
+
+// Procesar TODAS las facturas faltantes del mes
+async function procesarFacturasFaltantes(){
+  if(!accessToken){ alert('Conecta Drive primero'); return; }
+  const mes = document.getElementById('selMes').value;
+  const anio = document.getElementById('selAnio').value;
+  const statusDiv = document.getElementById('facStatusDiv');
+  if(statusDiv) statusDiv.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--warn);">Procesando facturas faltantes...</div>';
+
+  // Primero leer el sheet para saber cuales estan OK
+  await loadFacturasFromSheet();
+
+  let procesadas = 0, encontradas = 0, faltantes = 0;
+  for(const svc of SERVICIOS_FAC){
+    if(svc.val > 0){ continue; } // ya tiene valor, saltear
+    procesadas++;
+    const pdf = await findPDFInDrive(svc.folderId, mes, anio);
+    if(!pdf){ faltantes++; continue; }
+    const valor = await extractValueFromPDF(pdf.id, svc.hint, svc.dividir2);
+    if(valor && valor > 0){
+      svc.val = valor;
+      svc.loaded = true;
+      await saveFacturaToSheet(svc.id, valor);
+      encontradas++;
+    } else { faltantes++; }
+  }
+
+  renderFacturasGrid(mes, anio);
+  recalc();
+  if(statusDiv) statusDiv.innerHTML = `<div style="font-family:var(--mono);font-size:10px;color:var(--ok);">Procesadas: ${procesadas} | Encontradas: ${encontradas} | Faltantes: ${faltantes}</div>`;
+}
+
+// Setear valor manual de una factura
+async function setFacturaManual(svcId, val){
+  const svc = SERVICIOS_FAC.find(s=>s.id===svcId);
+  const v = parseFloat(val)||0;
+  if(!svc) return;
+  svc.val = v;
+  svc.loaded = v > 0;
+  if(v > 0) await saveFacturaToSheet(svcId, v);
+  recalc();
+}
+
+// Obtener valor de factura para calculos (compatible con sistema anterior)
+function getFacturaVal(id){
+  const svc = SERVICIOS_FAC.find(s=>s.id===id);
+  return svc ? (svc.val||0) : 0;
+}
+
+function init(){
+  buildNavInputs();
+  buildFtoInputRows();
+  buildFacturasGrid();
+  renderFacturasGrid('Marzo','2026');
+  buildCompRows();
+  renderInvList();
+  setTipo('lam', document.getElementById('btnLam'));
+  fetchDolarBNA();
+  setInterval(fetchDolarBNA, 30*60*1000);
+  recalc();
+}
+
+// -- SIDEBAR ---------------------------------------------------
+function showSidePanel(name, el){
+  document.querySelectorAll('.side-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.side-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+function setTipo(t, el){
+  tipo = t;
+  document.getElementById('btnLam').className  = 'btn ghost';
+  document.getElementById('btnConv').className = 'btn ghost';
+  el.className = 'btn acc';
+  document.getElementById('grumoLamField').style.display = t==='lam'?'':'none';
+  recalc();
+}
+
+// -- FACTURAS GRID ---------------------------------------------
+function buildFacturasGrid(){
+  const el = document.getElementById('facturasGrid');
+  el.innerHTML = FACTURAS.map(f=>`
+    <div style="margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;">${f.label} <span style="color:${f.tipo==='A'?'var(--acc3)':f.tipo==='B'?'var(--warn)':'var(--ok)'};">Tipo ${f.tipo}</span></span>
+        <span class="chip ${f.grupo==='vencido'?'w':'b'}" style="font-size:8px;">${f.grupo==='vencido'?'factura mes anterior':'factura mes actual'}</span>
+      </div>
+      <div class="upload-zone" id="uz_${f.id}" onclick="document.getElementById('file_${f.id}').click()">
+        <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
+          <span style="font-size:14px;"></span>
+          <div>
+            <div class="uz-label">${f.hint}</div>
+            <div class="uz-val" id="val_${f.id}"></div>
+            <div class="uz-err" id="err_${f.id}"></div>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="file_${f.id}" accept=".pdf" style="display:none" onchange="processFactura('${f.id}',this)">
+      <div class="iu" style="margin-top:4px;">
+        <input type="number" id="manual_${f.id}" value="0" oninput="setFacturaManual('${f.id}',this.value)" placeholder="O cargar manual">
+        <span class="u">ARS</span>
+      </div>
+    </div>`).join('');
+}
+
+// -- NAVEGANTE INPUTS ------------------------------------------
+function buildNavInputs(){
+  const el = document.getElementById('navInputs');
+  el.innerHTML = FTO_LIST.map(fto=>`
+    <div class="field" style="margin-bottom:6px;">
+      <label>Formato ${fto}</label>
+      <div class="iu"><input type="number" id="nv${fto}" value="${NAV_DEF[fto]||0}" step="1" oninput="recalc()"><span class="u">$/mts</span></div>
+    </div>`).join('');
+}
+
+// -- FTO INPUT ROWS --------------------------------------------
+function buildFtoInputRows(){
+  const DATOS = {
+    Enero:  {47:{mts:328846,kg:16620},53:{mts:37000,kg:2114},57:{mts:34500,kg:2222},60:{mts:172385,kg:11765},102:{mts:327844,kg:18465},120:{mts:49500,kg:3253}},
+    Febrero:{47:{mts:260000,kg:13162},53:{mts:104000,kg:6059},57:{mts:12000,kg:722},60:{mts:237252,kg:15965},102:{mts:159356,kg:9190}},
+    Marzo:  {47:{mts:164000,kg:8225},53:{mts:87000,kg:4999},57:{mts:52000,kg:3136},60:{mts:181358,kg:12177},102:{mts:142725,kg:7435}},
+  };
+  const el = document.getElementById('ftoInputRows');
+  const mes = document.getElementById('selMes')?.value || 'Marzo';
+  const pre = DATOS[mes] || {};
+  el.innerHTML = FTO_LIST.map(fto=>`
+    <tr>
+      <td style="font-family:var(--mono);color:var(--t2);">${fto}</td>
+      <td><input type="number" id="fmts_${fto}" value="${pre[fto]?.mts||0}" style="font-size:11px;padding:4px 6px;" oninput="recalc()"></td>
+      <td><input type="number" id="fkg_${fto}"  value="${pre[fto]?.kg||0}"  style="font-size:11px;padding:4px 6px;" oninput="recalc()"></td>
+    </tr>`).join('');
+}
+
+// -- COMPOSICION -----------------------------------------------
+function buildCompRows(){
+  const el = document.getElementById('compRows');
+  el.innerHTML = composicion.map((c,i)=>`
+    <div class="comp-row">
+      <input type="text"   value="${c.nombre}" oninput="composicion[${i}].nombre=this.value;recalc()" style="font-size:11px;padding:5px 8px;">
+      <select oninput="composicion[${i}].grupo=this.value;recalc()" style="font-size:11px;padding:5px 6px;">
+        ${['pGH','pGL','pPE','pCarb','pMast'].map(g=>`<option value="${g}" ${c.grupo===g?'selected':''}>${g}</option>`).join('')}
+      </select>
+      <div>
+        <div class="iu"><input type="number" value="${c.pct}" min="0" max="100" oninput="composicion[${i}].pct=parseFloat(this.value)||0;updateCompTotal();recalc()" style="font-size:11px;padding:5px 6px;padding-right:24px;"><span class="u">%</span></div>
+        <div class="comp-pct-bar"><div class="comp-pct-fill" style="width:${c.pct}%"></div></div>
+      </div>
+      <button class="btn danger sm" onclick="removeComp(${i})">x</button>
+    </div>`).join('');
+  updateCompTotal();
+}
+
+function updateCompTotal(){
+  const total = composicion.reduce((s,c)=>s+c.pct,0);
+  const el = document.getElementById('compTotal');
+  el.textContent = `Total: ${total.toFixed(1)}%`;
+  el.className = `pct-total ${Math.abs(total-100)<0.1?'ok':'err'}`;
+}
+
+function addCompRow(){
+  composicion.push({nombre:'Nuevo componente', pct:0, grupo:'pGH'});
+  buildCompRows(); recalc();
+}
+
+function removeComp(i){
+  composicion.splice(i,1);
+  buildCompRows(); recalc();
+}
+
+// -- INVERSIONES -----------------------------------------------
+function renderInvList(){
+  const el = document.getElementById('invList');
+  if(!inversiones.length){ el.innerHTML='<div style="color:var(--t3);font-family:var(--mono);font-size:10px;padding:8px;">Sin inversiones en amortizacion</div>'; return; }
+  el.innerHTML = inversiones.map((inv,i)=>{
+    const cuota = inv.monto/inv.vida;
+    const pagadas = inv.mesesTranscurridos||0;
+    const restantes = inv.vida - pagadas;
+    return `<div style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text);">${inv.desc}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:2px;">${inv.mesInicio} * ${inv.vida} meses</div>
+        </div>
+        <button class="btn danger sm" onclick="removeInv(${i})">x</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;">
+        <div><div style="font-family:var(--mono);font-size:8px;color:var(--t3);">CUOTA/MES</div><div style="font-family:var(--mono);font-size:12px;color:var(--acc);">$${Math.round(cuota).toLocaleString('es-AR')}</div></div>
+        <div><div style="font-family:var(--mono);font-size:8px;color:var(--t3);">RESTANTES</div><div style="font-family:var(--mono);font-size:12px;color:var(--acc2);">${restantes} meses</div></div>
+        <div><div style="font-family:var(--mono);font-size:8px;color:var(--t3);">SALDO</div><div style="font-family:var(--mono);font-size:12px;color:var(--warn);">$${Math.round(cuota*restantes).toLocaleString('es-AR')}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddInv(){
+  const f = document.getElementById('addInvForm');
+  f.style.display = f.style.display==='none'?'block':'none';
+}
+
+function addInvManual(){
+  const desc  = document.getElementById('newInvDesc').value||'Sin descripcion';
+  const monto = parseFloat(document.getElementById('newInvMonto').value)||0;
+  const inicio= document.getElementById('newInvMesInicio').value||'-';
+  const vida  = parseInt(document.getElementById('newInvVida').value)||60;
+  if(!monto){ alert('Ingresa el monto'); return; }
+  inversiones.push({desc,monto,mesInicio:inicio,vida,mesesTranscurridos:0});
+  renderInvList(); recalc();
+  document.getElementById('addInvForm').style.display='none';
+}
+
+function removeInv(i){ inversiones.splice(i,1); renderInvList(); recalc(); }
+
+// Modal inversion
+function showInvModal(item){
+  invPending = item;
+  document.getElementById('invModalContent').innerHTML = `
+    <div style="background:var(--surf2);border-radius:6px;padding:12px;margin-bottom:12px;">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text);">${item.desc}</div>
+      <div style="font-family:var(--mono);font-size:18px;color:var(--warn);margin-top:4px;">$${item.monto.toLocaleString('es-AR')}</div>
+    </div>
+    <div style="font-family:var(--sans);font-size:13px;color:var(--t2);">Esta compra parece ser una inversion (maquinaria u obra). ?La amortizamos a lo largo de su vida util o la incluimos como gasto del mes?</div>`;
+  document.getElementById('invForm').style.display='none';
+  document.getElementById('invModal').classList.add('open');
+}
+
+function classifyInv(tipo){
+  document.getElementById('invModal').classList.remove('open');
+  if(tipo==='gasto'){ invPending=null; recalc(); }
+}
+
+function showInvForm(){ document.getElementById('invForm').style.display='block'; }
+
+function confirmInv(){
+  if(!invPending) return;
+  const vida = parseInt(document.getElementById('invVidaUtil').value)||60;
+  const desc = document.getElementById('invDesc').value||invPending.desc;
+  const mes  = document.getElementById('selMes').value+' '+document.getElementById('selAnio').value;
+  inversiones.push({desc,monto:invPending.monto,mesInicio:mes,vida,mesesTranscurridos:0});
+  invPending = null;
+  document.getElementById('invModal').classList.remove('open');
+  renderInvList(); recalc();
+}
+
+// -- PROCESAR SUELDOS - usa SheetJS para leer Excel directamente --------------
+async function processSueldos(input){
+  const file = input.files[0]; if(!file) return;
+  const uz   = document.getElementById('uzSueldos');
+  const valEl= document.getElementById('valSueldos');
+  const errEl= document.getElementById('errSueldos');
+  uz.className='upload-zone loading';
+  valEl.innerHTML='<span class="spinner"></span>';
+  errEl.textContent='';
+  try{
+    const ab  = await file.arrayBuffer();
+    const wb  = XLSX.read(ab, {type:'array', cellFormula:false, cellNF:false});
+
+    // Buscar hoja "Sueldos" (case insensitive)
+    const sheetName = wb.SheetNames.find(n=>n.toLowerCase().includes('sueldo')) || wb.SheetNames[0];
+    const ws  = wb.Sheets[sheetName];
+
+    if(!ws) throw new Error(`No se encontro la hoja "Sueldos". Hojas disponibles: ${wb.SheetNames.join(', ')}`);
+
+    // Leer celda M26
+    const cell = ws['M26'];
+    const val  = cell ? (cell.v || cell.w) : null;
+    const num  = typeof val === 'number' ? val : parseFloat(String(val||'').replace(/[^0-9.]/g,''));
+
+    if(!num || num <= 0) throw new Error(`Celda M26 en hoja "${sheetName}" esta vacia o es 0. Valor encontrado: ${val}`);
+
+    document.getElementById('sueldos').value = Math.round(num);
+    uz.className='upload-zone loaded';
+    valEl.textContent = '$'+Math.round(num).toLocaleString('es-AR');
+    recalc();
+  }catch(e){
+    uz.className='upload-zone error';
+    errEl.textContent = 'Error: '+e.message;
+    console.error('processSueldos:', e);
+  }
+}
+
+// -- PROCESAR FACTURA PDF --------------------------------------
+async function processFactura(id, input){
+  const file = input.files[0]; if(!file) return;
+  const fac = FACTURAS.find(f=>f.id===id);
+  const uz  = document.getElementById('uz_'+id);
+  const valEl= document.getElementById('val_'+id);
+  const errEl= document.getElementById('err_'+id);
+  uz.className='upload-zone loading';
+  valEl.innerHTML='<span class="spinner"></span>';
+  errEl.textContent='';
+
+  const prompts = {
+    edesur:   'Busca "Subtotal cargos Netos del Mes" en esta factura de Edesur. Devolve UNICAMENTE el numero en formato entero sin puntos ni comas ni simbolo $. Ejemplo: si dice 10.735.588,53 responde 10735588.53',
+    expensas: 'Busca la linea "Subtotal: $" en esta factura (es el subtotal ANTES del IVA). Devolve UNICAMENTE el numero sin puntos de miles ni simbolo $. Ejemplo: 1341271.35',
+    agua:     'Busca "SUBTOTAL" en esta factura (es el monto antes del IVA). Devolve UNICAMENTE el numero sin puntos ni simbolo $. Ejemplo: 179338.84',
+    residuos: 'En la tabla de esta factura, busca la fila que dice "Pitec" en la columna de descripcion o producto. Devolve UNICAMENTE el numero de la columna Subtotal de ESA FILA, sin puntos de miles ni simbolo $. Ejemplo: 130000',
+    starlink: 'Busca "IMPORTE NETO" en esta factura de Starlink. Devolve UNICAMENTE ese numero sin puntos de miles ni simbolo $. Ejemplo: 92727.28',
+    ia:       'Busca "Importe Total: $" en esta factura. Devolve UNICAMENTE ese numero sin puntos de miles ni simbolo $. Ejemplo: 143500',
+    gili:     'Busca "Importe Total: $" en esta factura de Gili. Devolve UNICAMENTE ese numero sin puntos de miles ni simbolo $. Yo lo voy a dividir por 2. Ejemplo: 648000',
+    incendio: 'En esta factura busca el monto neto sin IVA (el subtotal o importe neto antes de los impuestos). Devolve UNICAMENTE ese numero sin puntos de miles ni simbolo $.',
+    fumigaciones: 'En esta factura busca el Importe Total o Importe Neto. Devolve UNICAMENTE ese numero sin puntos de miles ni simbolo $.',
+  };
+
+  try{
+    const ab = await file.arrayBuffer();
+    // Robust base64 encoding for large files
+    const bytes = new Uint8Array(ab);
+    let binary = '';
+    const chunkSize = 8192;
+    for(let i=0; i<bytes.length; i+=chunkSize){
+      binary += String.fromCharCode(...bytes.subarray(i, Math.min(i+chunkSize, bytes.length)));
+    }
+    const b64 = btoa(binary);
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:100,
+        messages:[{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
+          {type:'text',text:prompts[id]||'Devolve el importe neto sin IVA. SOLO el numero.'}
+        ]}]
+      })
+    });
+    const d = await res.json();
+    // Handle Argentine number format: 143.500,00 -> 143500.00
+    let raw = d.content?.[0]?.text?.trim() || '';
+    // Remove currency symbols and spaces
+    raw = raw.replace(/[$\s]/g,'');
+    // If format is X.XXX,XX (Argentine) -> convert to X.XX
+    if(/\d{1,3}(\.\d{3})+(,\d+)?$/.test(raw)){
+      raw = raw.replace(/\./g,'').replace(',','.');
+    } else if(/\d+(,\d+)?$/.test(raw) && raw.includes(',')){
+      raw = raw.replace(',','.');
+    } else {
+      raw = raw.replace(/[^0-9.]/g,'');
+    }
+    let val = parseFloat(raw);
+    if(id==='gili') val = val/2;
+    if(val>0){
+      fac.val = val; fac.loaded = true;
+      document.getElementById('manual_'+id).value = val;
+      uz.className='upload-zone loaded';
+      valEl.textContent='$'+val.toLocaleString('es-AR',{maximumFractionDigits:0});
+      recalc();
+    } else throw new Error('No se encontro el importe');
+  }catch(e){
+    uz.className='upload-zone error';
+    errEl.textContent='Error: '+e.message;
+    fac.loaded=false;
+    console.error('processFactura error:', id, e);
+  }
+}
+
+function setFacturaManual(id, val){
+  const fac = FACTURAS.find(f=>f.id===id);
+  if(fac){ fac.val=parseFloat(val)||0; fac.loaded=parseFloat(val)>0; }
+  recalc();
+}
+
+// -- HELPERS ---------------------------------------------------
+function g(id){ return parseFloat(document.getElementById(id)?.value)||0; }
+function fc(n,d=0){ return '$'+n.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function fm(n){ return n.toLocaleString('es-AR',{maximumFractionDigits:0}); }
+
+function getFacturaVal(id){
+  return parseFloat(document.getElementById('manual_'+id)?.value)||0;
+}
+
+// -- ALERTAS ---------------------------------------------------
+function calcAlerts(){
+  const alerts = [];
+  const hoy = new Date();
+  const diaHoy = hoy.getDate();
+
+  // Mes seleccionado en la app
+  const mesIdx = MESES.indexOf(document.getElementById('selMes').value);
+
+  // Mes anterior (para facturas vencidas)
+  const mesVencidoIdx = mesIdx > 0 ? mesIdx - 1 : 11;
+  const mesVencido = MESES[mesVencidoIdx];
+
+  // Mes actual (para facturas adelantadas)
+  const mesAdelantado = MESES[mesIdx];
+
+  FACTURAS.forEach(f=>{
+    const val = getFacturaVal(f.id);
+    if(val===0){
+      if(f.grupo==='vencido'){
+        // Factura del mes ANTERIOR - ej: estamos en marzo, necesitamos la de febrero
+        const msg = diaHoy > 10
+          ? ` ${f.label}: falta factura de ${mesVencido} (ya paso el dia 10)`
+          : `${f.label}: esperando factura de ${mesVencido}`;
+        alerts.push({msg, tipo: diaHoy > 10 ? 'red' : 'warn'});
+      } else {
+        // Factura del mes ACTUAL - ej: estamos en marzo, necesitamos la de marzo
+        const msg = diaHoy > 10
+          ? ` ${f.label}: falta factura de ${mesAdelantado}`
+          : `${f.label}: factura de ${mesAdelantado} aun no recibida`;
+        alerts.push({msg, tipo: diaHoy > 10 ? 'warn' : 'warn'});
+      }
+    }
+  });
+
+  // Inversiones detectadas
+  inversiones.forEach(inv=>{
+    if(inv.mesesTranscurridos>=inv.vida){
+      alerts.push({msg:`Inversion "${inv.desc}" completamente amortizada`, tipo:'ok'});
+    }
+  });
+
+  return alerts;
+}
+
+function renderAlerts(){
+  const alerts = calcAlerts();
+  const bar = document.getElementById('alertsBar');
+  const lbl = document.getElementById('alertLabel');
+  if(!alerts.length){ bar.style.display='none'; lbl.style.display='none'; return; }
+  bar.style.display='flex';
+  bar.innerHTML = alerts.map(a=>`
+    <div class="alert ${a.tipo}">
+      <div class="alert-dot" style="background:${a.tipo==='red'?'var(--acc3)':a.tipo==='warn'?'var(--warn)':'var(--ok)'}"></div>
+      ${a.msg}
+    </div>`).join('');
+  const reds = alerts.filter(a=>a.tipo==='red').length;
+  lbl.style.display='';
+  lbl.textContent = reds ? `${reds} alerta${reds>1?'s':''}` : `${alerts.length} aviso${alerts.length>1?'s':''}`;
+  lbl.className = 'hbadge ' + (reds?'red':'warn');
+}
+
+// ==============================================================
+// CALCULO PRINCIPAL
+// ==============================================================
+function recalc(){
+  const dolar   = g('dolar');
+  const totMts  = g('totMts');
+  const totKg   = g('totKg');
+  const grumoLam= tipo==='lam'?g('grumoLam'):0;
+  const peLam   = tipo==='lam'?g('peLam'):0;
+  const DESP    = 1.05;
+
+  // Precios MP
+  const preciosGrupo = {pGH:g('pGH'),pGL:g('pGL'),pPE:g('pPE'),pCarb:g('pCarb'),pMast:g('pMast')};
+
+  // -- FIJOS --------------------------------------------------
+  const sueldos   = g('sueldos');
+  const edesur    = getFacturaVal('edesur');
+  const expensas  = getFacturaVal('expensas');
+  const agua      = getFacturaVal('agua');
+  const residuos  = getFacturaVal('residuos');
+  const starlink  = getFacturaVal('starlink');
+  const ia        = getFacturaVal('ia');
+  const gili      = getFacturaVal('gili');
+  const incendio  = getFacturaVal('incendio');
+  const prSeguro  = g('prSeguro');
+  const prParar   = g('prParar');
+  const prMata    = g('prMata');
+  const prRopa    = g('prRopa');
+
+  const totalFijos = sueldos+edesur+expensas+agua+residuos+starlink+ia+gili+incendio+prSeguro+prParar+prMata+prRopa;
+
+  // -- MATERIA PRIMA HILO (composicion editable) --------------
+  let totalMPHilo = 0;
+  const mpDetalle = composicion.map(c=>{
+    const kg  = totKg * (c.pct/100) * DESP;
+    const prec= preciosGrupo[c.grupo]||0;
+    const cost= kg*prec;
+    totalMPHilo += cost;
+    return {nombre:c.nombre, kg, cost};
+  });
+
+  // -- MATERIA PRIMA LAMINADO ---------------------------------
+  const cGrumoLam = grumoLam * g('pGL');
+  const cPeLam    = peLam    * g('pPE');
+  const totalMPLam= cGrumoLam+cPeLam;
+
+  // -- VARIABLES PRODUCCION -----------------------------------
+  const cGasoil   = g('cGasoil');
+  const cAlm      = g('cAlmuerzos');
+  const cFletes   = g('cFletes');
+  const cVarios   = g('cVarios');
+  const cMant     = g('cMant');
+  const cOtros    = g('cOtros');
+  const totalVarProd = cGasoil+cAlm+cFletes+cVarios+cMant+cOtros;
+
+  // -- INVERSIONES --------------------------------------------
+  const cInversiones = inversiones.reduce((s,inv)=>{
+    const cuota = inv.vida>0?inv.monto/inv.vida:0;
+    return s + (inv.mesesTranscurridos<inv.vida?cuota:0);
+  },0);
+
+  // -- TOTAL --------------------------------------------------
+  const totalGeneral = totalFijos+totalMPHilo+totalMPLam+totalVarProd+cInversiones;
+
+  // -- METRICAS -----------------------------------------------
+  const costoPorKg  = totKg >0?totalGeneral/totKg :0;
+  const costoPorMts = totMts>0?totalGeneral/totMts:0;
+  const grM2Prom    = totMts>0?(totKg/totMts)*1000:0;
+
+  // -- FORMATOS -----------------------------------------------
+  const ftoResults = {};
+  FTO_LIST.forEach(fto=>{
+    const fmts=g('fmts_'+fto), fkg=g('fkg_'+fto);
+    const grM2Real = fmts>0&&fkg>0?(fkg/fmts)*1000:null;
+    const kgPorMts = grM2Real?grM2Real/1000:null;
+    const cPorMts  = kgPorMts?kgPorMts*costoPorKg:null;
+    const navPrice = g('nv'+fto);
+    const diff     = cPorMts&&navPrice>0?navPrice-cPorMts:null;
+    const diffPct  = diff&&navPrice>0?(diff/navPrice)*100:null;
+    ftoResults[fto]={grM2Real,kgPorMts,cPorMts,costoPorKg,navPrice,diff,diffPct,hasDatos:fmts>0&&fkg>0};
+  });
+
+  // -- RENDER -------------------------------------------------
+  renderKPIs(costoPorKg,costoPorMts,grM2Prom,totalGeneral,ftoResults['47'],dolar);
+  renderCostBreakdown(totalFijos,totalMPHilo,totalMPLam,totalVarProd,cInversiones,totalGeneral,
+    {sueldos,edesur,mpDetalle,cGrumoLam,cPeLam,cGasoil,cAlm,cFletes,cInversiones});
+  renderFtoTable(ftoResults);
+  renderSens(ftoResults['47']?.kgPorMts||0.0658, totalFijos,totalVarProd,totKg,
+    composicion,preciosGrupo,grumoLam,g('pGL'),peLam,g('pPE'),cInversiones);
+  renderNavChart(ftoResults);
+  renderUSD(ftoResults,dolar);
+  renderAlerts();
+
+  document.getElementById('mesLabel').textContent  = document.getElementById('selMes').value+' '+document.getElementById('selAnio').value;
+  document.getElementById('tipoLabel').textContent = tipo==='lam'?'Laminada':'Convencional';
+  document.getElementById('dolarHdr').textContent  = '$'+fm(dolar)+'/USD';
+  document.getElementById('tsLabel').textContent   = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+}
+
+// -- RENDER KPIs -----------------------------------------------
+function renderKPIs(cPorKg,cPorMts,grM2,total,r47,dolar){
+  const marg = r47?.diff;
+  const mCls = marg===null?'':marg>0?'green':marg>-20?'warn':'red';
+  document.getElementById('kpiStrip').innerHTML=`
+    <div class="kpi"><div class="kpi-lbl">Costo / kg</div><div class="kpi-val acc">${fc(cPorKg,2)}</div><div class="kpi-sub">u$s${(cPorKg/dolar).toFixed(3)}/kg</div></div>
+    <div class="kpi"><div class="kpi-lbl">Costo / mts (prom.)</div><div class="kpi-val blue">${fc(cPorMts,3)}</div><div class="kpi-sub">u$s${(cPorMts/dolar).toFixed(4)}/mts</div></div>
+    <div class="kpi"><div class="kpi-lbl">Gramaje prom. real</div><div class="kpi-val warn">${grM2.toFixed(2)}</div><div class="kpi-sub">gr/m2 del mes</div></div>
+    <div class="kpi"><div class="kpi-lbl">Total mensual</div><div class="kpi-val" style="color:var(--acc3);">${fc(total/1000000,1)}M</div><div class="kpi-sub">ARS sin IVA</div></div>
+    <div class="kpi"><div class="kpi-lbl">Margen vs Nav. F47</div><div class="kpi-val ${mCls}">${marg!==null?(marg>0?'+':'')+fc(marg,2)+'/mts':'-'}</div><div class="kpi-sub">${r47?.diffPct!==null&&r47?.diffPct!==undefined?(r47.diffPct>0?'+ baratos ':'+ caros ')+Math.abs(r47.diffPct).toFixed(1)+'%':''}</div></div>`;
+}
+
+// -- RENDER COST BREAKDOWN -------------------------------------
+function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,cInv,total,c){
+  const bar=(val,color)=>{
+    const pct=total>0?Math.min(100,val/total*100):0;
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <div style="flex:1;height:4px;background:var(--b2);border-radius:2px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${color};border-radius:2px;"></div></div>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--t3);min-width:44px;text-align:right;">${pct.toFixed(1)}%</span>
+      <span style="font-family:var(--mono);font-size:10px;min-width:70px;text-align:right;">${fc(val/1000,0)}K</span>
+    </div>`;
+  };
+  const row=(lbl,val,color)=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+    <span style="font-size:11px;color:var(--t2);">${lbl}</span>${bar(val,color)}</div>`;
+
+  document.getElementById('costBreakdown').innerHTML=`
+    <div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--acc);text-transform:uppercase;margin-bottom:4px;">FIJOS</div>
+    ${row('Sueldos',c.sueldos,'var(--acc)')}
+    ${row('Edesur',c.edesur,'var(--acc)')}
+    ${row('Servicios',totFijos-c.sueldos-c.edesur,'var(--acc)')}</div>
+    <div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--acc2);text-transform:uppercase;margin-bottom:4px;">MP HILO (composicion editable)</div>
+    ${c.mpDetalle.map(m=>row(m.nombre,m.cost,'var(--acc2)')).join('')}</div>
+    ${tipo==='lam'?`<div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--warn);text-transform:uppercase;margin-bottom:4px;">COATING LAMINADO</div>
+    ${row('Grumo XSD',c.cGrumoLam,'var(--warn)')}
+    ${row('PE BC818/APP',c.cPeLam,'var(--warn)')}</div>`:''}
+    <div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--ok);text-transform:uppercase;margin-bottom:4px;">PRODUCCION / VARIABLES</div>
+    ${row('Gasoil + fletes',c.cGasoil+c.cFletes,'var(--ok)')}
+    ${row('Almuerzos + varios',c.cAlm,'var(--ok)')}
+    ${cInv>0?row('Cuotas inversiones',cInv,'var(--acc2)'):''}</div>
+    <div style="padding:8px;background:var(--surf2);border-radius:6px;border:1px solid var(--b);display:flex;justify-content:space-between;">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--t2);">TOTAL MENSUAL</span>
+      <span style="font-family:var(--mono);font-size:15px;color:var(--acc);">${fc(total/1000000,2)}M ARS</span>
+    </div>`;
+}
+
+// -- RENDER FTO TABLE ------------------------------------------
+function renderFtoTable(results){
+  const rows = FTO_LIST.map(fto=>{
+    const r=results[fto];
+    if(!r||!r.cPorMts) return '';
+    const chipCls=r.diff===null?'':r.diff>0?'g':r.diff>-20?'w':'r';
+    const chipTxt=r.diff===null?'-':(r.diff>0?'+':'')+fc(r.diff,2);
+    return `<tr class="${r.hasDatos?'hi':''}">
+      <td><strong>${fto}</strong>${r.hasDatos?' <span style="color:var(--acc2);font-size:9px;">*</span>':''}</td>
+      <td class="r">${r.grM2Real?r.grM2Real.toFixed(2):'-'}</td>
+      <td class="r" style="color:var(--acc);">${fc(r.cPorMts,3)}</td>
+      <td class="r" style="color:var(--t2);">${r.navPrice>0?fc(r.navPrice,2):'-'}</td>
+      <td class="r"><span class="chip ${chipCls}">${chipTxt}</span></td>
+      <td class="r" style="color:var(--t2);">${fc(r.costoPorKg,2)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ftoBody').innerHTML=rows||'<tr><td colspan="6" style="color:var(--t3);text-align:center;padding:12px;">Carga mts y kg por formato</td></tr>';
+}
+
+// -- RENDER SENSIBILIDAD ---------------------------------------
+function renderSens(kgMts47,totFijos,totVarProd,kgActual,comp,precios,grumoLam,pGL,peLam,pPE,cInv){
+  const varMPporKg = comp.reduce((s,c)=>s+(c.pct/100)*(precios[c.grupo]||0),0);
+  const ratioCoat  = kgActual>0?(grumoLam*pGL+peLam*pPE)/kgActual:0;
+  const rows=[20,30,40,50,60,70,80,100].map(vk=>{
+    const kg=vk*1000;
+    const tot=totFijos+kg*varMPporKg+kg*ratioCoat+totVarProd+cInv;
+    const cPorKg=tot/kg;
+    const cPorMts=cPorKg*kgMts47;
+    const isCur=Math.abs(kg-kgActual)<5001;
+    return `<div class="sens-row${isCur?' cur':''}">
+      <div class="sens-cell" style="color:var(--t2);">${isCur?'> ':''}<strong>${vk}K</strong> kg</div>
+      <div class="sens-cell">${fc(cPorKg,2)}/kg</div>
+      <div class="sens-cell">${fc(cPorMts,3)}/mts F47</div>
+    </div>`;
+  }).join('');
+  document.getElementById('sensDiv').innerHTML=rows;
+}
+
+// -- RENDER NAV CHART ------------------------------------------
+function renderNavChart(results){
+  const activos=FTO_LIST.filter(f=>results[f]?.cPorMts&&results[f]?.navPrice>0);
+  if(!activos.length){document.getElementById('navChart').innerHTML='<div style="color:var(--t3);font-family:var(--mono);font-size:10px;padding:16px;text-align:center;">Carga precios Navegante</div>';return;}
+  const maxVal=Math.max(...activos.flatMap(f=>[results[f].cPorMts,results[f].navPrice]));
+  document.getElementById('navChart').innerHTML=`<div class="bar-chart">${
+    activos.map(fto=>{
+      const r=results[fto];
+      const hP=maxVal>0?(r.cPorMts/maxVal*100):4;
+      const hN=maxVal>0?(r.navPrice/maxVal*100):4;
+      const color=r.diff>0?'var(--ok)':r.diff>-20?'var(--warn)':'var(--acc3)';
+      return `<div class="bar-col">
+        <div class="bar-grp">
+          <div class="bar" style="height:${hP}px;background:${color};"></div>
+          <div class="bar" style="height:${hN}px;background:var(--acc2);"></div>
+        </div>
+        <div class="bar-lbl">F${fto}</div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+// -- RENDER USD ------------------------------------------------
+function renderUSD(results,dolar){
+  const rows=FTO_LIST.map(fto=>{
+    const r=results[fto]; if(!r?.cPorMts) return '';
+    const uMts=r.cPorMts/dolar, uKg=r.costoPorKg/dolar;
+    const uNav=r.navPrice>0?r.navPrice/dolar:null;
+    const uDif=uNav?uNav-uMts:null;
+    const pct=uNav&&uMts>0?((uNav-uMts)/uNav*100):null;
+    const cls=pct===null?'':pct>0?'g':pct>-10?'w':'r';
+    return `<tr>
+      <td><strong>${fto}</strong></td>
+      <td class="r">u$s${uMts.toFixed(4)}</td>
+      <td class="r">u$s${uKg.toFixed(4)}</td>
+      <td class="r">${uNav?'u$s'+uNav.toFixed(4):'-'}</td>
+      <td class="r">${uDif!==null?`<span style="color:${uDif>0?'var(--ok)':'var(--acc3)'};">u$s${uDif>0?'+':''}${uDif.toFixed(4)}</span>`:'-'}</td>
+      <td class="r">${pct!==null?`<span class="chip ${cls}">${pct>0?'+':''}${pct.toFixed(1)}%</span>`:'-'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('usdBody').innerHTML=rows;
+}
+
+// -- HISTORIAL -------------------------------------------------
+function saveCurrentMonth(){
+  const mes=document.getElementById('selMes').value;
+  const totMts=g('totMts'), totKg=g('totKg');
+  const grM2=totMts>0?(totKg/totMts)*1000:0;
+  // Recalc to get current values
+  const DESP=1.05;
+  const preciosGrupo={pGH:g('pGH'),pGL:g('pGL'),pPE:g('pPE'),pCarb:g('pCarb'),pMast:g('pMast')};
+  let totalMPHilo=0;
+  composicion.forEach(c=>{ totalMPHilo+=totKg*(c.pct/100)*DESP*(preciosGrupo[c.grupo]||0); });
+  const totalFijos=g('sueldos')+FACTURAS.reduce((s,f)=>s+(parseFloat(document.getElementById('manual_'+f.id)?.value)||0),0)+g('prSeguro')+g('prParar')+g('prMata')+g('prRopa');
+  const totalVarProd=g('cGasoil')+g('cAlmuerzos')+g('cFletes')+g('cVarios')+g('cMant')+g('cOtros');
+  const cInv=inversiones.reduce((s,inv)=>s+(inv.mesesTranscurridos<inv.vida?inv.monto/inv.vida:0),0);
+  const grumoLam=tipo==='lam'?g('grumoLam'):0, peLam=tipo==='lam'?g('peLam'):0;
+  const totalMPLam=grumoLam*g('pGL')+peLam*g('pPE');
+  const totalGeneral=totalFijos+totalMPHilo+totalMPLam+totalVarProd+cInv;
+  const cPorKg=totKg>0?totalGeneral/totKg:0;
+  const fmts47=g('fmts_47'), fkg47=g('fkg_47');
+  const gr47=fmts47>0&&fkg47>0?(fkg47/fmts47)*1000:grM2;
+  const cMts47=(gr47/1000)*cPorKg;
+  const nav47=g('nv47');
+  HIST[mes]={mts:totMts,kg:totKg,grM2,cPorKg,cMts47,nav47};
+  renderHistorial();
+}
+
+function renderHistorial(){
+  const rows=MESES.map(mes=>{
+    const h=HIST[mes];
+    if(!h) return `<tr><td style="color:var(--t3);">${mes}</td><td class="r" colspan="7" style="color:var(--t3);font-family:var(--mono);font-size:10px;">-</td></tr>`;
+    const diff=h.nav47>0?h.nav47-h.cMts47:null;
+    const cls=diff===null?'':diff>0?'g':'r';
+    return `<tr><td><strong>${mes}</strong></td>
+      <td class="r">${fm(h.mts)}</td><td class="r">${fm(h.kg)}</td>
+      <td class="r">${h.grM2.toFixed(2)}</td><td class="r" style="color:var(--acc);">${fc(h.cPorKg,2)}</td>
+      <td class="r" style="color:var(--acc2);">${fc(h.cMts47,3)}</td>
+      <td class="r" style="color:var(--t2);">${h.nav47>0?fc(h.nav47,2):'-'}</td>
+      <td class="r">${diff!==null?`<span class="chip ${cls}">${diff>0?'+':''}${fc(diff,2)}</span>`:'-'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('histBody').innerHTML=rows;
+}
+
+// -- DOLAR BNA -------------------------------------------------
+async function fetchDolarBNA(){
+  const statusEl=document.getElementById('dolarStatus');
+  try{
+    const res=await fetch('https://dolarapi.com/v1/dolares/oficial',{signal:AbortSignal.timeout(5000)});
+    const d=await res.json();
+    if(d.venta&&d.venta>100){
+      document.getElementById('dolar').value=d.venta;
+      statusEl.textContent='OK BNA venta: $'+d.venta.toLocaleString('es-AR')+' - '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      statusEl.style.color='var(--ok)';
+      recalc();
+    }
+  }catch(e){
+    statusEl.textContent='! Sin conexion - valor manual';
+    statusEl.style.color='var(--acc3)';
+  }
+}
+
+// ==============================================================
+// GOOGLE OAUTH & SHEETS API
+// ==============================================================
+const CLIENT_ID = '844318342271-pqa0mj2oav678htbqatrcqjuh06r5a3i.apps.googleusercontent.com';
+const SCOPES    = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+
+// IDs de los Sheets en Drive
+const SHEET_IDS = {
+  oc:       '1EHWoF4WzSPypZ66zbs9JEjv4kzVKCcrwHdnHRDsHeJE',
+  prod:     '1__VAhSwaLtF4xGjtuMI_Gw2yWpBzsNKZNy0tgBEAYJA',
+  gastos:   '1UR_b8lEpZ0H8vEkfzFcIa1V7IF2nEwoUGgh6SC0bDEU',
+  facturas: '1cWKvSWw9tEpRWnbnFEpb7WBkee_9xwspuAMhqBY4kAM',
+};
+
+// Servicios con sus IDs de carpeta Drive (se leen de la hoja Config del sheet Facturas)
+// Col A=Servicio, B=FolderID, C=Anio, D=Patron
+// La app lee esto dinamicamente al conectar Drive
+const SERVICIOS_FAC = [
+  {id:'edesur',       label:'Edesur',       col:2,  grupo:'vencido',    hint:'Subtotal cargos Netos del Mes', folderId:''},
+  {id:'expensas',     label:'Expensas',     col:3,  grupo:'adelantado', hint:'Subtotal: $',                   folderId:''},
+  {id:'agua',         label:'Agua',         col:4,  grupo:'vencido',    hint:'SUBTOTAL',                      folderId:''},
+  {id:'residuos',     label:'Residuos',     col:5,  grupo:'vencido',    hint:'Fila Pitec -> Subtotal',        folderId:''},
+  {id:'starlink',     label:'Starlink',     col:6,  grupo:'adelantado', hint:'IMPORTE NETO',                  folderId:''},
+  {id:'ia',           label:'IA/Safar',     col:7,  grupo:'adelantado', hint:'Importe Total: $',              folderId:''},
+  {id:'gili',         label:'Gili',         col:8,  grupo:'vencido',    hint:'Importe Total: $ div 2',        folderId:'', dividir2:true},
+  {id:'incendio',     label:'Incendio',     col:9,  grupo:'adelantado', hint:'Subtotal sin IVA',              folderId:''},
+  {id:'fumigaciones', label:'Fumigaciones', col:10, grupo:'vencido',    hint:'Importe Total: $',              folderId:''},
+];
+
+let accessToken = null;
+let tokenClient = null;
+
+// Inicializar Google Identity Services
+function initGoogleAuth(){
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    prompt: '',
+    callback: async (resp) => {
+      if(resp.error){ console.error('Auth error:', resp); return; }
+      accessToken = resp.access_token;
+      updateLoginUI(true);
+      await loadAllFromDrive();
+      // Renovar token automaticamente cada 55 minutos (token dura 60 min)
+      if(window._tokenRefreshInterval) clearInterval(window._tokenRefreshInterval);
+      window._tokenRefreshInterval = setInterval(()=>{
+        tokenClient.requestAccessToken({prompt:''});
+      }, 55 * 60 * 1000);
+    }
+  });
+}
+
+function handleLogin(){
+  if(!tokenClient){ alert('Google no cargo todavia, espera un segundo y reintenta'); return; }
+  // prompt:'select_account' la primera vez, despues '' para renovacion silenciosa
+  tokenClient.requestAccessToken({prompt:'select_account'});
+}
+
+function handleLogout(){
+  if(accessToken) google.accounts.oauth2.revoke(accessToken);
+  accessToken = null;
+  updateLoginUI(false);
+  updateDriveStatus([]);
+}
+
+function updateLoginUI(loggedIn){
+  document.getElementById('btnLogin').style.display   = loggedIn ? 'none' : '';
+  document.getElementById('btnLogout').style.display  = loggedIn ? '' : 'none';
+  document.getElementById('userLabel').style.display  = loggedIn ? '' : 'none';
+  document.getElementById('btnRefresh').style.display = loggedIn ? '' : 'none';
+  if(loggedIn) document.getElementById('userLabel').textContent = 'OK Drive conectado';
+}
+
+// Leer un rango de un Sheet
+async function readSheet(sheetId, range){
+  if(!accessToken) throw new Error('No autenticado');
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}`;
+  const res  = await fetch(url, {headers:{Authorization:`Bearer ${accessToken}`}});
+  if(!res.ok){
+    const err = await res.json();
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const d = await res.json();
+  return d.values || [];
+}
+
+// -- CARGAR TODO DESDE DRIVE ----------------------------------
+async function loadAllFromDrive(){
+  const statusEl = document.getElementById('driveStatus');
+  statusEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--warn);text-align:center;"><span class="spinner"></span> Cargando desde Drive...</div>';
+
+  const results = [];
+  const errors  = [];
+
+  // 1. SUELDOS - leer M26 de hoja Sueldos del archivo del mes
+  try {
+    // Sueldos: el archivo mensual es diferente - el ID se debe configurar por mes
+    // Por ahora marcar como pendiente con nota clara
+    results.push('refresh Sueldos: cargar ID del archivo del mes en configuracion');
+  } catch(e) { errors.push('Sueldos: '+e.message); }
+
+  // 2. PRODUCCION - hoja Dinamica del archivo Carga datos Produccion
+  try {
+    const mes = document.getElementById('selMes').value;
+    const mesIdx = MESES.indexOf(mes) + 1; // 1-12
+
+    // Leer totales de la Dinamica
+    // Estructura: fila 3=header mts, filas 4-15=formatos, fila 17=total
+    // fila 20=header kg, filas 21-32=formatos, fila 33=total
+    const rangeMts = 'Dinamica!C17'; // Total mts del mes actual
+    const rangeKg  = 'Dinamica!C34'; // Total kg del mes actual
+
+    // Estructura Dinamica (0-indexed -> Sheets 1-indexed):
+    // Fila 3  (idx) = Fila 4  Sheets -> headers mts (Formato, Enero, Feb...)
+    // Fila 16 (idx) = Fila 17 Sheets -> TOTAL Mts Mes
+    // Fila 20 (idx) = Fila 21 Sheets -> headers kg
+    // Fila 33 (idx) = Fila 34 Sheets -> TOTAL Mes kg
+    // Col B=Formato, C=Enero(mesIdx=0), D=Feb(1), E=Mar(2)...
+    const col = String.fromCharCode(67 + mesIdx); // C=Enero, D=Feb, E=Mar
+
+    const dataMts = await readSheet(SHEET_IDS.prod, `Dinamica!${col}17`);
+    const dataKg  = await readSheet(SHEET_IDS.prod, `Dinamica!${col}34`);
+
+    const mts = parseFloat(String(dataMts[0]?.[0]||0).replace(/[^0-9.,]/g,'').replace(',','.'));
+    const kg  = parseFloat(String(dataKg[0]?.[0]||0).replace(/[^0-9.,]/g,'').replace(',','.'));
+
+    if(mts > 0){
+      document.getElementById('totMts').value = Math.round(mts);
+      results.push(`OK Mts: \${Math.round(mts).toLocaleString('es-AR')}`);
+    }
+    if(kg > 0){
+      document.getElementById('totKg').value = Math.round(kg);
+      results.push(`OK Kg: \${Math.round(kg).toLocaleString('es-AR')}`);
+    }
+
+    // Leer mts por formato: filas 5-16 Sheets (fila 4-15 idx), cols B a col del mes
+    const mtsRows = await readSheet(SHEET_IDS.prod, `Dinamica!B5:\${col}16`);
+    // Leer kg por formato: filas 22-33 Sheets, cols B a col del mes
+    const kgRows  = await readSheet(SHEET_IDS.prod, `Dinamica!B22:\${col}33`);
+
+    const FTO_LIST_D = ['40','47','53','57','60','71','82','102','120','40.7','47.7','57.7'];
+    mtsRows.forEach((row,i) => {
+      const fto = String(row[0]||'').trim();
+      const val = parseFloat(String(row[row.length-1]||0).replace(/[^0-9.,]/g,'').replace(',','.'));
+      if(val > 0){
+        const el = document.getElementById('fmts_'+fto);
+        if(el) el.value = Math.round(val);
+      }
+    });
+    kgRows.forEach((row,i) => {
+      const fto = String(row[0]||'').trim();
+      const val = parseFloat(String(row[row.length-1]||0).replace(/[^0-9.,]/g,'').replace(',','.'));
+      if(val > 0){
+        const el = document.getElementById('fkg_'+fto);
+        if(el) el.value = Math.round(val);
+      }
+    });
+
+    // Grumo laminado: filas 38-49 Sheets, col del mes -> total fila 50
+    const dataGrumo = await readSheet(SHEET_IDS.prod, `Dinamica!${col}50`).catch(()=>[[0]]);
+    const grumo = parseFloat(String(dataGrumo[0]?.[0]||0).replace(/[^0-9.,]/g,'').replace(',','.'));
+    if(grumo > 0){
+      document.getElementById('grumoLam').value = Math.round(grumo);
+      results.push(`OK Grumo lam: \${Math.round(grumo).toLocaleString('es-AR')} kg`);
+    }
+
+    results.push('OK Produccion por formato cargada');
+  } catch(e) { errors.push('Produccion: '+e.message); }
+
+  // 3. GASTOS MANUALES - leer del Google Sheet Gastos_Variables_PITEC
+  try {
+    const mes = document.getElementById('selMes').value;
+    const mesIdx = MESES.indexOf(mes); // 0-11
+    const fila = 7 + mesIdx; // fila 7=enero, 8=feb...
+
+    // Columnas: C=gasoil, D=almuerzos, E=fletes, F=varios, G=mant, H=otros
+    const gasoilData = await readSheet(SHEET_IDS.gastos, `Gastos_Manuales!C${fila}`);
+    const almData    = await readSheet(SHEET_IDS.gastos, `Gastos_Manuales!D${fila}`);
+    const fletesData = await readSheet(SHEET_IDS.gastos, `Gastos_Manuales!E${fila}`);
+    const variosData = await readSheet(SHEET_IDS.gastos, `Gastos_Manuales!F${fila}`);
+    const mantData   = await readSheet(SHEET_IDS.gastos, `Gastos_Manuales!G${fila}`);
+    const otrosData  = await readSheet(SHEET_IDS.gastos, `Gastos_Manuales!H${fila}`);
+
+    const parseVal = d => parseFloat(String(d[0]?.[0]||0).replace(/[^0-9.]/g,''))||0;
+
+    const gasoil = parseVal(gasoilData);
+    const alm    = parseVal(almData);
+    const fletes = parseVal(fletesData);
+    const varios = parseVal(variosData);
+    const mant   = parseVal(mantData);
+    const otros  = parseVal(otrosData);
+
+    if(gasoil) document.getElementById('cGasoil').value    = gasoil;
+    if(alm)    document.getElementById('cAlmuerzos').value  = alm;
+    if(fletes) document.getElementById('cFletes').value     = fletes;
+    if(varios) document.getElementById('cVarios').value     = varios;
+    if(mant)   document.getElementById('cMant').value       = mant;
+    if(otros)  document.getElementById('cOtros').value      = otros;
+
+    results.push(`OK Gastos manuales: gasoil $${gasoil.toLocaleString('es-AR')}`);
+  } catch(e) { errors.push('Gastos manuales: '+e.message); }
+
+  // 4. PRORRATEOS - leer de hoja Prorrateos del Gastos Sheet
+  try {
+    const segData  = await readSheet(SHEET_IDS.gastos, 'Prorrateos!J6');
+    const parData  = await readSheet(SHEET_IDS.gastos, 'Prorrateos!E11');
+    const matData  = await readSheet(SHEET_IDS.gastos, 'Prorrateos!E16');
+    const ropaData = await readSheet(SHEET_IDS.gastos, 'Prorrateos!H21');
+
+    const parseVal = d => parseFloat(String(d[0]?.[0]||0).replace(/[^0-9.]/g,''))||0;
+    const seg  = parseVal(segData);
+    const par  = parseVal(parData);
+    const mat  = parseVal(matData);
+    const ropa = parseVal(ropaData);
+
+    if(seg)  document.getElementById('prSeguro').value = seg;
+    if(par)  document.getElementById('prParar').value  = par;
+    if(mat)  document.getElementById('prMata').value   = mat;
+    if(ropa) document.getElementById('prRopa').value   = ropa;
+
+    results.push('OK Prorrateos cargados');
+  } catch(e) { errors.push('Prorrateos: '+e.message); }
+
+  // 4b. FACTURAS - leer del Sheet
+  try {
+    await loadFolderIdsFromConfig();
+    await loadFacturasFromSheet();
+    results.push('OK Facturas cargadas desde Sheet');
+  } catch(e) { errors.push('Facturas: '+e.message); }
+
+  // 5. PRECIOS MP - leer ultimos precios de la OC de PITEC
+  try {
+    // Leer todas las OC - columnas: A=OC, B=Fecha, C=Fabrica, D=Categoria, E=Descripcion, I=Precio unitario
+    // Intentar con variantes del nombre de la hoja
+    let ocData = [];
+    const ocSheetNames = ['OC','Ordenes de compra','Ordenes de compra','Sheet1','Hoja1'];
+    for(const shName of ocSheetNames){
+      try {
+        ocData = await readSheet(SHEET_IDS.oc, `\${shName}!A2:J5000`);
+        if(ocData.length > 0){ results.push(`OK OC cargada: \${ocData.length} registros`); break; }
+      } catch(e){ continue; }
+    }
+    if(!ocData.length) throw new Error('No se encontro la hoja de OC');
+
+    // Filtrar PITEC y agrupar por codigo de insumo
+    const preciosPorGrupo = {
+      grumoHilo: [], grumoLam: [], pe: [], carb: [], mast: []
+    };
+
+    const GRUPOS_MP = {
+      grumoHilo: ['KYD 6110','LYD6200K','LYD 6200K','1102L'],
+      grumoLam:  ['XSD 6200T','XSD6200T'],
+      pe:        ['BC818','BC 818','722','APP'],
+      carb:      ['1001 BR','1001BR','APC'],
+      mast:      ['9048','30080','30040','AMARILLO 114247','VERDE 113227','60SW','901021'],
+    };
+
+    ocData.forEach(row => {
+      const fabrica  = String(row[2]||'').trim();
+      const desc     = String(row[4]||'').trim().toUpperCase();
+      const precioStr= String(row[8]||'0');
+      const precio   = parseFloat(precioStr.replace(/[^0-9.]/g,''));
+      const fecha    = row[1]||'';
+
+      if(!fabrica.toLowerCase().includes('pitec')) return;
+      if(!precio || precio <= 0) return;
+
+      for(const [grupo, codigos] of Object.entries(GRUPOS_MP)){
+        if(codigos.some(cod => desc.includes(cod.toUpperCase()))){
+          preciosPorGrupo[grupo].push({precio, fecha});
+        }
+      }
+    });
+
+    // Tomar ultimo precio de cada grupo
+    const ultimoPrecio = (arr) => {
+      if(!arr.length) return null;
+      arr.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+      return arr[0].precio;
+    };
+
+    const pGH   = ultimoPrecio(preciosPorGrupo.grumoHilo);
+    const pGL   = ultimoPrecio(preciosPorGrupo.grumoLam);
+    const pPE   = ultimoPrecio(preciosPorGrupo.pe);
+    const pCarb = ultimoPrecio(preciosPorGrupo.carb);
+    const pMast = ultimoPrecio(preciosPorGrupo.mast);
+
+    if(pGH)   { document.getElementById('pGH').value   = pGH;   results.push(`OK Grumo hilo: $${pGH.toLocaleString('es-AR')}/kg`); }
+    if(pGL)   { document.getElementById('pGL').value   = pGL;   results.push(`OK Grumo lam: $${pGL.toLocaleString('es-AR')}/kg`); }
+    if(pPE)   { document.getElementById('pPE').value   = pPE;   results.push(`OK PE: $${pPE.toLocaleString('es-AR')}/kg`); }
+    if(pCarb) { document.getElementById('pCarb').value = pCarb; results.push(`OK Carbonato: $${pCarb.toLocaleString('es-AR')}/kg`); }
+    if(pMast) { document.getElementById('pMast').value = pMast; results.push(`OK Master: $${pMast.toLocaleString('es-AR')}/kg`); }
+
+  } catch(e) { errors.push('Precios MP: '+e.message); }
+
+  // Actualizar estado
+  updateDriveStatus(results, errors);
+  recalc();
+}
+
+function updateDriveStatus(results, errors=[]){
+  const el = document.getElementById('driveStatus');
+  const ok  = results.filter(r=>r.startsWith('OK'));
+  const warn= results.filter(r=>r.startsWith('refresh'));
+  el.innerHTML = `
+    <div style="font-family:var(--mono);font-size:9px;margin-bottom:6px;color:var(--ok);">${ok.length} fuentes cargadas</div>
+    ${ok.map(r=>`<div style="font-family:var(--mono);font-size:9px;color:var(--ok);margin-bottom:2px;">${r}</div>`).join('')}
+    ${warn.map(r=>`<div style="font-family:var(--mono);font-size:9px;color:var(--warn);margin-bottom:2px;">${r}</div>`).join('')}
+    ${errors.map(e=>`<div style="font-family:var(--mono);font-size:9px;color:var(--acc3);margin-bottom:2px;">X ${e}</div>`).join('')}
+    <div style="font-family:var(--mono);font-size:8px;color:var(--t3);margin-top:4px;">${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</div>
+  `;
+}
+
+// ==============================================================
+init();
+// Inicializar Google Auth cuando cargue la libreria
+window.addEventListener('load', () => {
+  const checkGIS = setInterval(() => {
+    if(window.google?.accounts?.oauth2){
+      clearInterval(checkGIS);
+      initGoogleAuth();
+    }
+  }, 200);
+});
+
+// Auto-actualizar datos desde Drive cada 30 minutos si esta conectado
+setInterval(async () => {
+  if(accessToken){
+    await loadAllFromDrive();
+  }
+}, 30 * 60 * 1000);
+</script>
+</body>
+</html>
