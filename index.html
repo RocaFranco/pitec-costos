@@ -1597,13 +1597,19 @@ async function loadAllFromDrive(){
     // Fila 20 (idx) = Fila 21 Sheets -> headers kg
     // Fila 33 (idx) = Fila 34 Sheets -> TOTAL Mes kg
     // Col B=Formato, C=Enero(mesIdx=0), D=Feb(1), E=Mar(2)...
-    const col = String.fromCharCode(67 + mesIdx); // C=Enero, D=Feb, E=Mar
+    const col = String.fromCharCode(67 + mesIdx - 1); // C=Enero(0), D=Feb(1), E=Mar(2)... // C=Enero, D=Feb, E=Mar
 
     const dataMts = await readSheet(SHEET_IDS.prod, `Dinamica!${col}17`);
     const dataKg  = await readSheet(SHEET_IDS.prod, `Dinamica!${col}34`);
 
-    const mts = parseFloat(String(dataMts[0]?.[0]||0).replace(/[^0-9.,]/g,'').replace(',','.'));
-    const kg  = parseFloat(String(dataKg[0]?.[0]||0).replace(/[^0-9.,]/g,'').replace(',','.'));
+    const parseProd = v => {
+      let s = String(v||'0').trim();
+      if(s.includes(',')) { s = s.replace(/\./g,'').replace(',','.'); }
+      else if(s.match(/\.\d{3}$/)) { s = s.replace(/\./g,''); }
+      return parseFloat(s)||0;
+    };
+    const mts = parseProd(dataMts[0]?.[0]);
+    const kg  = parseProd(dataKg[0]?.[0]);
 
     if(mts > 0){
       document.getElementById('totMts').value = Math.round(mts);
@@ -1639,7 +1645,12 @@ async function loadAllFromDrive(){
 
     // Grumo laminado: filas 38-49 Sheets, col del mes -> total fila 50
     const dataGrumo = await readSheet(SHEET_IDS.prod, `Dinamica!${col}50`).catch(()=>[[0]]);
-    const grumo = parseFloat(String(dataGrumo[0]?.[0]||0).replace(/[^0-9.,]/g,'').replace(',','.'));
+    const grumo = (() => {
+      let s = String(dataGrumo[0]?.[0]||'0').trim();
+      if(s.includes(',')) { s = s.replace(/\./g,'').replace(',','.'); }
+      else if(s.match(/\.\d{3}$/)) { s = s.replace(/\./g,''); }
+      return parseFloat(s)||0;
+    })();
     if(grumo > 0){
       document.getElementById('grumoLam').value = Math.round(grumo);
       results.push(`OK Grumo lam: \${Math.round(grumo).toLocaleString('es-AR')} kg`);
@@ -1726,7 +1737,7 @@ async function loadAllFromDrive(){
     // Leer todas las OC - columnas: A=OC, B=Fecha, C=Fabrica, D=Categoria, E=Descripcion, I=Precio unitario
     // Intentar con variantes del nombre de la hoja
     let ocData = [];
-    const ocSheetNames = ['OC','Hoja1','Sheet1','Ordenes de compra','Ordenes','PITEC','Data'];
+    const ocSheetNames = ['OC','Hoja1','Sheet1','Hoja 1','Sheet 1','Ordenes de compra','Ordenes','PITEC','Data','Compras'];
     for(const shName of ocSheetNames){
       try {
         ocData = await readSheet(SHEET_IDS.oc, `\${shName}!A2:J5000`);
