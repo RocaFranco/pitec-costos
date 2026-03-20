@@ -201,6 +201,7 @@ tr.hi td{background:rgba(71,255,178,.04);}
     <div class="side-tab" onclick="showSidePanel('nav',this)">Navegante</div>
     <div class="side-tab" onclick="showSidePanel('inv',this)">Inversiones</div>
     <div class="side-tab" onclick="showSidePanel('fac',this)">Facturas</div>
+    <div class="side-tab" onclick="showSidePanel('cfg',this)">Config</div>
   </div>
 
   <!-- PANEL DATOS -->
@@ -346,6 +347,68 @@ tr.hi td{background:rgba(71,255,178,.04);}
     </div>
     <div id="facGrid" style="margin-top:8px;"></div>
   </div>
+
+
+<div class="side-panel" id="panel-cfg">
+  <div>
+    <div class="s-head">Configuracion</div>
+    <div class="nota info" style="margin-bottom:10px;font-size:9px;">Los IDs se guardan automaticamente en el navegador. Solo los cargas una vez.</div>
+
+    <div class="s-head" style="margin-top:8px;">IDs Sheets de Sueldos por mes</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Pega el ID del Google Sheet de sueldos de cada mes (la parte larga de la URL).</div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Enero</label>
+        <input type="text" id="cfg_sue_enero" placeholder="ID del Sheet de sueldos de Enero" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Febrero</label>
+        <input type="text" id="cfg_sue_febrero" placeholder="ID del Sheet de sueldos de Febrero" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Marzo</label>
+        <input type="text" id="cfg_sue_marzo" placeholder="ID del Sheet de sueldos de Marzo" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Abril</label>
+        <input type="text" id="cfg_sue_abril" placeholder="ID del Sheet de sueldos de Abril" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Mayo</label>
+        <input type="text" id="cfg_sue_mayo" placeholder="ID del Sheet de sueldos de Mayo" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Junio</label>
+        <input type="text" id="cfg_sue_junio" placeholder="ID del Sheet de sueldos de Junio" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Julio</label>
+        <input type="text" id="cfg_sue_julio" placeholder="ID del Sheet de sueldos de Julio" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Agosto</label>
+        <input type="text" id="cfg_sue_agosto" placeholder="ID del Sheet de sueldos de Agosto" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Septiembre</label>
+        <input type="text" id="cfg_sue_septiembre" placeholder="ID del Sheet de sueldos de Septiembre" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Octubre</label>
+        <input type="text" id="cfg_sue_octubre" placeholder="ID del Sheet de sueldos de Octubre" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Noviembre</label>
+        <input type="text" id="cfg_sue_noviembre" placeholder="ID del Sheet de sueldos de Noviembre" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+      <div class="field" style="margin-bottom:5px;">
+        <label>Diciembre</label>
+        <input type="text" id="cfg_sue_diciembre" placeholder="ID del Sheet de sueldos de Diciembre" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">
+      </div>
+
+    <button class="btn acc" style="width:100%;margin-top:10px;" onclick="saveCfg();alert('Guardado!')">Guardar configuracion</button>
+    <button class="btn ghost sm" style="width:100%;margin-top:6px;" onclick="clearCfg()">Borrar todo</button>
+  </div>
+</div>
 
 </div><!-- /side -->
 
@@ -692,7 +755,49 @@ function getFacturaVal(id){
   return svc ? (svc.val||0) : 0;
 }
 
+
+// ============================================================
+// CONFIGURACION - IDs guardados en localStorage
+// ============================================================
+const MESES_CFG = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+function saveCfg(){
+  const cfg = {};
+  MESES_CFG.forEach(m => {
+    const el = document.getElementById('cfg_sue_'+m.toLowerCase());
+    if(el && el.value.trim()) cfg['sue_'+m.toLowerCase()] = el.value.trim();
+  });
+  localStorage.setItem('pitec_cfg', JSON.stringify(cfg));
+}
+
+function loadCfg(){
+  try{
+    const cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
+    MESES_CFG.forEach(m => {
+      const el = document.getElementById('cfg_sue_'+m.toLowerCase());
+      if(el && cfg['sue_'+m.toLowerCase()]) el.value = cfg['sue_'+m.toLowerCase()];
+    });
+    return cfg;
+  }catch(e){ return {}; }
+}
+
+function clearCfg(){
+  if(confirm('Borrar toda la configuracion guardada?')){
+    localStorage.removeItem('pitec_cfg');
+    MESES_CFG.forEach(m => {
+      const el = document.getElementById('cfg_sue_'+m.toLowerCase());
+      if(el) el.value = '';
+    });
+  }
+}
+
+function getSueldoIdForMes(mes){
+  const cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
+  return cfg['sue_'+mes.toLowerCase()] || null;
+}
+
 function init(){
+  loadCfg();
   buildNavInputs();
   buildFtoInputRows();
   buildFacturasGrid();
@@ -1456,9 +1561,23 @@ async function loadAllFromDrive(){
 
   // 1. SUELDOS - leer M26 de hoja Sueldos del archivo del mes
   try {
-    // Sueldos: el archivo mensual es diferente - el ID se debe configurar por mes
-    // Por ahora marcar como pendiente con nota clara
-    results.push('refresh Sueldos: cargar ID del archivo del mes en configuracion');
+    // Sueldos: leer M26 de hoja Sueldos del Sheet del mes
+    const mesSueldos = document.getElementById('selMes').value;
+    const idSueldos = getSueldoIdForMes(mesSueldos);
+    if(idSueldos){
+      try{
+        const dataSue = await readSheet(idSueldos, 'Sueldos!M26');
+        const valSue = parseFloat(String(dataSue[0]?.[0]||'0').replace(/\./g,'').replace(',','.'))||0;
+        if(valSue > 0){
+          document.getElementById('sueldos').value = Math.round(valSue);
+          results.push('OK Sueldos: $'+Math.round(valSue).toLocaleString('es-AR'));
+        } else {
+          errors.push('Sueldos: celda M26 vacia en '+mesSueldos);
+        }
+      }catch(e){ errors.push('Sueldos: '+e.message); }
+    } else {
+      results.push('refresh Sueldos: configurar ID del Sheet en panel Config');
+    }
   } catch(e) { errors.push('Sueldos: '+e.message); }
 
   // 2. PRODUCCION - hoja Dinamica del archivo Carga datos Produccion
@@ -1543,7 +1662,13 @@ async function loadAllFromDrive(){
     const mantData   = await readSheet(SHEET_IDS.gastos, `Gastos_Manuales!G${fila}`);
     const otrosData  = await readSheet(SHEET_IDS.gastos, `Gastos_Manuales!H${fila}`);
 
-    const parseVal = d => parseFloat(String(d[0]?.[0]||0).replace(/[^0-9.]/g,''))||0;
+    const parseVal = d => {
+      let s = String(d[0]?.[0]||'0').trim();
+      // Argentine format: 1.234.567,89 or 112.000 (dot=thousands, comma=decimal)
+      if(s.includes(',')) { s = s.replace(/\./g,'').replace(',','.'); }
+      else if(s.match(/\.\d{3}$/)) { s = s.replace(/\./g,''); }
+      return parseFloat(s)||0;
+    };
 
     const gasoil = parseVal(gasoilData);
     const alm    = parseVal(almData);
@@ -1569,7 +1694,13 @@ async function loadAllFromDrive(){
     const matData  = await readSheet(SHEET_IDS.gastos, 'Prorrateos!E16');
     const ropaData = await readSheet(SHEET_IDS.gastos, 'Prorrateos!H21');
 
-    const parseVal = d => parseFloat(String(d[0]?.[0]||0).replace(/[^0-9.]/g,''))||0;
+    const parseVal = d => {
+      let s = String(d[0]?.[0]||'0').trim();
+      // Argentine format: 1.234.567,89 or 112.000 (dot=thousands, comma=decimal)
+      if(s.includes(',')) { s = s.replace(/\./g,'').replace(',','.'); }
+      else if(s.match(/\.\d{3}$/)) { s = s.replace(/\./g,''); }
+      return parseFloat(s)||0;
+    };
     const seg  = parseVal(segData);
     const par  = parseVal(parData);
     const mat  = parseVal(matData);
@@ -1595,7 +1726,7 @@ async function loadAllFromDrive(){
     // Leer todas las OC - columnas: A=OC, B=Fecha, C=Fabrica, D=Categoria, E=Descripcion, I=Precio unitario
     // Intentar con variantes del nombre de la hoja
     let ocData = [];
-    const ocSheetNames = ['OC','Ordenes de compra','Ordenes de compra','Sheet1','Hoja1'];
+    const ocSheetNames = ['OC','Hoja1','Sheet1','Ordenes de compra','Ordenes','PITEC','Data'];
     for(const shName of ocSheetNames){
       try {
         ocData = await readSheet(SHEET_IDS.oc, `\${shName}!A2:J5000`);
