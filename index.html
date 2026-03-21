@@ -659,7 +659,7 @@ async function extractValueFromPDF(fileId, hint, dividir2){
     const prompt = `Busca "${hint}" en esta factura. Devuelve UNICAMENTE el numero sin puntos de miles ni signo $. Ejemplo: si dice 10.735.588,53 responde 10735588.53`;
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 100,
@@ -1560,7 +1560,7 @@ function saveCurrentMonth(){
   const preciosGrupo={pGH:g('pGH'),pGL:g('pGL'),pPE:g('pPE'),pCarb:g('pCarb'),pMast:g('pMast')};
   let totalMPHilo=0;
   composicion.forEach(c=>{ totalMPHilo+=totKg*(c.pct/100)*DESP*(preciosGrupo[c.grupo]||0); });
-  const totalFijos=g('sueldos')+FACTURAS.reduce((s,f)=>s+(parseFloat(document.getElementById('manual_'+f.id)?.value)||0),0)+g('prSeguro')+g('prParar')+g('prMata')+g('prRopa');
+  const totalFijos=g('sueldos')+FACTURAS.reduce((s,f)=>s+(parseFloat(document.getElementById('manual_'+f.id)?.value)||0),0)+getCuotasProrrateos();
   const totalVarProd=g('cGasoil')+g('cAlmuerzos')+g('cFletes')+g('cVarios')+g('cMant')+g('cOtros');
   const cInv=inversiones.reduce((s,inv)=>s+(inv.mesesTranscurridos<inv.vida?inv.monto/inv.vida:0),0);
   const grumoLam=tipo==='lam'?g('grumoLam'):0, peLam=tipo==='lam'?g('peLam'):0;
@@ -1758,17 +1758,17 @@ async function loadAllFromDrive(){
 
     if(mts > 0){
       document.getElementById('totMts').value = Math.round(mts);
-      results.push(`OK Mts: \${Math.round(mts).toLocaleString('es-AR')}`);
+      results.push('OK Mts: '+Math.round(mts).toLocaleString('es-AR'));
     }
     if(kg > 0){
       document.getElementById('totKg').value = Math.round(kg);
-      results.push(`OK Kg: \${Math.round(kg).toLocaleString('es-AR')}`);
+      results.push('OK Kg: '+Math.round(kg).toLocaleString('es-AR'));
     }
 
     // Leer mts por formato: filas 5-16 Sheets (fila 4-15 idx), cols B a col del mes
-    const mtsRows = await readSheet(SHEET_IDS.prod, `Dinamica!B5:\${col}16`);
+    const mtsRows = await readSheet(SHEET_IDS.prod, `Dinamica!B5:${col}16`);
     // Leer kg por formato: filas 22-33 Sheets, cols B a col del mes
-    const kgRows  = await readSheet(SHEET_IDS.prod, `Dinamica!B22:\${col}33`);
+    const kgRows  = await readSheet(SHEET_IDS.prod, `Dinamica!B22:${col}33`);
 
     const FTO_LIST_D = ['40','47','53','57','60','71','82','102','120','40.7','47.7','57.7'];
     mtsRows.forEach((row,i) => {
@@ -1798,7 +1798,7 @@ async function loadAllFromDrive(){
     })();
     if(grumo > 0){
       document.getElementById('grumoLam').value = Math.round(grumo);
-      results.push(`OK Grumo lam: \${Math.round(grumo).toLocaleString('es-AR')} kg`);
+      results.push('OK Grumo lam: '+Math.round(grumo).toLocaleString('es-AR')+' kg');
     }
 
     results.push('OK Produccion por formato cargada');
@@ -1862,12 +1862,8 @@ async function loadAllFromDrive(){
     const mat  = parseVal(matData);
     const ropa = parseVal(ropaData);
 
-    if(seg)  document.getElementById('prSeguro').value = seg;
-    if(par)  document.getElementById('prParar').value  = par;
-    if(mat)  document.getElementById('prMata').value   = mat;
-    if(ropa) document.getElementById('prRopa').value   = ropa;
-
-    results.push('OK Prorrateos cargados');
+    // Prorrateos ahora son dinamicos - no se escriben en campos fijos
+    results.push('OK Prorrateos: usar panel Gastos para cargarlos');
   } catch(e) { errors.push('Prorrateos: '+e.message); }
 
   // 4b. FACTURAS - leer del Sheet
@@ -1885,8 +1881,8 @@ async function loadAllFromDrive(){
     const ocSheetNames = ['OC','Hoja1','Sheet1','Hoja 1','Sheet 1','Ordenes de compra','Ordenes','PITEC','Data','Compras'];
     for(const shName of ocSheetNames){
       try {
-        ocData = await readSheet(SHEET_IDS.oc, `\${shName}!A2:J5000`);
-        if(ocData.length > 0){ results.push(`OK OC cargada: \${ocData.length} registros`); break; }
+        ocData = await readSheet(SHEET_IDS.oc, `${shName}!A2:J5000`);
+        if(ocData.length > 0){ results.push('OK OC cargada: '+ocData.length+' registros'); break; }
       } catch(e){ continue; }
     }
     if(!ocData.length) throw new Error('No se encontro la hoja de OC');
