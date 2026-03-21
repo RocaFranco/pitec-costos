@@ -581,7 +581,17 @@ async function loadFacturasFromSheet(){
     const data = await readSheet(SHEET_IDS.facturas, `Facturas!B${fila}:J${fila}`);
     const vals = data[0] || [];
     SERVICIOS_FAC.forEach((svc, i) => {
-      const v = parseFloat(String(vals[i]||'0').replace(/[^0-9.]/g,''))||0;
+      const rawV = String(vals[i]||'0').trim();
+      let v = 0;
+      if(rawV.includes(',')) {
+        // Formato argentino: 10.735.588,53 -> quitar puntos de miles, reemplazar coma por punto
+        v = parseFloat(rawV.replace(/\./g,'').replace(',','.'))||0;
+      } else if(rawV.match(/\.\d{3}/)) {
+        // Punto como separador de miles: 10.735.588 -> quitar puntos
+        v = parseFloat(rawV.replace(/\./g,''))||0;
+      } else {
+        v = parseFloat(rawV.replace(/[^0-9.]/g,''))||0;
+      }
       svc.val = v;
       svc.loaded = v > 0;
       // Actualizar campo manual en panel facturas si existe
@@ -595,27 +605,17 @@ async function loadFacturasFromSheet(){
   } catch(e) { console.warn('Error leyendo Sheet facturas:', e.message); }
 }
 
-// Guardar un valor en el Sheet
+// Guardar un valor en el Sheet via Apps Script
 async function saveFacturaToSheet(svcId, valor){
-  if(!accessToken) return;
   const mes = document.getElementById('selMes').value;
-  const anio = document.getElementById('selAnio').value;
-  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const mesIdx = MESES.indexOf(mes);
-  const svc = SERVICIOS_FAC.find(s=>s.id===svcId);
-  if(!svc || mesIdx<0) return;
-  const fila = 3 + mesIdx;
-  const col = svc.col; // col 2=B, 3=C... col letra
-  const colLetra = String.fromCharCode(64 + col); // B=66-64=2 -> 66 -> B
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_IDS.facturas}/values/Facturas!${colLetra}${fila}?valueInputOption=RAW`;
-    await fetch(url, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ values: [[valor]] })
+    await fetch('https://script.google.com/macros/s/AKfycbxJXhHj26jty2U5DShZSoaxDbpwLaEszIZCyk5cRdfQdPMerWmvxuh9AN8gzo5HGXpG/exec', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'saveFactura', svcId, mes, valor })
     });
-    console.log('Guardado en Sheet:', svcId, valor, colLetra+fila);
-  } catch(e) { console.warn('Error guardando en Sheet:', e.message); }
+    console.log('Guardado en Sheet via Apps Script:', svcId, valor, mes);
+  } catch(e) { console.warn('Error guardando:', e.message); }
 }
 
 // Buscar PDF en carpeta Drive
@@ -641,40 +641,17 @@ async function findPDFInDrive(folderId, mes, anio){
   } catch(e) { console.warn('Error buscando PDF:', e.message); return null; }
 }
 
-// Descargar PDF de Drive y mandarlo a IA
+// Extraer valor de PDF via Google Apps Script + Gemini
 async function extractValueFromPDF(fileId, hint, dividir2){
   try {
-    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    const ab = await r.arrayBuffer();
-    const bytes = new Uint8Array(ab);
-    let binary = '';
-    const chunk = 8192;
-    for(let i=0; i<bytes.length; i+=chunk){
-      binary += String.fromCharCode(...bytes.subarray(i, Math.min(i+chunk, bytes.length)));
-    }
-    const b64 = btoa(binary);
-
-    const prompt = `Busca "${hint}" en esta factura. Devuelve UNICAMENTE el numero sin puntos de miles ni signo $. Ejemplo: si dice 10.735.588,53 responde 10735588.53`;
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbxJXhHj26jty2U5DShZSoaxDbpwLaEszIZCyk5cRdfQdPMerWmvxuh9AN8gzo5HGXpG/exec', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 100,
-        messages: [{ role: 'user', content: [
-          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
-          { type: 'text', text: prompt }
-        ]}]
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'extractPDF', fileId, hint, dividir2: dividir2||false })
     });
     const d = await res.json();
-    let raw = d.content?.[0]?.text?.trim() || '0';
-    raw = raw.replace(/[^0-9.]/g,'');
-    let val = parseFloat(raw) || 0;
-    if(dividir2) val = val / 2;
-    return val;
+    if(!d.ok) { console.warn('Apps Script error:', d.error); return null; }
+    return d.valor || 0;
   } catch(e) { console.warn('Error extrayendo PDF:', e.message); return null; }
 }
 
