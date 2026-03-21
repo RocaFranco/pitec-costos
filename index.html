@@ -147,6 +147,7 @@ tr.hi td{background:rgba(71,255,178,.04);}
 .sens-row.cur{background:rgba(232,255,71,.04);}
 .sens-row.cur .sens-cell{color:var(--acc);}
 
+.fmt-hint{font-family:var(--mono);font-size:9px;color:var(--ok);margin-top:2px;text-align:right;}
 /* SPINNER */
 .spinner{width:14px;height:14px;border:2px solid var(--b2);border-top-color:var(--acc2);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -197,6 +198,7 @@ tr.hi td{background:rgba(71,255,178,.04);}
 <div class="side">
   <div class="side-tabs">
     <div class="side-tab active" onclick="showSidePanel('datos',this)">Datos</div>
+    <div class="side-tab" onclick="showSidePanel('gastos',this)">Gastos</div>
     <div class="side-tab" onclick="showSidePanel('formula',this)">Formula</div>
     <div class="side-tab" onclick="showSidePanel('nav',this)">Navegante</div>
     <div class="side-tab" onclick="showSidePanel('inv',this)">Inversiones</div>
@@ -250,44 +252,22 @@ tr.hi td{background:rgba(71,255,178,.04);}
       <input type="file" id="fileSueldos" accept=".xlsx,.xls" style="display:none" onchange="processSueldos(this)">
       <div class="field" style="margin-top:6px;">
         <label>O cargar manual</label>
-        <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div>
+        <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div><div class="fmt-hint" id="hint_sueldos"></div>
       </div>
     </div>
 
     <!-- PRODUCCION -->
     <div>
       <div class="s-head">Produccion del mes (desde Dinamica)</div>
-      <div class="field"><label>Mts totales producidos</label><div class="iu"><input type="number" id="totMts" value="627083" oninput="recalc()"><span class="u">mts</span></div></div>
-      <div class="field"><label>Kg hilo producidos</label><div class="iu"><input type="number" id="totKg" value="35972" oninput="recalc()"><span class="u">kg</span></div></div>
-      <div id="grumoLamField"><div class="field"><label>Kg grumo laminado (coating)</label><div class="iu"><input type="number" id="grumoLam" value="10266" oninput="recalc()"><span class="u">kg</span></div></div>
-      <div class="field"><label>Kg PE laminado</label><div class="iu"><input type="number" id="peLam" value="1800" oninput="recalc()"><span class="u">kg</span></div></div></div>
+      <div class="field"><label>Mts totales producidos</label><div class="iu"><input type="number" id="totMts" value="627083" oninput="recalc()"><span class="u">mts</span></div><div class="fmt-hint" id="hint_totMts"></div></div>
+      <div class="field"><label>Kg hilo producidos</label><div class="iu"><input type="number" id="totKg" value="35972" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_totKg"></div></div>
+      <div id="grumoLamField"><div class="field"><label>Kg grumo laminado (coating)</label><div class="iu"><input type="number" id="grumoLam" value="10266" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_grumoLam"></div></div>
+      <div class="field"><label>Kg PE laminado</label><div class="iu"><input type="number" id="peLam" value="1800" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_peLam"></div></div></div>
     </div>
 
-    <!-- FACTURAS PDF -->
-    <div>
-      <div class="s-head">Facturas PDF - IA extrae el valor</div>
-      <div id="facturasGrid"></div>
-    </div>
+    <!-- GASTOS y FACTURAS -> ver pestana Gastos -->
 
-    <!-- GASTOS MANUALES -->
-    <div>
-      <div class="s-head">Gastos manuales del mes</div>
-      <div class="field"><label>Gasoil</label><div class="iu"><input type="number" id="cGasoil" value="98000" oninput="recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Almuerzos</label><div class="iu"><input type="number" id="cAlmuerzos" value="360000" oninput="recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Fletes internos</label><div class="iu"><input type="number" id="cFletes" value="550000" oninput="recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Gastos varios</label><div class="iu"><input type="number" id="cVarios" value="41000" oninput="recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Mantenimiento extra</label><div class="iu"><input type="number" id="cMant" value="300000" oninput="recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Otros</label><div class="iu"><input type="number" id="cOtros" value="0" oninput="recalc()"><span class="u">ARS</span></div></div>
-    </div>
 
-    <!-- PRORRATEOS -->
-    <div>
-      <div class="s-head">Prorrateos mensuales</div>
-      <div class="field"><label>Seguro (suma total / 12)</label><div class="iu"><input type="number" id="prSeguro" value="194044" oninput="recalc()"><span class="u">ARS/mes</span></div></div>
-      <div class="field"><label>Pararrayos (anual / 12)</label><div class="iu"><input type="number" id="prParar" value="80833" oninput="recalc()"><span class="u">ARS/mes</span></div></div>
-      <div class="field"><label>Matafuegos (anual / 12)</label><div class="iu"><input type="number" id="prMata" value="38415" oninput="recalc()"><span class="u">ARS/mes</span></div></div>
-      <div class="field"><label>Ropa personal (suma anual / 12)</label><div class="iu"><input type="number" id="prRopa" value="278393" oninput="recalc()"><span class="u">ARS/mes</span></div></div>
-    </div>
 
     <!-- PRECIOS MP -->
     <div>
@@ -300,6 +280,50 @@ tr.hi td{background:rgba(71,255,178,.04);}
     </div>
 
   </div><!-- /panel-datos -->
+
+
+  <!-- PANEL GASTOS -->
+  <div class="side-panel" id="panel-gastos">
+
+    <!-- SERVICIOS FIJOS (facturas) -->
+    <div>
+      <div class="s-head">Servicios fijos (facturas)</div>
+      <div class="nota info" style="margin-bottom:6px;font-size:9px;">Valores sin IVA. Se cargan automaticamente desde el Sheet de Facturas al conectar Drive.</div>
+      <div id="facturasGrid"></div>
+    </div>
+
+    <!-- GASTOS MANUALES -->
+    <div>
+      <div class="s-head">Gastos variables del mes</div>
+      <div class="field"><label>Gasoil</label><div class="iu"><input type="number" id="cGasoil" value="98000" oninput="recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Almuerzos</label><div class="iu"><input type="number" id="cAlmuerzos" value="360000" oninput="recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Fletes internos</label><div class="iu"><input type="number" id="cFletes" value="550000" oninput="recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Gastos varios</label><div class="iu"><input type="number" id="cVarios" value="41000" oninput="recalc()"><span class="u">ARS</span></div></div>
+    </div>
+
+    <!-- MANTENIMIENTO -->
+    <div>
+      <div class="s-head">Mantenimiento</div>
+      <div class="field"><label>Mantenimiento extra</label><div class="iu"><input type="number" id="cMant" value="300000" oninput="recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Otros</label><div class="iu"><input type="number" id="cOtros" value="0" oninput="recalc()"><span class="u">ARS</span></div></div>
+    </div>
+
+    <!-- PRORRATEOS -->
+    <div>
+      <div class="s-head">Prorrateos / Contratos</div>
+      <div class="nota info" style="margin-bottom:8px;font-size:9px;">Gastos que se renuevan periodicamente. La app avisa cuando vence cada uno.</div>
+      <div id="prorrList"></div>
+      <button class="btn ghost sm" style="margin-top:6px;width:100%;" onclick="openAddProrrForm()">+ Agregar prorrateo</button>
+      <div id="addProrrForm" style="display:none;margin-top:8px;">
+        <div class="field" style="margin-bottom:5px;"><label>Descripcion</label><input type="text" id="newProrrDesc" placeholder="Ej: Seguro edilicio"></div>
+        <div class="field" style="margin-bottom:5px;"><label>Monto total (sin IVA)</label><div class="iu"><input type="number" id="newProrrMonto" placeholder="0"><span class="u">ARS</span></div></div>
+        <div class="field" style="margin-bottom:5px;"><label>Duracion (meses)</label><input type="number" id="newProrrVida" value="12" min="1"></div>
+        <div class="field" style="margin-bottom:8px;"><label>Mes inicio</label><input type="text" id="newProrrInicio" placeholder="Ej: Marzo 2026"></div>
+        <button class="btn acc sm" style="width:100%;" onclick="addProrr()">Agregar</button>
+      </div>
+    </div>
+
+  </div><!-- /panel-gastos -->
 
   <!-- PANEL FORMULA -->
   <div class="side-panel" id="panel-formula">
@@ -796,8 +820,116 @@ function getSueldoIdForMes(mes){
   return cfg['sue_'+mes.toLowerCase()] || null;
 }
 
+
+// Formatear numero con puntos de miles para mostrar en inputs
+function fmtInput(el){
+  const raw = el.value.replace(/\./g,'').replace(',','.');
+  const num = parseFloat(raw);
+  if(!isNaN(num) && el.nextElementSibling && el.nextElementSibling.classList.contains('fmt-hint')){
+    el.nextElementSibling.textContent = isNaN(num)?'':Math.round(num).toLocaleString('es-AR');
+  }
+}
+
+// Formatear todos los inputs numericos del sidebar al cargar valores
+function refreshFmtHints(){
+  document.querySelectorAll('input[type=number]').forEach(el => {
+    const v = parseFloat(el.value);
+    if(!isNaN(v) && el.nextElementSibling && el.nextElementSibling.classList.contains('fmt-hint')){
+      el.nextElementSibling.textContent = Math.round(v).toLocaleString('es-AR');
+    }
+  });
+}
+
+
+// ============================================================
+// PRORRATEOS - sistema igual a inversiones con fecha y vida util
+// ============================================================
+let prorrateos = [];
+
+function renderProrrList(){
+  const el = document.getElementById('prorrList');
+  if(!el) return;
+  if(!prorrateos.length){
+    el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);padding:8px;">Sin prorrateos cargados</div>';
+    return;
+  }
+  const mes = document.getElementById('selMes').value;
+  const anio = parseInt(document.getElementById('selAnio').value);
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesActualIdx = MESES.indexOf(mes) + (anio - 2026) * 12;
+
+  el.innerHTML = prorrateos.map((p, i) => {
+    const cuota = p.monto / p.vida;
+    const [mesI, anioI] = p.inicio.split(' ');
+    const inicioIdx = MESES.indexOf(mesI) + (parseInt(anioI) - 2026) * 12;
+    const mesesTransc = Math.max(0, mesActualIdx - inicioIdx);
+    const restantes = p.vida - mesesTransc;
+    const vencido = restantes <= 0;
+    const porVencer = restantes > 0 && restantes <= 2;
+    const statusCls = vencido ? 'r' : porVencer ? 'w' : 'g';
+    const statusTxt = vencido ? 'VENCIDO' : porVencer ? `Vence en ${restantes} mes${restantes>1?'es':''}` : `${restantes} meses`;
+    return `<div style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text);">${p.desc}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:2px;">${p.inicio} * ${p.vida} meses</div>
+        </div>
+        <button class="btn danger sm" onclick="removeProrrAteo(${i})">x</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;">
+        <div><div style="font-family:var(--mono);font-size:8px;color:var(--t3);">CUOTA/MES</div><div style="font-family:var(--mono);font-size:12px;color:var(--acc);">$${Math.round(cuota).toLocaleString('es-AR')}</div></div>
+        <div><div style="font-family:var(--mono);font-size:8px;color:var(--t3);">ESTADO</div><div><span class="chip ${statusCls}" style="font-size:9px;">${statusTxt}</span></div></div>
+        <div><div style="font-family:var(--mono);font-size:8px;color:var(--t3);">TOTAL</div><div style="font-family:var(--mono);font-size:11px;color:var(--t2);">$${Math.round(p.monto).toLocaleString('es-AR')}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getCuotasProrrateos(){
+  // Retorna el total de cuotas activas para el mes/anio seleccionado
+  const mes = document.getElementById('selMes').value;
+  const anio = parseInt(document.getElementById('selAnio').value);
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesActualIdx = MESES.indexOf(mes) + (anio - 2026) * 12;
+  return prorrateos.reduce((sum, p) => {
+    const cuota = p.monto / p.vida;
+    const [mesI, anioI] = p.inicio.split(' ');
+    const inicioIdx = MESES.indexOf(mesI) + (parseInt(anioI||'2026') - 2026) * 12;
+    const mesesTransc = Math.max(0, mesActualIdx - inicioIdx);
+    // Sumar siempre (vencido o no) - alerta pero sigue sumando
+    if(mesesTransc >= 0) return sum + cuota;
+    return sum;
+  }, 0);
+}
+
+function openAddProrrForm(){
+  const f = document.getElementById('addProrrForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+function addProrr(){
+  const desc  = document.getElementById('newProrrDesc').value || 'Sin descripcion';
+  const monto = parseFloat(document.getElementById('newProrrMonto').value) || 0;
+  const vida  = parseInt(document.getElementById('newProrrVida').value) || 12;
+  const inicio= document.getElementById('newProrrInicio').value || 'Enero 2026';
+  if(!monto){ alert('Ingresa el monto'); return; }
+  prorrateos.push({desc, monto, vida, inicio});
+  renderProrrList();
+  recalc();
+  document.getElementById('addProrrForm').style.display = 'none';
+  document.getElementById('newProrrDesc').value = '';
+  document.getElementById('newProrrMonto').value = '';
+}
+
+function removeProrrAteo(i){
+  prorrateos.splice(i, 1);
+  renderProrrList();
+  recalc();
+}
+
 function init(){
   loadCfg();
+  renderProrrList();
   buildNavInputs();
   buildFtoInputRows();
   buildFacturasGrid();
@@ -1160,6 +1292,22 @@ function calcAlerts(){
     }
   });
 
+  // Alertas prorrateos vencidos o por vencer
+  const mes2 = document.getElementById('selMes').value;
+  const anio2 = parseInt(document.getElementById('selAnio').value);
+  const MESES2 = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesIdx2 = MESES2.indexOf(mes2) + (anio2 - 2026) * 12;
+  prorrateos.forEach(p => {
+    const [mesI, anioI] = p.inicio.split(' ');
+    const inicioIdx = MESES2.indexOf(mesI) + (parseInt(anioI||'2026') - 2026) * 12;
+    const restantes = p.vida - Math.max(0, mesIdx2 - inicioIdx);
+    if(restantes <= 0){
+      alerts.push({msg: `Prorrateo "${p.desc}" VENCIDO - actualizar`, tipo: 'warn'});
+    } else if(restantes <= 2){
+      alerts.push({msg: `Prorrateo "${p.desc}" vence en ${restantes} mes${restantes>1?'es':''}`, tipo: 'warn'});
+    }
+  });
+
   return alerts;
 }
 
@@ -1204,12 +1352,9 @@ function recalc(){
   const ia        = getFacturaVal('ia');
   const gili      = getFacturaVal('gili');
   const incendio  = getFacturaVal('incendio');
-  const prSeguro  = g('prSeguro');
-  const prParar   = g('prParar');
-  const prMata    = g('prMata');
-  const prRopa    = g('prRopa');
+  const cProrrateos = getCuotasProrrateos();
 
-  const totalFijos = sueldos+edesur+expensas+agua+residuos+starlink+ia+gili+incendio+prSeguro+prParar+prMata+prRopa;
+  const totalFijos = sueldos+edesur+expensas+agua+residuos+starlink+ia+gili+incendio+cProrrateos;
 
   // -- MATERIA PRIMA HILO (composicion editable) --------------
   let totalMPHilo = 0;
@@ -1469,7 +1614,7 @@ async function fetchDolarBNA(){
 // GOOGLE OAUTH & SHEETS API
 // ==============================================================
 const CLIENT_ID = '844318342271-pqa0mj2oav678htbqatrcqjuh06r5a3i.apps.googleusercontent.com';
-const SCOPES    = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+const SCOPES    = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly';
 
 // IDs de los Sheets en Drive
 const SHEET_IDS = {
@@ -1800,6 +1945,7 @@ async function loadAllFromDrive(){
   // Actualizar estado
   updateDriveStatus(results, errors);
   recalc();
+  refreshFmtHints();
 }
 
 function updateDriveStatus(results, errors=[]){
