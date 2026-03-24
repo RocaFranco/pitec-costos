@@ -16,8 +16,8 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
-header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:50px;position:sticky;top:0;z-index:300;}
-.logo{font-family:var(--disp);font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px;}
+header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:70px;position:sticky;top:0;z-index:300;}
+.logo{font-family:var(--disp);font-weight:800;font-size:22px;display:flex;align-items:center;gap:10px;}
 .pulse{width:7px;height:7px;background:var(--acc);border-radius:50%;animation:p 2s ease-in-out infinite;}
 @keyframes p{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
 .hbadge{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid;}
@@ -25,19 +25,19 @@ header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;di
 .hbadge.green{color:var(--ok);border-color:rgba(71,255,178,.25);background:rgba(71,255,178,.07);}
 .hbadge.warn{color:var(--warn);border-color:rgba(255,179,71,.25);background:rgba(255,179,71,.07);}
 .hbadge.red{color:var(--acc3);border-color:rgba(255,107,71,.25);background:rgba(255,107,71,.07);}
-.ctrl-bar{background:var(--surf);border-bottom:1px solid var(--b);padding:7px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:50px;z-index:250;flex-wrap:wrap;}
+.ctrl-bar{background:var(--surf);border-bottom:1px solid var(--b);padding:7px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:70px;z-index:250;flex-wrap:wrap;}
 .ctrl-sep{width:1px;height:20px;background:var(--b2);flex-shrink:0;}
-.ctrl-lbl{font-family:var(--mono);font-size:9px;color:var(--t3);white-space:nowrap;}
+.ctrl-lbl{font-family:var(--mono);font-size:12px;color:var(--t3);white-space:nowrap;font-weight:600;}
 .ctrl-bar select,.ctrl-bar input[type=number]{background:var(--surf2);border:1px solid var(--b2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:10px;padding:4px 8px;outline:none;}
 .ctrl-bar input[type=number]{width:72px;}
-.wrap{display:flex;min-height:calc(100vh - 90px);}
+.wrap{display:flex;min-height:calc(100vh - 110px);}
 .side{background:var(--surf);border-right:1px solid var(--b);overflow-y:auto;display:flex;flex-direction:column;width:560px;min-width:560px;transition:width .3s ease,min-width .3s ease,opacity .3s ease;}
 .side.collapsed{width:0;min-width:0;opacity:0;overflow:hidden;border-right:none;}
 .content{overflow-y:auto;background:var(--bg);flex:1;transition:all .3s ease;}
 .sidebar-toggle{background:none;border:1px solid var(--b2);border-radius:5px;color:var(--t2);font-family:var(--mono);font-size:12px;padding:4px 10px;cursor:pointer;transition:all .2s;white-space:nowrap;}
 .sidebar-toggle:hover{border-color:var(--acc2);color:var(--acc2);}
 .side-tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;}
-.side-tab{flex:1;padding:10px 4px;text-align:center;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.side-tab{flex:1;padding:13px 4px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;}
 .side-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
 .side-panel{padding:16px;display:none;flex-direction:column;gap:12px;}
 .side-panel.active{display:flex;}
@@ -54,7 +54,9 @@ input[type="radio"],input[type="checkbox"]{width:auto;height:auto;padding:0;back
 .nota.ok{background:rgba(71,255,178,.06);border-color:rgba(71,255,178,.2);color:var(--ok);}
 .nota.info{background:rgba(71,200,255,.05);border-color:rgba(71,200,255,.2);color:var(--acc2);}
 .nota.red{background:rgba(255,107,71,.06);border-color:rgba(255,107,71,.2);color:var(--acc3);}
-.alerts-bar{padding:10px 20px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--b);}
+.alerts-bar{padding:0;border-bottom:1px solid var(--b);}
+.alerts-bar-header{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;cursor:pointer;background:rgba(255,107,71,.06);}
+.alerts-bar-list{display:flex;flex-direction:column;gap:5px;padding:8px 20px 10px;}
 .alert{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-family:var(--mono);font-size:10px;}
 .alert.red{background:rgba(255,107,71,.1);border:1px solid rgba(255,107,71,.25);color:var(--acc3);}
 .alert.warn{background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.25);color:var(--warn);}
@@ -159,7 +161,7 @@ body.experimental .exp-compare{display:block;}
     <div class="logo">
       <div class="pulse"></div>
       <span>Costos Rafia</span>
-      <span style="color:var(--t3);font-weight:400;font-size:12px;margin-left:4px;">PITEC v4</span>
+      <span style="color:var(--t3);font-weight:400;font-size:16px;margin-left:6px;">PITEC v4</span>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
@@ -178,7 +180,7 @@ body.experimental .exp-compare{display:block;}
 <!-- BARRA CONTROL RAPIDO -->
 <div class="ctrl-bar">
   <span class="ctrl-lbl">USD BNA</span>
-  <div class="iu" style="width:100px;"><input type="number" id="dolar" value="1415" step="10" oninput="recalc()" style="font-size:13px;font-weight:500;"><span class="u">ARS</span></div>
+  <div class="iu" style="width:120px;"><input type="number" id="dolar" value="1415" step="10" oninput="recalc()" style="font-size:18px;font-weight:700;padding:5px 12px;"><span class="u" style="font-size:13px;">ARS</span></div>
   <span id="dolarStatus" style="font-family:var(--mono);font-size:9px;color:var(--t3);">Obteniendo...</span>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
     <select id="selMes" onchange="onMesChange()">
@@ -1446,19 +1448,45 @@ function calcAlerts(){
   return alerts;
 }
 
+function toggleAlerts(){
+  var list = document.getElementById('alertsList');
+  var arrow = document.getElementById('alertsArrow');
+  if(!list) return;
+  var open = list.style.display !== 'none';
+  list.style.display = open ? 'none' : 'flex';
+  if(arrow) arrow.textContent = open ? '▶' : '▼';
+}
+
 function renderAlerts(){
   var alerts = calcAlerts();
   var bar    = document.getElementById('alertsBar');
   var lbl    = document.getElementById('alertLabel');
   if(!alerts.length){ bar.style.display='none'; lbl.style.display='none'; return; }
-  bar.style.display='flex';
-  bar.innerHTML = alerts.map(function(a){
+  var reds  = alerts.filter(function(a){ return a.tipo==='red'; }).length;
+  var warns = alerts.filter(function(a){ return a.tipo==='warn'; }).length;
+  var count = alerts.length;
+  var badge = reds ? '🔴 '+reds+' error'+(reds>1?'s':'') : '⚠️ '+warns+' aviso'+(warns>1?'s':'');
+  var headerColor = reds ? 'var(--acc3)' : 'var(--warn)';
+  var borderColor = reds ? 'rgba(255,107,71,.4)' : 'rgba(255,179,71,.35)';
+  var listHtml = alerts.map(function(a){
     var dot = a.tipo==='red'?'var(--acc3)':a.tipo==='warn'?'var(--warn)':'var(--ok)';
     return '<div class="alert '+a.tipo+'"><div class="alert-dot" style="background:'+dot+'"></div>'+a.msg+'</div>';
   }).join('');
-  var reds = alerts.filter(function(a){ return a.tipo==='red'; }).length;
+  bar.style.display = 'block';
+  bar.innerHTML =
+    '<div class="alerts-bar-header" onclick="toggleAlerts()" style="border-left:4px solid '+borderColor+';">'
+    +'<div style="display:flex;align-items:center;gap:10px;">'
+    +'<span style="font-family:var(--mono);font-size:13px;font-weight:800;color:'+headerColor+';text-transform:uppercase;letter-spacing:.08em;">⚠ ALERTAS</span>'
+    +'<span style="font-family:var(--mono);font-size:11px;background:rgba(255,107,71,.15);border:1px solid '+borderColor+';border-radius:4px;padding:1px 8px;color:'+headerColor+';">'+count+' activa'+(count>1?'s':'')+'</span>'
+    +'<span style="font-family:var(--mono);font-size:11px;color:var(--t3);">'+badge+'</span>'
+    +'</div>'
+    +'<span id="alertsArrow" style="font-family:var(--mono);font-size:12px;color:'+headerColor+';">▼</span>'
+    +'</div>'
+    +'<div id="alertsList" class="alerts-bar-list" style="display:flex;flex-direction:column;">'
+    +listHtml
+    +'</div>';
   lbl.style.display='';
-  lbl.textContent = reds ? reds+' alerta'+(reds>1?'s':'') : alerts.length+' aviso'+(alerts.length>1?'s':'');
+  lbl.textContent = reds ? reds+' alerta'+(reds>1?'s':'') : count+' aviso'+(count>1?'s':'');
   lbl.className = 'hbadge '+(reds?'red':'warn');
 }
 
@@ -1604,24 +1632,32 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,cInv,total,c){
       +'</div>';
   }
   function row(lbl,val,color){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">'
-      +'<span style="font-size:11px;color:var(--t2);">'+lbl+'</span>'+bar(val,color)+'</div>';
+    return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">'
+      +'<span style="font-family:var(--mono);font-size:15px;color:var(--t2);min-width:180px;">'+lbl+'</span>'
+      +'<div style="flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;margin:0 8px;">'
+      +'<div style="width:'+Math.min(100,(val/total*100)||0).toFixed(1)+'%;height:100%;background:'+color+';border-radius:2px;"></div></div>'
+      +'<span style="font-family:var(--mono);font-size:12px;color:var(--t3);min-width:44px;text-align:right;">'+(val/total*100||0).toFixed(1)+'%</span>'
+      +'<span style="font-family:var(--mono);font-size:15px;font-weight:600;min-width:80px;text-align:right;color:'+color+';">'+fc(val/1000,0)+'K</span>'
+      +'</div>';
   }
-  var html = '<div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--acc);text-transform:uppercase;margin-bottom:4px;">FIJOS</div>'
+  function secHead(label,color){
+    return '<div style="font-family:var(--mono);font-size:13px;font-weight:800;color:'+color+';text-transform:uppercase;letter-spacing:.07em;padding:8px 0 3px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:2px;">'+label+'</div>';
+  }
+  var html = '<div style="margin-bottom:6px;">'+secHead('FIJOS','var(--acc)')
     +row('Sueldos',c.sueldos,'var(--acc)')
     +row('Edesur',c.edesur,'var(--acc)')
     +row('Otros servicios',totFijos-c.sueldos-c.edesur,'var(--acc)')+'</div>'
-    +'<div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--acc2);text-transform:uppercase;margin-bottom:4px;">MP HILO</div>'
+    +'<div style="margin-bottom:6px;">'+secHead('MP HILO','var(--acc2)')
     +c.mpDetalle.map(function(m){ return row(m.nombre,m.cost,'var(--acc2)'); }).join('')+'</div>'
-    +(tipo==='lam'?'<div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--warn);text-transform:uppercase;margin-bottom:4px;">COATING LAMINADO</div>'
+    +(tipo==='lam'?'<div style="margin-bottom:6px;">'+secHead('COATING LAMINADO','var(--warn)')
       +row('Grumo XSD',c.cGrumoLam,'var(--warn)')+row('PE BC818/APP',c.cPeLam,'var(--warn)')+(c.cMastLam>0?row('Master ('+(mastLamActivo>=0&&mastLamColores[mastLamActivo]?mastLamColores[mastLamActivo].label:'color')+')',c.cMastLam,'var(--warn)'):'')+'</div>':'')
-    +'<div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--ok);text-transform:uppercase;margin-bottom:4px;">PRODUCCION / VARIABLES</div>'
+    +'<div style="margin-bottom:6px;">'+secHead('PRODUCCIÓN / VARIABLES','var(--ok)')
     +row('Gasoil + fletes',c.cGasoil+c.cFletes,'var(--ok)')
     +row('Almuerzos + varios',c.cAlm,'var(--ok)')
     +(cInv>0?row('Cuotas inversiones',cInv,'var(--acc2)'):'')+'</div>'
-    +'<div style="padding:8px;background:var(--surf2);border-radius:6px;border:1px solid var(--b);display:flex;justify-content:space-between;">'
-    +'<span style="font-family:var(--mono);font-size:10px;color:var(--t2);">TOTAL MENSUAL</span>'
-    +'<span style="font-family:var(--mono);font-size:15px;color:var(--acc);">'+fc(total/1000000,2)+'M ARS</span></div>';
+    +'<div style="padding:10px 14px;background:var(--surf2);border-radius:6px;border:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;margin-top:4px;">'
+    +'<span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;">TOTAL MENSUAL</span>'
+    +'<span style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--acc);">'+fc(total/1000000,2)+'M ARS</span></div>';
   document.getElementById('costBreakdown').innerHTML = html;
 }
 
@@ -2298,11 +2334,12 @@ function saveMatManual(key, val){
 }
 function _manualInput(storeKey, campo, placeholder, unidad){
   var manual = getMatManual();
-  var val = manual[storeKey]||'';
-  if(val && campo) _matPreciosSugeridos[campo] = val;
+  var val = manual[storeKey]||''; // stored in USD
+  var dolarTc = g('dolar')||1415;
+  if(val && campo) _matPreciosSugeridos[campo] = parseFloat(val)*dolarTc; // convert to ARS for recalc
   return '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">'
     +'<div class="iu" style="flex:1;"><input type="number" value="'+val+'" placeholder="'+placeholder+'" '
-    +'oninput="saveMatManual(\''+storeKey+'\',this.value)'+(campo?';_matPreciosSugeridos[\''+campo+'\']=parseFloat(this.value)||0':'')+'" '
+    +'oninput="saveMatManual(\''+storeKey+'\',this.value)'+(campo?';_matPreciosSugeridos[\''+campo+'\']=(parseFloat(this.value)||0)*g(\'dolar\')':'')+'" '
     +'style="font-size:11px;padding:4px 6px;border-color:var(--warn);"><span class="u">'+unidad+'</span></div>'
     +'<span style="font-family:var(--mono);font-size:9px;color:var(--warn);">manual</span>'
     +'</div>';
@@ -2312,10 +2349,11 @@ function renderMatPreciosMP(ocRows){
   var el = document.getElementById('matPreciosMP');
   if(!el) return;
   _matPreciosSugeridos = {};
+  var dolarTc = g('dolar') || 1415;
 
-  // Cargar valores manuales guardados como base
+  // Cargar valores manuales guardados como base (guardados en USD → convertir a ARS para recalc)
   var manual = getMatManual();
-  MP_ITEMS.forEach(function(mp){ if(manual['mp_'+mp.key]) _matPreciosSugeridos[mp.campo] = manual['mp_'+mp.key]; });
+  MP_ITEMS.forEach(function(mp){ if(manual['mp_'+mp.key]) _matPreciosSugeridos[mp.campo] = manual['mp_'+mp.key] * dolarTc; });
 
   var html = '';
   MP_ITEMS.forEach(function(mp){
@@ -2325,7 +2363,7 @@ function renderMatPreciosMP(ocRows){
         +'<div style="display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;">'
         +'<span style="color:var(--t2);">'+mp.label+'</span>'
         +'<span style="color:var(--t3);font-size:9px;">configurar aliases →</span></div>'
-        +_manualInput('mp_'+mp.key, mp.campo, '$/kg estimado', '$/kg')
+        +_manualInput('mp_'+mp.key, mp.campo, 'USD/kg estimado', 'USD/kg')
         +'</div>';
       return;
     }
@@ -2337,7 +2375,7 @@ function renderMatPreciosMP(ocRows){
         +'<div style="display:flex;justify-content:space-between;align-items:center;">'
         +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+mp.label+'</span>'
         +'<span style="font-family:var(--mono);font-size:9px;color:var(--acc3);">sin OC — ingresá valor</span></div>'
-        +_manualInput('mp_'+mp.key, mp.campo, '$/kg estimado', '$/kg')
+        +_manualInput('mp_'+mp.key, mp.campo, 'USD/kg estimado', 'USD/kg')
         +'</div>';
       return;
     }
@@ -2346,18 +2384,19 @@ function renderMatPreciosMP(ocRows){
     var precio = last.precio_unit;
     if(precio > 0){
       _matPreciosSugeridos[mp.campo] = precio;
+      var usdPrecio = (precio / dolarTc).toFixed(2);
       var fechaStr = last.fecha ? last.fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '?';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);">'
         +'<div><div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+mp.label+'</div>'
-        +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">OC: '+fechaStr+' · '+last.unidad+'</div></div>'
-        +'<div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--acc2);">$'+precio.toLocaleString('es-AR')+'</div>'
+        +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">OC: '+fechaStr+' · '+last.unidad+' · $'+precio.toLocaleString('es-AR')+' ARS</div></div>'
+        +'<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--acc2);">USD '+usdPrecio+'/kg</div>'
         +'</div>';
     } else {
       html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;">'
         +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+mp.label+'</span>'
         +'<span style="font-family:var(--mono);font-size:9px;color:var(--t3);">precio $0 en OC</span></div>'
-        +_manualInput('mp_'+mp.key, mp.campo, '$/kg estimado', '$/kg')
+        +_manualInput('mp_'+mp.key, mp.campo, 'USD/kg estimado', 'USD/kg')
         +'</div>';
     }
   });
