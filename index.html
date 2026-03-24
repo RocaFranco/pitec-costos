@@ -182,8 +182,8 @@ tr.hi td{background:rgba(71,255,178,.04);}
         <button class="btn ghost" style="flex:1;" id="btnConv" onclick="setTipo('conv',this)">Convencional</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
-        <select id="selMes" onchange="recalc()">
-          <option>Enero</option><option>Febrero</option><option selected>Marzo</option>
+        <select id="selMes" onchange="onMesChange()">
+          <option>Enero</option><option>Febrero</option><option>Marzo</option>
           <option>Abril</option><option>Mayo</option><option>Junio</option>
           <option>Julio</option><option>Agosto</option><option>Septiembre</option>
           <option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
@@ -1543,7 +1543,21 @@ function getSueldoIdForMes(mes){
 // ==============================================================
 init();
 
+// Cuando el usuario cambia el mes: recalcula Y recarga facturas del sheet
+function onMesChange(){
+  recalc();
+  if(accessToken) loadFacturasFromSheet();
+}
+
 window.addEventListener('load', function(){
+  // Auto-detectar mes actual y setearlo en el selector
+  var mesActual = MESES[new Date().getMonth()];
+  var sel = document.getElementById('selMes');
+  for(var i=0; i<sel.options.length; i++){
+    if(sel.options[i].text === mesActual){ sel.selectedIndex = i; break; }
+  }
+  recalc();
+
   var checkGIS = setInterval(function(){
     if(window.google && window.google.accounts && window.google.accounts.oauth2){
       clearInterval(checkGIS);
