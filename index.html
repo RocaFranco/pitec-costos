@@ -180,7 +180,7 @@ body.experimental .exp-compare{display:block;}
       <option>Julio</option><option>Agosto</option><option>Septiembre</option>
       <option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
     </select>
-    <input type="number" id="selAnio" value="2026" oninput="recalc()" style="width:64px;">
+    <input type="number" id="selAnio" value="2026" onchange="onMesChange()" oninput="recalc()" style="width:64px;">
     <div class="ctrl-sep"></div>
     <div style="display:flex;gap:4px;">
       <button class="btn ghost" style="padding:4px 12px;font-size:10px;" id="btnLam" onclick="setTipo('lam',this)">Laminada</button>
@@ -1495,6 +1495,8 @@ async function readSheet(sheetId, range){
 // - Sueldos: usa parseArgentino() correctamente
 // ==============================================================
 async function loadAllFromDrive(){
+  if(_loadingDrive) return;
+  _loadingDrive = true;
   var statusEl = document.getElementById('driveStatus');
   statusEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--warn);text-align:center;"><span class="spinner"></span> Cargando desde Drive...</div>';
 
@@ -1628,6 +1630,7 @@ async function loadAllFromDrive(){
   updateDriveStatus(results, errors);
   recalc();
   refreshFmtHints();
+  _loadingDrive = false;
 }
 
 function updateDriveStatus(results, errors){
@@ -1952,19 +1955,30 @@ async function loadGastosManuales(){
       document.getElementById(campo).value = v || '';
       if(v>0) cargados++;
     });
-    if(cargados > 0) saveGastosLS(); // cachear en localStorage lo que vino del sheet
-    else loadGastosLS(mes, anio);    // sheet vacío → intentar localStorage
+    if(cargados > 0) saveGastosLS();
+    else loadGastosLS(mes, anio);
+    recalc();
+    return cargados;
   }catch(e){
-    loadGastosLS(mes, anio); // error en sheet → localStorage
+    console.error('[Gastos] Error cargando hoja:', e.message);
+    var ds = document.getElementById('driveStatus');
+    if(ds) ds.innerHTML += '<div style="font-family:var(--mono);font-size:9px;color:var(--acc3);margin-top:4px;">⚠ Gastos: '+e.message+'</div>';
+    loadGastosLS(mes, anio);
+    recalc();
+    return 0;
   }
-  recalc();
 }
 
-// Cuando el usuario cambia el mes: recalcula Y recarga facturas + gastos
-function onMesChange(){
+var _loadingDrive = false;
+
+// Cuando el usuario cambia el mes/año: recarga todo desde Drive si está logueado
+async function onMesChange(){
   recalc();
-  loadGastosManuales(); // siempre (usa localStorage si no hay Drive)
-  if(accessToken) loadAllFromDrive(); // recarga todo: sueldos, produccion, facturas, gastos
+  if(accessToken){
+    await loadAllFromDrive();
+  } else {
+    loadGastosManuales();
+  }
 }
 
 window.addEventListener('load', function(){
