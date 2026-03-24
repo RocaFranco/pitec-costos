@@ -1132,7 +1132,7 @@ function recalc(){
     var cargadas = SERVICIOS_FAC.filter(function(s){ return s.val>0; }).length;
     var total    = SERVICIOS_FAC.length;
     var color    = cargadas===total?'var(--ok)':cargadas===0?'var(--acc3)':'var(--warn)';
-    elCarg.innerHTML = '<span style="color:'+color+'">'+cargadas+'/'+total+' facturas cargadas</span> · <span style="cursor:pointer;color:var(--acc2);" onclick="showSidePanel('fac', document.querySelector('.side-tab:last-of-type'))">Ver detalle ↗</span>';
+    elCarg.innerHTML = '<span style="color:'+color+'">'+cargadas+'/'+total+' facturas cargadas</span> · <span style="cursor:pointer;color:var(--acc2);" onclick="showSidePanel(\'fac\', document.querySelector(\'.side-tab:last-of-type\'))">Ver detalle \u2197</span>';
   }
 
   // MP HILO
