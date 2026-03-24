@@ -139,6 +139,7 @@ body.experimental .exp-compare{display:block;}
 .gram-sim-row:last-child .gram-sim-cell{border-bottom:none;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>window.onGoogleLibraryLoad = function(){ if(typeof initGoogleAuth==='function') initGoogleAuth(); };</script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -1916,10 +1917,6 @@ window.addEventListener('load', function(){
   }
 });
 
-// Callback oficial de Google — se llama cuando el script GSI termina de cargar
-window.onGoogleLibraryLoad = function(){
-  initGoogleAuth();
-};
 
 // Auto-refresh cada 30 minutos si esta conectado
 setInterval(async function(){
