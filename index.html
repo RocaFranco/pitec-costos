@@ -1412,7 +1412,25 @@ function initGoogleAuth(){
 }
 
 function handleLogin(){
-  if(!tokenClient){ alert('Google no cargo todavia, espera un segundo'); return; }
+  var btn = document.getElementById('btnLogin');
+  if(!tokenClient){
+    // GSI todavía cargando — esperar automáticamente y reintentar
+    if(btn){ btn.textContent = 'Cargando...'; btn.disabled = true; }
+    var waited = 0;
+    var waitGSI = setInterval(function(){
+      waited += 100;
+      if(tokenClient){
+        clearInterval(waitGSI);
+        if(btn){ btn.textContent = 'Conectar Drive'; btn.disabled = false; }
+        tokenClient.requestAccessToken({prompt:'select_account'});
+      } else if(waited >= 8000){
+        clearInterval(waitGSI);
+        if(btn){ btn.textContent = 'Conectar Drive'; btn.disabled = false; }
+        alert('No se pudo cargar Google Sign-In. Verificá tu conexión a internet y recargá la página.');
+      }
+    }, 100);
+    return;
+  }
   tokenClient.requestAccessToken({prompt:'select_account'});
 }
 
