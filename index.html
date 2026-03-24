@@ -106,6 +106,37 @@ tr.hi td{background:rgba(71,255,178,.04);}
 .fmt-hint{font-family:var(--mono);font-size:9px;color:var(--ok);margin-top:2px;text-align:right;}
 .spinner{width:14px;height:14px;border:2px solid var(--b2);border-top-color:var(--acc2);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
+/* ─── EXPERIMENTAL MODE ─────────────────────────────────── */
+.exp-toggle{padding:4px 12px;border-radius:5px;font-family:var(--mono);font-size:9px;cursor:pointer;border:1px solid var(--b2);background:none;color:var(--t2);transition:all .2s;letter-spacing:.04em;}
+.exp-toggle:hover{border-color:var(--warn);color:var(--warn);}
+.exp-toggle.active{background:rgba(255,179,71,.12);border-color:var(--warn);color:var(--warn);}
+body.experimental .side{box-shadow:inset -3px 0 0 rgba(255,179,71,.35);}
+body.experimental .side-tabs{border-bottom-color:rgba(255,179,71,.25);}
+body.experimental .side-tab.active{color:var(--warn);border-bottom-color:var(--warn);}
+body.experimental input:not([readonly]){border-color:rgba(255,179,71,.35);background:rgba(255,179,71,.04);}
+.exp-banner{background:rgba(255,179,71,.08);border-bottom:1px solid rgba(255,179,71,.25);padding:8px 20px;display:none;align-items:center;justify-content:space-between;gap:12px;}
+body.experimental .exp-banner{display:flex;}
+.exp-banner-txt{font-family:var(--mono);font-size:10px;color:var(--warn);}
+.exp-banner-txt strong{font-size:11px;}
+.exp-compare{background:var(--surf);border:1px solid rgba(255,179,71,.3);border-radius:var(--r);padding:16px;display:none;}
+body.experimental .exp-compare{display:block;}
+.exp-cmp-grid{display:grid;grid-template-columns:1fr 1fr 1fr 80px;gap:0;margin-top:10px;border:1px solid var(--b);border-radius:6px;overflow:hidden;}
+.exp-cmp-hd{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:7px 10px;background:var(--surf2);border-bottom:1px solid var(--b);}
+.exp-cmp-hd.real{color:var(--acc2);}
+.exp-cmp-hd.exp{color:var(--warn);}
+.exp-cmp-hd.delta{color:var(--t3);}
+.exp-cmp-cell{padding:8px 10px;font-family:var(--mono);font-size:11px;border-bottom:1px solid rgba(42,45,53,.5);}
+.exp-cmp-cell.lbl{font-size:10px;color:var(--t2);}
+.exp-cmp-row:last-child .exp-cmp-cell{border-bottom:none;}
+.exp-delta-pos{color:var(--ok);}
+.exp-delta-neg{color:var(--acc3);}
+/* ─── GRAMAJE SIMULATOR ──────────────────────────────────── */
+.gram-sim-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;margin-top:10px;border:1px solid var(--b);border-radius:6px;overflow:hidden;}
+.gram-sim-hd{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:7px 10px;background:var(--surf2);border-bottom:1px solid var(--b);color:var(--t3);}
+.gram-sim-cell{padding:7px 10px;font-family:var(--mono);font-size:11px;border-bottom:1px solid rgba(42,45,53,.5);}
+.gram-sim-row.actual{background:rgba(71,200,255,.05);}
+.gram-sim-row.actual .gram-sim-cell:first-child::after{content:' ★';color:var(--acc2);}
+.gram-sim-row:last-child .gram-sim-cell{border-bottom:none;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -123,6 +154,7 @@ tr.hi td{background:rgba(71,255,178,.04);}
     <span id="mesLabel" class="hbadge blue">-</span>
     <span id="tipoLabel" class="hbadge green">-</span>
     <span id="alertLabel" class="hbadge warn" style="display:none;"></span>
+    <button class="exp-toggle" id="btnExp" onclick="toggleExp()" title="Modo experimental: jugá con los números sin tocar datos reales">⚗ REAL</button>
     <span style="font-family:var(--mono);font-size:10px;color:var(--t3);" id="tsLabel">-</span>
     <button id="btnLogin" onclick="handleLogin()" class="btn acc" style="font-size:10px;padding:5px 14px;">Conectar Drive</button>
     <button id="btnLogout" onclick="handleLogout()" class="btn ghost" style="font-size:10px;padding:5px 14px;display:none;">Desconectar</button>
@@ -342,6 +374,10 @@ tr.hi td{background:rgba(71,255,178,.04);}
 
 <!-- ========== CONTENT ========== -->
 <div class="content">
+  <div class="exp-banner" id="expBanner">
+    <div class="exp-banner-txt"><strong>⚗ MODO EXPERIMENTAL</strong> — Modificá libremente. Los datos reales están guardados y se restauran al salir.</div>
+    <button class="btn ghost sm" onclick="toggleExp()">✕ Volver a datos reales</button>
+  </div>
   <div class="alerts-bar" id="alertsBar" style="display:none;"></div>
   <div class="kpi-strip" id="kpiStrip"></div>
   <div class="main">
@@ -387,6 +423,30 @@ tr.hi td{background:rgba(71,255,178,.04);}
         <tbody id="usdBody"></tbody>
       </table>
     </div>
+    <!-- COMPARATIVA REAL vs EXPERIMENTAL -->
+    <div class="exp-compare" id="expCompareCard">
+      <div class="card-hd" style="margin-bottom:0;"><div class="card-hd-left"><div class="dot6" style="background:var(--warn)"></div>Comparativa — Real vs Experimental</div></div>
+      <div class="exp-cmp-grid" id="expCmpGrid">
+        <div class="exp-cmp-hd lbl">Métrica</div><div class="exp-cmp-hd real">● REAL</div><div class="exp-cmp-hd exp">⚗ EXPERIMENTAL</div><div class="exp-cmp-hd delta">Delta</div>
+        <div style="grid-column:1/-1;padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--t3);">Activá el modo experimental para ver la comparativa</div>
+      </div>
+    </div>
+    <!-- SIMULADOR DE GRAMAJE -->
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--ok)"></div>Simulador de gramaje — ¿qué pasa si cambio el gr/m²?</div></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:10px;">Con los kg producidos del mes, ¿cuántos mts y a qué costo según el gramaje elegido?</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;">Kg disponibles</label>
+          <div class="iu" style="width:110px;"><input type="number" id="simKg" value="0" oninput="this.dataset.userSet=1;renderGramajeSim()" style="width:100%;"><span class="u">kg</span></div>
+        </div>
+      </div>
+      <div class="gram-sim-grid">
+        <div class="gram-sim-hd">gr/m²</div><div class="gram-sim-hd">Mts producibles</div><div class="gram-sim-hd">Costo/mt</div><div class="gram-sim-hd">Margen vs Nav.</div>
+        <div id="gramSimBody" style="display:contents;"></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:8px;">★ = gramaje actual del mes &nbsp;·&nbsp; Margen calculado vs precio Navegante de cada formato</div>
+    </div>
     <div class="card">
       <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc3)"></div>Historial 2026</div><button class="btn ghost sm" onclick="saveCurrentMonth()">Guardar mes actual</button></div>
       <table>
@@ -404,6 +464,10 @@ tr.hi td{background:rgba(71,255,178,.04);}
 // ==============================================================
 let tipo = 'lam';
 const HIST = {};
+// ─── EXPERIMENTAL MODE STATE ──────────────────────────────
+var modoExp  = false;
+var snapReal = null; // snapshot of real input values
+var calcReal = null; // real calculation results for comparison
 let inversiones = [];
 let prorrateos  = [];
 let invPending  = null;
@@ -1101,6 +1165,12 @@ function recalc(){
   renderUSD(ftoResults,dolar);
   renderAlerts();
   refreshFmtHints();
+  // Sync experimental comparison if active
+  if(modoExp) renderExpComparativa();
+  // Sync gramaje simulator - update simKg to current totKg if user hasn't changed it
+  var simKgEl = document.getElementById('simKg');
+  if(simKgEl && (!simKgEl.dataset.userSet)) simKgEl.value = totKg||0;
+  renderGramajeSim();
 
   document.getElementById('mesLabel').textContent  = document.getElementById('selMes').value+' '+document.getElementById('selAnio').value;
   document.getElementById('tipoLabel').textContent = tipo==='lam'?'Laminada':'Convencional';
@@ -1554,6 +1624,145 @@ function getSueldoIdForMes(mes){
 // ARRANQUE
 // ==============================================================
 init();
+
+// ─── EXPERIMENTAL MODE ────────────────────────────────────
+var EXP_INPUTS = ['dolar','sueldos','totMts','totKg','grumoLam','peLam',
+  'pGH','pGL','pPE','pCarb','pMast',
+  'cGasoil','cAlmuerzos','cFletes','cVarios','cMant','cOtros'];
+
+function captureSnapshot(){
+  var snap = { inputs:{}, servicios:[], composicion:[] };
+  EXP_INPUTS.forEach(function(id){
+    var el = document.getElementById(id);
+    snap.inputs[id] = el ? el.value : '';
+  });
+  // fmts/kg por formato
+  FTO_LIST.forEach(function(fto){
+    var em = document.getElementById('fmts_'+fto);
+    var ek = document.getElementById('fkg_'+fto);
+    if(em) snap.inputs['fmts_'+fto] = em.value;
+    if(ek) snap.inputs['fkg_'+fto]  = ek.value;
+    var en = document.getElementById('nv'+fto);
+    if(en) snap.inputs['nv'+fto] = en.value;
+  });
+  // SERVICIOS_FAC
+  snap.servicios = SERVICIOS_FAC.map(function(s){ return {id:s.id, val:s.val, loaded:s.loaded}; });
+  // Composicion
+  snap.composicion = composicion.map(function(c){ return Object.assign({},c); });
+  return snap;
+}
+
+function restoreSnapshot(snap){
+  if(!snap) return;
+  Object.keys(snap.inputs).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.value = snap.inputs[id];
+  });
+  snap.servicios.forEach(function(s){
+    var svc = SERVICIOS_FAC.find(function(x){ return x.id===s.id; });
+    if(svc){ svc.val=s.val; svc.loaded=s.loaded; }
+  });
+  composicion = snap.composicion.map(function(c){ return Object.assign({},c); });
+  buildCompRows();
+  syncFacturasInputs();
+  renderFacturasGrid();
+  recalc();
+}
+
+function toggleExp(){
+  if(!modoExp){
+    // Entrar a modo experimental
+    snapReal = captureSnapshot();
+    calcReal = _calc ? Object.assign({},_calc) : null;
+    modoExp  = true;
+    document.body.classList.add('experimental');
+    document.getElementById('btnExp').textContent = '⚗ EXPERIMENTAL';
+    document.getElementById('btnExp').classList.add('active');
+    renderExpComparativa();
+    recalc();
+  } else {
+    // Salir — restaurar datos reales
+    modoExp = false;
+    document.body.classList.remove('experimental');
+    document.getElementById('btnExp').textContent = '⚗ REAL';
+    document.getElementById('btnExp').classList.remove('active');
+    if(snapReal) restoreSnapshot(snapReal);
+    snapReal = null;
+    calcReal = null;
+    renderExpComparativa();
+  }
+}
+
+function renderExpComparativa(){
+  var grid = document.getElementById('expCmpGrid');
+  if(!grid) return;
+  if(!modoExp || !calcReal){
+    grid.innerHTML = '<div class="exp-cmp-hd lbl">Métrica</div><div class="exp-cmp-hd real">● REAL</div><div class="exp-cmp-hd exp">⚗ EXPERIMENTAL</div><div class="exp-cmp-hd delta">Delta</div>'
+      +'<div style="grid-column:1/-1;padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--t3);">Activá el modo experimental para ver la comparativa</div>';
+    return;
+  }
+  var exp = _calc;
+  var real = calcReal;
+  function cmpRow(lbl, realVal, expVal, fmt, invertColor){
+    var delta = expVal - realVal;
+    var pct   = realVal ? (delta/realVal*100) : 0;
+    var isPos = invertColor ? delta<0 : delta>0;
+    var cls   = delta===0 ? '' : isPos ? 'exp-delta-pos' : 'exp-delta-neg';
+    var sign  = delta>0?'+':'';
+    return '<div class="exp-cmp-row" style="display:contents;">'
+      +'<div class="exp-cmp-cell lbl">'+lbl+'</div>'
+      +'<div class="exp-cmp-cell">'+fmt(realVal)+'</div>'
+      +'<div class="exp-cmp-cell">'+fmt(expVal)+'</div>'
+      +'<div class="exp-cmp-cell '+cls+'">'+(delta!==0?sign+fmt(Math.abs(delta))+(pct?' <span style="font-size:9px;opacity:.7;">('+sign+pct.toFixed(1)+'%)</span>':''):'-')+'</div>'
+      +'</div>';
+  }
+  var r47r = real.ftoResults&&real.ftoResults['47'] ? real.ftoResults['47'] : null;
+  var r47e = exp.ftoResults&&exp.ftoResults['47']   ? exp.ftoResults['47']  : null;
+  grid.innerHTML = '<div class="exp-cmp-hd lbl">Métrica</div><div class="exp-cmp-hd real">● REAL</div><div class="exp-cmp-hd exp">⚗ EXPERIMENTAL</div><div class="exp-cmp-hd delta">Delta</div>'
+    + cmpRow('Total mensual',   real.totalGeneral,  exp.totalGeneral,  function(v){ return fc(v/1000000,2)+'M'; }, true)
+    + cmpRow('Costo / kg',      real.costoPorKg,    exp.costoPorKg,    function(v){ return fc(v,2); }, true)
+    + cmpRow('Costo / mt (F47)',r47r?r47r.cPorMts:0, r47e?r47e.cPorMts:0, function(v){ return fc(v,3); }, true)
+    + cmpRow('Gramaje prom.',   real.grM2Prom,      exp.grM2Prom,      function(v){ return v.toFixed(2)+' gr'; }, false)
+    + cmpRow('Mts producidos',  real.totMts,        exp.totMts,        function(v){ return v.toLocaleString('es-AR'); }, false)
+    + cmpRow('Kg producidos',   real.totKg,         exp.totKg,         function(v){ return v.toLocaleString('es-AR'); }, false)
+    + cmpRow('Margen vs Nav F47', r47r?r47r.diff||0:0, r47e?r47e.diff||0:0, function(v){ return (v>0?'+':'')+fc(v,2)+'/mt'; }, false);
+}
+
+// ─── SIMULADOR DE GRAMAJE ─────────────────────────────────
+var GRAM_SIM_FORMATS = [
+  {fto:'47', grm2:47},
+  {fto:'53', grm2:53},
+  {fto:'57', grm2:57},
+  {fto:'60', grm2:60},
+  {fto:'71', grm2:71},
+  {fto:'102',grm2:102},
+];
+
+function renderGramajeSim(){
+  var body    = document.getElementById('gramSimBody');
+  if(!body) return;
+  var kg      = parseFloat(document.getElementById('simKg').value)||(_calc?_calc.totKg:0);
+  var total   = _calc ? _calc.totalGeneral : 0;
+  var grProm  = _calc ? _calc.grM2Prom : 0;
+  if(!kg||!total){ body.innerHTML='<div style="grid-column:1/-1;padding:14px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--t3);">Cargá producción del mes para ver el simulador</div>'; return; }
+  body.innerHTML = GRAM_SIM_FORMATS.map(function(f){
+    var mts    = (kg*1000)/f.grm2;
+    var cPMts  = mts>0 ? total/mts : 0;
+    var navEl  = document.getElementById('nv'+f.fto);
+    var nav    = navEl ? (parseFloat(navEl.value)||0) : 0;
+    var diff   = nav>0 ? nav-cPMts : null;
+    var isActual = grProm>0 && Math.abs(f.grm2-grProm)<3;
+    var diffHtml = diff!==null
+      ? '<div class="gram-sim-cell" style="color:'+(diff>0?'var(--ok)':'var(--acc3)')+';">'+(diff>0?'+':'')+fc(diff,2)+'</div>'
+      : '<div class="gram-sim-cell" style="color:var(--t3);">-</div>';
+    return '<div class="gram-sim-row'+(isActual?' actual':'')+'" style="display:contents;">'
+      +'<div class="gram-sim-cell" style="color:var(--acc2);font-weight:500;">'+f.grm2+'</div>'
+      +'<div class="gram-sim-cell">'+Math.round(mts).toLocaleString('es-AR')+' mts</div>'
+      +'<div class="gram-sim-cell" style="color:var(--acc);">'+fc(cPMts,3)+'</div>'
+      +diffHtml
+      +'</div>';
+  }).join('');
+}
 
 // Carga gastos variables del mes desde el sheet de Gastos_Manuales
 async function loadGastosManuales(){
