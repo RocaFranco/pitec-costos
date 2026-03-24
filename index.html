@@ -131,7 +131,7 @@ body.experimental .exp-compare{display:block;}
 .exp-delta-pos{color:var(--ok);}
 .exp-delta-neg{color:var(--acc3);}
 /* ─── GRAMAJE SIMULATOR ──────────────────────────────────── */
-.gram-sim-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;margin-top:10px;border:1px solid var(--b);border-radius:6px;overflow:hidden;}
+.gram-sim-grid{display:grid;grid-template-columns:1.4fr 70px 1fr 1fr 1fr 1fr 80px;gap:0;margin-top:10px;border:1px solid var(--b);border-radius:6px;overflow:hidden;}
 .gram-sim-hd{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:7px 10px;background:var(--surf2);border-bottom:1px solid var(--b);color:var(--t3);}
 .gram-sim-cell{padding:7px 10px;font-family:var(--mono);font-size:11px;border-bottom:1px solid rgba(42,45,53,.5);}
 .gram-sim-row.actual{background:rgba(71,200,255,.05);}
@@ -434,18 +434,49 @@ body.experimental .exp-compare{display:block;}
     <!-- SIMULADOR DE GRAMAJE -->
     <div class="card">
       <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--ok)"></div>Simulador de gramaje — ¿qué pasa si cambio el gr/m²?</div></div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:10px;">Con los kg producidos del mes, ¿cuántos mts y a qué costo según el gramaje elegido?</div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:12px;">
+        El número de formato (47, 57...) es el <strong style="color:var(--acc2);">código de ancho</strong>, no el gramaje.<br>
+        El gramaje real varía según la producción. A menor gramaje → menos kg por metro → menor costo de MP → mejor margen al mismo precio de venta.
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:6px;">
-          <label style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;">Kg disponibles</label>
-          <div class="iu" style="width:110px;"><input type="number" id="simKg" value="0" oninput="this.dataset.userSet=1;renderGramajeSim()" style="width:100%;"><span class="u">kg</span></div>
+          <label style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;">Formato</label>
+          <select id="simFto" onchange="renderGramajeSim()" style="background:var(--surf2);color:var(--text);border:1px solid var(--b2);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:11px;">
+            <option value="40">F40 — Tubular 80cm</option>
+            <option value="47" selected>F47 — Tubular 94cm</option>
+            <option value="53">F53 — Tubular 106cm</option>
+            <option value="57">F57 — Tubular 114cm</option>
+            <option value="60">F60 — Tubular 120cm</option>
+            <option value="71">F71 — Plana 71cm</option>
+            <option value="82">F82 — Plana 82cm</option>
+            <option value="102">F102 — Plana 102cm</option>
+            <option value="120">F120 — Plana 120cm</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;">Mts referencia</label>
+          <div class="iu" style="width:120px;"><input type="number" id="simMts" value="0" oninput="this.dataset.userSet=1;renderGramajeSim()" style="width:100%;"><span class="u">mts</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;">Gramaje actual</label>
+          <div class="iu" style="width:90px;"><input type="number" id="simGrActual" value="0" oninput="this.dataset.userSet=1;renderGramajeSim()" style="width:100%;"><span class="u">gr/m²</span></div>
         </div>
       </div>
       <div class="gram-sim-grid">
-        <div class="gram-sim-hd">gr/m²</div><div class="gram-sim-hd">Mts producibles</div><div class="gram-sim-hd">Costo/mt</div><div class="gram-sim-hd">Margen vs Nav.</div>
+        <div class="gram-sim-hd">gr/m²</div>
+        <div class="gram-sim-hd">Kg consumidos</div>
+        <div class="gram-sim-hd">Costo total</div>
+        <div class="gram-sim-hd">Costo/mt</div>
+        <div class="gram-sim-hd">Costo/kg</div>
+        <div class="gram-sim-hd">Precio Nav.</div>
+        <div class="gram-sim-hd">Δ costo/mt vs actual</div>
         <div id="gramSimBody" style="display:contents;"></div>
       </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:8px;">★ = gramaje actual del mes &nbsp;·&nbsp; Margen calculado vs precio Navegante de cada formato</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:8px;">
+        ★ = gramaje actual del mes &nbsp;·&nbsp;
+        Fórmula: kg = mts × ancho(m) × gr/m² / 1000 &nbsp;·&nbsp;
+        El precio Navegante es fijo por formato → menor gramaje = más margen
+      </div>
     </div>
     <div class="card">
       <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc3)"></div>Historial 2026</div><button class="btn ghost sm" onclick="saveCurrentMonth()">Guardar mes actual</button></div>
@@ -1167,9 +1198,11 @@ function recalc(){
   refreshFmtHints();
   // Sync experimental comparison if active
   if(modoExp) renderExpComparativa();
-  // Sync gramaje simulator - update simKg to current totKg if user hasn't changed it
-  var simKgEl = document.getElementById('simKg');
-  if(simKgEl && (!simKgEl.dataset.userSet)) simKgEl.value = totKg||0;
+  // Sync gramaje simulator inputs con producción del mes
+  var simMtsEl = document.getElementById('simMts');
+  if(simMtsEl && !simMtsEl.dataset.userSet) simMtsEl.value = totMts||0;
+  var simGrEl = document.getElementById('simGrActual');
+  if(simGrEl && !simGrEl.dataset.userSet) simGrEl.value = grM2Prom>0 ? grM2Prom.toFixed(1) : 0;
   renderGramajeSim();
 
   document.getElementById('mesLabel').textContent  = document.getElementById('selMes').value+' '+document.getElementById('selAnio').value;
@@ -1729,37 +1762,108 @@ function renderExpComparativa(){
 }
 
 // ─── SIMULADOR DE GRAMAJE ─────────────────────────────────
-var GRAM_SIM_FORMATS = [
-  {fto:'47', grm2:47},
-  {fto:'53', grm2:53},
-  {fto:'57', grm2:57},
-  {fto:'60', grm2:60},
-  {fto:'71', grm2:71},
-  {fto:'102',grm2:102},
-];
+// Datos físicos de cada formato
+// Tubulares: el nro de fto × 2 = ancho real en cm (la tela es un tubo que se aplana)
+// Planas: cortadas verticalmente del tubo, ancho = fto
+var FTO_DATA = {
+  '40':  {tipo:'tubular', ancho:80},
+  '47':  {tipo:'tubular', ancho:94},
+  '53':  {tipo:'tubular', ancho:106},
+  '57':  {tipo:'tubular', ancho:114},
+  '60':  {tipo:'tubular', ancho:120},
+  '71':  {tipo:'plana',   ancho:71},
+  '82':  {tipo:'plana',   ancho:82},
+  '102': {tipo:'plana',   ancho:102},
+  '120': {tipo:'plana',   ancho:120},
+};
+
+// Gramajes a simular (rango típico de producción)
+var GRAM_SIM_RANGE = [40, 44, 47, 50, 53, 55, 57, 60, 65, 70];
 
 function renderGramajeSim(){
-  var body    = document.getElementById('gramSimBody');
+  var body = document.getElementById('gramSimBody');
   if(!body) return;
-  var kg      = parseFloat(document.getElementById('simKg').value)||(_calc?_calc.totKg:0);
-  var total   = _calc ? _calc.totalGeneral : 0;
-  var grProm  = _calc ? _calc.grM2Prom : 0;
-  if(!kg||!total){ body.innerHTML='<div style="grid-column:1/-1;padding:14px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--t3);">Cargá producción del mes para ver el simulador</div>'; return; }
-  body.innerHTML = GRAM_SIM_FORMATS.map(function(f){
-    var mts    = (kg*1000)/f.grm2;
-    var cPMts  = mts>0 ? total/mts : 0;
-    var navEl  = document.getElementById('nv'+f.fto);
-    var nav    = navEl ? (parseFloat(navEl.value)||0) : 0;
-    var diff   = nav>0 ? nav-cPMts : null;
-    var isActual = grProm>0 && Math.abs(f.grm2-grProm)<3;
-    var diffHtml = diff!==null
-      ? '<div class="gram-sim-cell" style="color:'+(diff>0?'var(--ok)':'var(--acc3)')+';">'+(diff>0?'+':'')+fc(diff,2)+'</div>'
-      : '<div class="gram-sim-cell" style="color:var(--t3);">-</div>';
+
+  var ftoKey  = document.getElementById('simFto')     ? document.getElementById('simFto').value     : '47';
+  var mts     = parseFloat(document.getElementById('simMts')?.value)||(_calc?_calc.totMts:0);
+  var grActual= parseFloat(document.getElementById('simGrActual')?.value)||(_calc?_calc.grM2Prom:0);
+  var calc    = _calc;
+  var ftoInfo = FTO_DATA[ftoKey] || {tipo:'tubular', ancho:94};
+
+  if(!mts||!calc||!calc.totalGeneral){
+    body.innerHTML='<div style="grid-column:1/-1;padding:14px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--t3);">Cargá producción del mes para ver el simulador</div>';
+    return;
+  }
+
+  // Componentes de costo que NO cambian con el gramaje
+  var totalFijos   = calc.totalFijos;
+  var totalVarProd = calc.totalVarProd;
+  var cInversiones = calc.cInversiones;
+
+  // Costo de MP por kg de hilo (formula × precios actuales × desperdicio)
+  var DESP = 1.05;
+  var varMPporKg = composicion.reduce(function(s,c){
+    return s + (c.pct/100)*(g(c.grupo)||0);
+  }, 0) * DESP;
+
+  // Laminado: costo por kg escalado desde el mes real
+  var lamPorKg = (tipo==='lam' && calc.totKg>0) ? calc.totalMPLam/calc.totKg : 0;
+
+  var anchoM = ftoInfo.ancho / 100; // ancho en metros
+
+  // Precio Navegante para el formato seleccionado
+  var navEl = document.getElementById('nv'+ftoKey);
+  var nav   = navEl ? (parseFloat(navEl.value)||0) : 0;
+
+  // Costo al gramaje actual para calcular Δ
+  var kgRef   = mts * anchoM * (grActual||57) / 1000;
+  var costRef = totalFijos + kgRef*(varMPporKg+lamPorKg) + totalVarProd + cInversiones;
+  var cPMtsRef = mts>0 ? costRef/mts : 0;
+
+  // Construir filas para cada gramaje del rango
+  // Si el gramaje actual no está en el rango, agregarlo
+  var rangos = GRAM_SIM_RANGE.slice();
+  if(grActual>0 && !rangos.some(function(r){ return Math.abs(r-grActual)<1; })){
+    rangos.push(Math.round(grActual));
+    rangos.sort(function(a,b){ return a-b; });
+  }
+
+  body.innerHTML = rangos.map(function(grm2){
+    // FÓRMULA CORRECTA: kg = mts × ancho(m) × gramaje(gr/m²) / 1000
+    var kg        = mts * anchoM * grm2 / 1000;
+    var totalMP   = kg * (varMPporKg + lamPorKg);
+    var totalCost = totalFijos + totalMP + totalVarProd + cInversiones;
+    var cPMts     = mts>0 ? totalCost/mts : 0;
+    var cPKg      = kg>0  ? totalCost/kg  : 0;
+    var margen    = nav>0 ? nav-cPMts : null;
+    var delta     = cPMts - cPMtsRef;
+    var isActual  = grActual>0 && Math.abs(grm2-grActual)<1;
+
     return '<div class="gram-sim-row'+(isActual?' actual':'')+'" style="display:contents;">'
-      +'<div class="gram-sim-cell" style="color:var(--acc2);font-weight:500;">'+f.grm2+'</div>'
-      +'<div class="gram-sim-cell">'+Math.round(mts).toLocaleString('es-AR')+' mts</div>'
-      +'<div class="gram-sim-cell" style="color:var(--acc);">'+fc(cPMts,3)+'</div>'
-      +diffHtml
+      // gr/m²
+      +'<div class="gram-sim-cell" style="font-weight:'+(isActual?'700':'400')+';color:'+(isActual?'var(--acc2)':'var(--text)')+';">'
+        +grm2+' gr/m²'+(isActual?' ★':'')
+      +'</div>'
+      // Kg consumidos
+      +'<div class="gram-sim-cell">'+Math.round(kg).toLocaleString('es-AR')+' kg</div>'
+      // Costo total
+      +'<div class="gram-sim-cell" style="color:var(--t2);">'+fc(totalCost/1000000,2)+'M</div>'
+      // Costo/mt
+      +'<div class="gram-sim-cell" style="color:var(--acc);font-weight:500;">'+fc(cPMts,3)+'</div>'
+      // Costo/kg
+      +'<div class="gram-sim-cell" style="color:var(--t2);">'+fc(cPKg,2)+'</div>'
+      // Precio Nav
+      +(nav>0
+        ?'<div class="gram-sim-cell" style="color:var(--t2);">'+fc(nav,2)+'</div>'
+        :'<div class="gram-sim-cell" style="color:var(--t3);">-</div>')
+      // Δ vs actual
+      +(isActual
+        ?'<div class="gram-sim-cell" style="color:var(--acc2);font-size:9px;">← referencia</div>'
+        :(margen!==null
+          ?'<div class="gram-sim-cell" style="color:'+(margen>0?'var(--ok)':'var(--acc3)')+';">'
+            +(margen>0?'Margen +':'')+fc(Math.abs(margen),2)+(margen<0?' negativo':'')+'</div>'
+          :'<div class="gram-sim-cell" style="color:'+(delta<0?'var(--ok)':delta>0?'var(--acc3)':'var(--t3)')+';">'
+            +(delta!==0?(delta<0?'':'+')+fc(delta,3)+'/mt':'-')+'</div>'))
       +'</div>';
   }).join('');
 }
