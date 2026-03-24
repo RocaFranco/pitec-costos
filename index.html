@@ -180,7 +180,7 @@ body.experimental .exp-compare{display:block;}
 <!-- BARRA CONTROL RAPIDO -->
 <div class="ctrl-bar">
   <span class="ctrl-lbl">USD BNA</span>
-  <div class="iu" style="width:160px;"><input type="number" id="dolar" value="1415" step="10" oninput="recalc()" style="font-size:18px;font-weight:700;padding:6px 46px 6px 12px;"><span class="u" style="font-size:13px;">ARS</span></div>
+  <div class="iu" style="width:230px;"><input type="number" id="dolar" value="1415" step="10" oninput="recalc()" style="font-size:20px;font-weight:700;padding:6px 52px 6px 14px;letter-spacing:.02em;"><span class="u" style="font-size:14px;font-weight:600;">ARS</span></div>
   <span id="dolarStatus" style="font-family:var(--mono);font-size:12px;color:var(--t3);">Obteniendo...</span>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
     <select id="selMes" onchange="onMesChange()" style="font-size:13px;padding:5px 10px;">
@@ -467,15 +467,15 @@ body.experimental .exp-compare{display:block;}
         <div id="costBreakdown"></div>
       </div>
       <div class="card">
-        <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc2)"></div>Costo por formato - gr/m2 real</div></div>
+        <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc2)"></div>Gramaje y costo por tipo de tela</div></div>
         <table id="ftoTable">
-          <thead><tr><th>Fto</th><th class="r">gr/m2</th><th class="r">$/mts</th><th class="r">Nav.</th><th class="r">Dif.</th><th class="r">$/kg</th></tr></thead>
+          <thead><tr><th>Tipo</th><th class="r">gr/m2</th><th class="r">Mts</th><th class="r">Kg</th><th class="r">$/mts</th><th class="r">$/kg</th></tr></thead>
           <tbody id="ftoBody"></tbody>
         </table>
-        <div style="margin-top:8px;" id="ftoInputsWrap">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:6px;">KG y MTS reales por formato (de la Dinamica):</div>
-          <table style="font-size:11px;">
-            <thead><tr><th>Fto</th><th>Mts</th><th>Kg</th></tr></thead>
+        <div style="margin-top:14px;" id="ftoInputsWrap">
+          <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">KG y MTS reales por formato <span style="font-size:11px;color:var(--t3);font-weight:400;">(de la Dinamica)</span></div>
+          <table style="font-size:15px;">
+            <thead><tr><th style="font-size:13px;">Fto</th><th style="font-size:13px;">Mts</th><th style="font-size:13px;">Kg</th></tr></thead>
             <tbody id="ftoInputRows"></tbody>
           </table>
         </div>
@@ -920,11 +920,16 @@ function buildFtoInputRows(){
   if(!el) return;
   el.innerHTML = FTO_LIST.map(function(fto){
     return '<tr>'
-      +'<td style="font-family:var(--mono);color:var(--t2);">'+fto+'</td>'
-      +'<td><input type="number" id="fmts_'+fto+'" value="0" style="font-size:11px;padding:4px 6px;" oninput="recalc()"></td>'
-      +'<td><input type="number" id="fkg_'+fto+'" value="0" style="font-size:11px;padding:4px 6px;" oninput="recalc()"></td>'
+      +'<td style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--t2);padding:4px 8px 4px 0;">'+fto+'</td>'
+      +'<td><input type="number" id="fmts_'+fto+'" value="0" style="font-size:14px;padding:5px 8px;" oninput="recalc()"></td>'
+      +'<td><input type="number" id="fkg_'+fto+'" value="0" style="font-size:14px;padding:5px 8px;" oninput="recalc()"></td>'
       +'</tr>';
-  }).join('');
+  }).join('')
+  +'<tr style="border-top:2px solid var(--b2);">'
+  +'<td style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--acc);padding:6px 8px 4px 0;">TOTAL</td>'
+  +'<td style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--acc);padding:6px 8px;text-align:right;" id="totalMtsLabel">—</td>'
+  +'<td style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--acc);padding:6px 8px;text-align:right;" id="totalKgLabel">—</td>'
+  +'</tr>';
 }
 
 // ==============================================================
@@ -1585,7 +1590,14 @@ function recalc(){
 
   renderKPIs(costoPorKg,costoPorMts,grM2Prom,totalGeneral,ftoResults['47'],dolar);
   renderCostBreakdown(totalFijos,totalMPHilo,totalMPLam,totalVarProd,cInversiones,totalGeneral,_calc);
-  renderFtoTable(ftoResults);
+  renderFtoTable(ftoResults, costoPorKg);
+  // Actualizar fila TOTAL en la tabla de inputs por formato
+  var _totMts = FTO_LIST.reduce(function(s,f){ return s+(parseFloat(document.getElementById('fmts_'+f)?.value)||0); },0);
+  var _totKg  = FTO_LIST.reduce(function(s,f){ return s+(parseFloat(document.getElementById('fkg_'+f)?.value)||0); },0);
+  var _tlMts  = document.getElementById('totalMtsLabel');
+  var _tlKg   = document.getElementById('totalKgLabel');
+  if(_tlMts) _tlMts.textContent = _totMts>0 ? _totMts.toLocaleString('es-AR') : '—';
+  if(_tlKg)  _tlKg.textContent  = _totKg>0  ? _totKg.toLocaleString('es-AR')  : '—';
   renderSens(ftoResults['47']?.kgPorMts||0.0658, totalFijos,totalVarProd,totKg,composicion,preciosGrupo,grumoLam,g('pGL'),peLam,g('pPE'),cInversiones);
   renderNavChart(ftoResults);
   renderUSD(ftoResults,dolar);
@@ -1661,20 +1673,40 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,cInv,total,c){
   document.getElementById('costBreakdown').innerHTML = html;
 }
 
-function renderFtoTable(results){
-  var rows = FTO_LIST.map(function(fto){
-    var r = results[fto];
-    if(!r||!r.cPorMts) return '';
-    var chipCls = r.diff===null?'':r.diff>0?'g':r.diff>-20?'w':'r';
-    var chipTxt = r.diff===null?'-':(r.diff>0?'+':'')+fc(r.diff,2);
-    return '<tr class="'+(r.hasDatos?'hi':'')+'"><td><strong>'+fto+'</strong>'+(r.hasDatos?' <span style="color:var(--acc2);font-size:9px;">*</span>':'')+'</td>'
-      +'<td class="r">'+(r.grM2Real?r.grM2Real.toFixed(2):'-')+'</td>'
-      +'<td class="r" style="color:var(--acc);">'+fc(r.cPorMts,3)+'</td>'
-      +'<td class="r" style="color:var(--t2);">'+(r.navPrice>0?fc(r.navPrice,2):'-')+'</td>'
-      +'<td class="r"><span class="chip '+chipCls+'">'+chipTxt+'</span></td>'
-      +'<td class="r" style="color:var(--t2);">'+fc(r.costoPorKg,2)+'</td></tr>';
-  }).join('');
-  document.getElementById('ftoBody').innerHTML = rows||'<tr><td colspan="6" style="color:var(--t3);text-align:center;padding:12px;">Conecta Drive o carga mts y kg por formato</td></tr>';
+function renderFtoTable(results, cPorKg){
+  // Grupos fijos — las de trama 5 (laminado) y trama 3 (convencional) usan los mismos
+  // formatos 40-60; se muestran bajo el tipo activo. Planas y Cristal siempre visibles.
+  var GRUPOS = [
+    { label: tipo==='lam' ? 'Laminado' : 'Convencional',
+      color: tipo==='lam' ? 'var(--warn)' : 'var(--acc2)',
+      ftos: ['40','47','53','57','60'] },
+    { label: 'Planas', color: 'var(--ok)', ftos: ['71','82','102','120'] },
+    { label: 'Planas Cristal', color: 'var(--acc3)', ftos: ['102'] },
+  ];
+  var rows = '';
+  GRUPOS.forEach(function(g){
+    var totMts = 0, totKgPeso = 0, totKg = 0;
+    g.ftos.forEach(function(f){
+      var mts = parseFloat(document.getElementById('fmts_'+f)?.value)||0;
+      var kg  = parseFloat(document.getElementById('fkg_'+f)?.value)||0;
+      var ancho = parseFloat(f)/100;
+      totMts   += mts;
+      totKgPeso += mts * ancho;   // para gr/m2 ponderado por ancho
+      totKg    += kg;
+    });
+    if(!totMts && !totKg) return;
+    var grM2 = totKgPeso > 0 ? (totKg / totKgPeso) * 1000 : 0;
+    var cMts = (totMts > 0 && cPorKg > 0) ? cPorKg * (totKg / totMts) : 0;
+    rows += '<tr class="hi">'
+      +'<td style="font-size:15px;"><strong style="color:'+g.color+';">'+g.label+'</strong></td>'
+      +'<td class="r" style="font-size:15px;font-weight:600;">'+(grM2>0?grM2.toFixed(2):'-')+'</td>'
+      +'<td class="r" style="font-size:14px;color:var(--t2);">'+(totMts>0?totMts.toLocaleString('es-AR'):'-')+'</td>'
+      +'<td class="r" style="font-size:14px;color:var(--t2);">'+(totKg>0?totKg.toLocaleString('es-AR'):'-')+'</td>'
+      +'<td class="r" style="font-size:15px;color:var(--acc);">'+(cMts>0?fc(cMts,3):'-')+'</td>'
+      +'<td class="r" style="font-size:14px;color:var(--t3);">'+(cPorKg>0?fc(cPorKg,2):'-')+'</td>'
+      +'</tr>';
+  });
+  document.getElementById('ftoBody').innerHTML = rows||'<tr><td colspan="6" style="color:var(--t3);text-align:center;padding:16px;">Sin datos — cargá mts y kg por formato</td></tr>';
 }
 
 function renderSens(kgMts47,totFijos,totVarProd,kgActual,comp,precios,grumoLam,pGL,peLam,pPE,cInv){
