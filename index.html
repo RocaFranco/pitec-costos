@@ -283,6 +283,35 @@ body.experimental .exp-compare{display:block;}
       <button class="btn ghost sm" style="margin-top:8px;width:100%;" onclick="addCompRow()">+ Agregar componente</button>
     </div>
     <div class="nota info">Cada componente se costea con el precio del grupo MP asignado. El coating laminado se calcula aparte con los kg reales de la Dinamica.</div>
+
+    <!-- COMPOSICIÓN LAMINADO — solo visible cuando tipo=lam -->
+    <div id="lamCompSection" style="display:none;margin-top:14px;">
+      <div class="s-head">Composicion del Laminado</div>
+      <!-- Filas fijas PP / PE -->
+      <div style="background:var(--surf2);border:1px solid var(--brd);border-radius:6px;padding:8px 10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--brd);font-family:var(--mono);font-size:11px;">
+          <span style="color:var(--t2);">Grumo XSD (PP)</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:var(--t3);font-size:9px;">83.3%</span>
+            <span style="color:var(--acc2);font-size:11px;font-weight:600;">pGL</span>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-family:var(--mono);font-size:11px;">
+          <span style="color:var(--t2);">PE BC818</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:var(--t3);font-size:9px;">16.7%</span>
+            <span style="color:var(--acc2);font-size:11px;font-weight:600;">pPE</span>
+          </div>
+        </div>
+      </div>
+      <!-- Masterbatch colores -->
+      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Masterbatch — color (2% del mix)</div>
+      <div id="mastLamList"></div>
+      <button class="btn ghost sm" style="width:100%;margin-top:4px;font-size:10px;" onclick="clearMastLamActivo()">✕ Sin color (laminado natural)</button>
+      <button class="btn ghost sm" style="width:100%;margin-top:6px;" onclick="addMastLamColor()">+ Agregar color</button>
+      <!-- Resumen costo master -->
+      <div id="mastLamCostoResumen" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--t3);text-align:right;"></div>
+    </div>
   </div>
 
   <!-- PANEL NAVEGANTE -->
@@ -384,6 +413,7 @@ body.experimental .exp-compare{display:block;}
       <div class="s-head">Consumibles del proceso</div>
       <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Palabras clave para identificar cada insumo en las OC. Separadas por coma.</div>
       <div id="cfgConsumFields"></div>
+      <button class="btn ghost sm" style="width:100%;margin-top:6px;" onclick="addCustomConsum()">+ Agregar consumible</button>
     </div>
     <div>
       <div class="s-head">IDs Sheets de Sueldos por mes</div>
@@ -519,6 +549,8 @@ body.experimental .exp-compare{display:block;}
 // ==============================================================
 let tipo = 'lam';
 const HIST = {};
+var mastLamColores = []; // [{label, precio}]
+var mastLamActivo  = -1; // índice del color activo, -1 = sin color
 // ─── EXPERIMENTAL MODE STATE ──────────────────────────────
 var modoExp  = false;
 var snapReal = null; // snapshot of real input values
@@ -634,6 +666,8 @@ function init(){
   buildCompRows();
   renderInvList();
   renderProrrList();
+  loadMastLam();
+  buildLamCompSection();
   setTipo('lam', document.getElementById('btnLam'));
   fetchDolarBNA();
   setInterval(fetchDolarBNA, 30*60*1000);
@@ -656,6 +690,9 @@ function setTipo(t, el){
   document.getElementById('btnConv').className = 'btn ghost';
   el.className = 'btn acc';
   document.getElementById('grumoLamField').style.display = t==='lam'?'':'none';
+  var lcs = document.getElementById('lamCompSection');
+  if(lcs) lcs.style.display = t==='lam'?'':'none';
+  if(t==='lam') buildLamCompSection();
   recalc();
 }
 
@@ -897,6 +934,94 @@ function addCompRow(){
 function removeComp(i){
   composicion.splice(i,1);
   buildCompRows(); recalc();
+}
+
+// ==============================================================
+// MASTERBATCH LAMINADO — colores con precios individuales
+// ==============================================================
+function loadMastLam(){
+  try{ mastLamColores = JSON.parse(localStorage.getItem('pitec_mast_lam')||'[]'); }catch(e){ mastLamColores=[]; }
+  try{ mastLamActivo  = parseInt(localStorage.getItem('pitec_mast_lam_activo')||'-1'); }catch(e){ mastLamActivo=-1; }
+}
+
+function saveMastLam(){
+  localStorage.setItem('pitec_mast_lam', JSON.stringify(mastLamColores));
+  localStorage.setItem('pitec_mast_lam_activo', String(mastLamActivo));
+}
+
+function buildLamCompSection(){
+  var el = document.getElementById('mastLamList');
+  if(!el) return;
+  if(!mastLamColores.length){
+    el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);padding:6px 0;">Sin colores cargados. Agregá con el botón de abajo.</div>';
+    updateMastLamResumen();
+    return;
+  }
+  el.innerHTML = mastLamColores.map(function(c, i){
+    var isActive = i === mastLamActivo;
+    var borderColor = isActive ? 'var(--acc2)' : 'var(--brd)';
+    var bg = isActive ? 'rgba(100,200,100,0.06)' : 'var(--surf2)';
+    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;padding:6px 8px;border:1px solid '+borderColor+';border-radius:6px;background:'+bg+';">'
+      +'<input type="radio" name="mastLamRad" '+(isActive?'checked':'')+' onchange="setMastLamActivo('+i+')" style="cursor:pointer;accent-color:var(--acc2);">'
+      +'<input type="text" value="'+c.label+'" placeholder="Código/color" oninput="mastLamColores['+i+'].label=this.value;saveMastLam()" style="flex:1;font-size:11px;padding:3px 6px;font-family:var(--mono);">'
+      +'<div class="iu" style="width:110px;flex-shrink:0;"><input type="number" value="'+c.precio+'" placeholder="$/kg" oninput="mastLamColores['+i+'].precio=parseFloat(this.value)||0;saveMastLam();recalc();updateMastLamResumen()" style="font-size:11px;padding:3px 6px;"><span class="u" style="font-size:9px;">$/kg</span></div>'
+      +'<button class="btn danger sm" onclick="removeMastLamColor('+i+')" style="padding:2px 7px;font-size:11px;">x</button>'
+      +'</div>';
+  }).join('');
+  updateMastLamResumen();
+}
+
+function updateMastLamResumen(){
+  var el = document.getElementById('mastLamCostoResumen');
+  if(!el) return;
+  var g2 = function(id){ var e=document.getElementById(id); return e?parseFloat(e.value)||0:0; };
+  var grumoLam = g2('grumoLam'), peLam = g2('peLam');
+  var total = grumoLam + peLam;
+  if(mastLamActivo < 0 || !mastLamColores[mastLamActivo] || !total){
+    el.textContent = 'Sin color activo — cMastLam = $0';
+    el.style.color = 'var(--t3)';
+    return;
+  }
+  var c = mastLamColores[mastLamActivo];
+  var kgMast = total * 0.02;
+  var costo = kgMast * c.precio;
+  el.innerHTML = '<span style="color:var(--t2);">'+c.label+'</span> · '
+    +kgMast.toFixed(1)+' kg × $'+c.precio.toLocaleString('es-AR')
+    +' = <span style="color:var(--acc2);font-weight:600;">$'+Math.round(costo).toLocaleString('es-AR')+'</span>';
+  el.style.color = 'var(--t2)';
+}
+
+function setMastLamActivo(idx){
+  mastLamActivo = idx;
+  saveMastLam();
+  buildLamCompSection();
+  recalc();
+}
+
+function clearMastLamActivo(){
+  mastLamActivo = -1;
+  saveMastLam();
+  buildLamCompSection();
+  recalc();
+}
+
+function addMastLamColor(){
+  mastLamColores.push({label:'Nuevo color', precio:0});
+  saveMastLam();
+  buildLamCompSection();
+}
+
+function removeMastLamColor(idx){
+  mastLamColores.splice(idx, 1);
+  if(mastLamActivo >= mastLamColores.length) mastLamActivo = -1;
+  saveMastLam();
+  buildLamCompSection();
+  recalc();
+}
+
+function getMastLamPrecioActivo(){
+  if(mastLamActivo < 0 || !mastLamColores[mastLamActivo]) return 0;
+  return mastLamColores[mastLamActivo].precio || 0;
 }
 
 // ==============================================================
@@ -1178,9 +1303,10 @@ function recalc(){
   });
 
   // MP LAMINADO
-  var cGrumoLam = grumoLam*g('pGL');
-  var cPeLam    = peLam*g('pPE');
-  var totalMPLam= cGrumoLam+cPeLam;
+  var cGrumoLam  = grumoLam*g('pGL');
+  var cPeLam     = peLam*g('pPE');
+  var cMastLam   = tipo==='lam' ? (grumoLam+peLam)*0.02*getMastLamPrecioActivo() : 0;
+  var totalMPLam = cGrumoLam+cPeLam+cMastLam;
 
   // VARIABLES
   var cGasoil   = g('cGasoil');
@@ -1218,7 +1344,7 @@ function recalc(){
   _calc = {dolar:dolar,totMts:totMts,totKg:totKg,grM2Prom:grM2Prom,totalGeneral:totalGeneral,
     costoPorKg:costoPorKg,costoPorMts:costoPorMts,ftoResults:ftoResults,
     totalFijos:totalFijos,totalMPHilo:totalMPHilo,totalMPLam:totalMPLam,totalVarProd:totalVarProd,cInversiones:cInversiones,
-    sueldos:sueldos,edesur:edesur,mpDetalle:mpDetalle,cGrumoLam:cGrumoLam,cPeLam:cPeLam,cGasoil:cGasoil,cAlm:cAlm,cFletes:cFletes};
+    sueldos:sueldos,edesur:edesur,mpDetalle:mpDetalle,cGrumoLam:cGrumoLam,cPeLam:cPeLam,cMastLam:cMastLam,cGasoil:cGasoil,cAlm:cAlm,cFletes:cFletes};
 
   renderKPIs(costoPorKg,costoPorMts,grM2Prom,totalGeneral,ftoResults['47'],dolar);
   renderCostBreakdown(totalFijos,totalMPHilo,totalMPLam,totalVarProd,cInversiones,totalGeneral,_calc);
@@ -1279,7 +1405,7 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,cInv,total,c){
     +'<div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--acc2);text-transform:uppercase;margin-bottom:4px;">MP HILO</div>'
     +c.mpDetalle.map(function(m){ return row(m.nombre,m.cost,'var(--acc2)'); }).join('')+'</div>'
     +(tipo==='lam'?'<div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--warn);text-transform:uppercase;margin-bottom:4px;">COATING LAMINADO</div>'
-      +row('Grumo XSD',c.cGrumoLam,'var(--warn)')+row('PE BC818/APP',c.cPeLam,'var(--warn)')+'</div>':'')
+      +row('Grumo XSD',c.cGrumoLam,'var(--warn)')+row('PE BC818/APP',c.cPeLam,'var(--warn)')+(c.cMastLam>0?row('Master ('+(mastLamActivo>=0&&mastLamColores[mastLamActivo]?mastLamColores[mastLamActivo].label:'color')+')',c.cMastLam,'var(--warn)'):'')+'</div>':'')
     +'<div style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--ok);text-transform:uppercase;margin-bottom:4px;">PRODUCCION / VARIABLES</div>'
     +row('Gasoil + fletes',c.cGasoil+c.cFletes,'var(--ok)')
     +row('Almuerzos + varios',c.cAlm,'var(--ok)')
@@ -1730,12 +1856,45 @@ function buildCfgAliasFields(){
 function buildCfgConsumFields(){
   var el = document.getElementById('cfgConsumFields');
   if(!el) return;
+  var customItems = getCustomConsumibles();
   el.innerHTML = CONSUMIBLES_ITEMS.map(function(c){
     return '<div class="field" style="margin-bottom:5px;">'
       +'<label>'+c.label+'</label>'
       +'<input type="text" id="cfg_consum_'+c.key+'" placeholder="'+c.defaultKw+'" style="font-size:11px;padding:5px 8px;font-family:var(--mono);" oninput="saveCfg()">'
       +'</div>';
-  }).join('');
+  }).join('')
+    + (customItems.length ? '<div style="margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Custom</div>' : '')
+    + customItems.map(function(c, i){
+      return '<div class="field" style="margin-bottom:5px;display:flex;align-items:center;gap:4px;">'
+        +'<div style="flex:1;">'
+        +'<label><input type="text" value="'+c.label+'" placeholder="Nombre" oninput="var a=getCustomConsumibles();a['+i+'].label=this.value;saveCustomConsumibles(a)" style="font-size:11px;padding:3px 6px;margin-bottom:3px;width:100%;"></label>'
+        +'<input type="text" id="cfg_custom_consum_'+i+'" value="'+c.kw+'" placeholder="keywords separados por coma" style="font-size:11px;padding:3px 6px;font-family:var(--mono);width:100%;" oninput="var a=getCustomConsumibles();a['+i+'].kw=this.value;saveCustomConsumibles(a)">'
+        +'</div>'
+        +'<button class="btn danger sm" onclick="removeCustomConsum('+i+')" style="padding:2px 7px;">x</button>'
+        +'</div>';
+    }).join('');
+}
+
+function getCustomConsumibles(){
+  try{ return JSON.parse(localStorage.getItem('pitec_consumibles_custom')||'[]'); }catch(e){ return []; }
+}
+
+function saveCustomConsumibles(arr){
+  localStorage.setItem('pitec_consumibles_custom', JSON.stringify(arr));
+}
+
+function addCustomConsum(){
+  var arr = getCustomConsumibles();
+  arr.push({label:'Nuevo insumo', kw:''});
+  saveCustomConsumibles(arr);
+  buildCfgConsumFields();
+}
+
+function removeCustomConsum(idx){
+  var arr = getCustomConsumibles();
+  arr.splice(idx,1);
+  saveCustomConsumibles(arr);
+  buildCfgConsumFields();
 }
 
 function getMPAliases(key){
@@ -2018,6 +2177,40 @@ function renderMatConsumibles(ocRows){
       +'</div>'
       +'</div>'
       +'</div>';
+  });
+
+  // Custom consumibles
+  var customArr = getCustomConsumibles();
+  customArr.forEach(function(item){
+    if(!item.label || !item.kw) return;
+    var kws = item.kw.split(',').map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
+    var matched = pitecSolo.filter(function(r){ return matchDesc(r.descripcion, kws); });
+    if(!matched.length){
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
+        +'<div style="display:flex;justify-content:space-between;">'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+item.label+'</span>'
+        +'<span style="font-family:var(--mono);font-size:9px;color:var(--t3);">sin OC</span></div></div>';
+      return;
+    }
+    var sorted = matched.slice().sort(function(a,b){ if(a.fecha&&b.fecha) return b.fecha-a.fecha; return 0; });
+    var lastOC = sorted[0];
+    var ultimoPrecio = lastOC.importe_ars;
+    var ultimaFecha = lastOC.fecha ? lastOC.fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '?';
+    var recientes = sorted.slice(0,12);
+    var totalARS = recientes.reduce(function(s,r){ return s+(r.importe_ars||0); }, 0);
+    var mesesSpan = 1;
+    if(recientes.length>1 && recientes[0].fecha && recientes[recientes.length-1].fecha){
+      var ms = recientes[0].fecha - recientes[recientes.length-1].fecha;
+      mesesSpan = Math.max(1, Math.round(ms/(30*24*3600*1000)));
+    }
+    var promMensual = Math.round(totalARS/mesesSpan);
+    html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+      +'<div><div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+item.label+'</div>'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">Última OC: '+ultimaFecha+' · '+matched.length+' compras</div></div>'
+      +'<div style="text-align:right;"><div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acc2);">$'+promMensual.toLocaleString('es-AR')+'/mes</div>'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">último: $'+ultimoPrecio.toLocaleString('es-AR')+'</div></div>'
+      +'</div></div>';
   });
 
   el.innerHTML = html || '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">Configura los keywords en Config → Consumibles.</div>';
