@@ -1698,9 +1698,8 @@ function getSueldoIdForMes(mes, anio){
 }
 
 // ==============================================================
-// ARRANQUE
+// ARRANQUE — se llama al final del script (después de todas las declaraciones)
 // ==============================================================
-init();
 
 // ─── EXPERIMENTAL MODE ────────────────────────────────────
 var EXP_INPUTS = ['dolar','sueldos','totMts','totKg','grumoLam','peLam',
@@ -1999,6 +1998,9 @@ window.addEventListener('load', function(){
 setInterval(async function(){
   if(accessToken) await loadAllFromDrive();
 }, 30*60*1000);
+
+// ARRANQUE — aqui todas las variables ya están declaradas
+init();
 </script>
 </body>
 </html>
