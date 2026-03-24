@@ -217,11 +217,9 @@ body.experimental .exp-compare{display:block;}
 <div class="side">
   <div class="side-tabs">
     <div class="side-tab active" onclick="showSidePanel('datos',this)">Datos</div>
-    <div class="side-tab" onclick="showSidePanel('gastos',this)">Gastos</div>
     <div class="side-tab" onclick="showSidePanel('formula',this)">Formula</div>
     <div class="side-tab" onclick="showSidePanel('nav',this)">Navegante</div>
-    <div class="side-tab" onclick="showSidePanel('inv',this)">Inversiones</div>
-    <div class="side-tab" onclick="showSidePanel('fac',this)">Facturas</div>
+    <div class="side-tab" onclick="showSidePanel('fac',this)">Facturas y Gastos</div>
     <div class="side-tab" onclick="showSidePanel('cfg',this)">Config</div>
   </div>
 
@@ -273,12 +271,35 @@ body.experimental .exp-compare{display:block;}
 
   <!-- PANEL GASTOS -->
   <div class="side-panel" id="panel-gastos">
-    <!-- SERVICIOS FIJOS - resumen compacto (detalle en tab FACTURAS) -->
+  </div><!-- /panel-gastos (vacío, mantenido por compatibilidad) -->
+
+  <!-- PANEL FORMULA -->
+  <div class="side-panel" id="panel-formula">
     <div>
-      <div class="s-head" style="display:flex;align-items:center;justify-content:space-between;">
-        Servicios fijos (facturas)
-        <span style="font-family:var(--mono);font-size:9px;color:var(--t3);font-weight:normal;text-transform:none;letter-spacing:0;">Ver detalle → tab FACTURAS</span>
-      </div>
+      <div class="s-head">Composicion del hilo (debe sumar 100%)</div>
+      <div id="compRows"></div>
+      <div id="compTotal" class="pct-total">Total: 0%</div>
+      <button class="btn ghost sm" style="margin-top:8px;width:100%;" onclick="addCompRow()">+ Agregar componente</button>
+    </div>
+    <div class="nota info">Cada componente se costea con el precio del grupo MP asignado. El coating laminado se calcula aparte con los kg reales de la Dinamica.</div>
+  </div>
+
+  <!-- PANEL NAVEGANTE -->
+  <div class="side-panel" id="panel-nav">
+    <div>
+      <div class="s-head">Precios Navegante ($/mts)</div>
+      <div id="navInputs"></div>
+    </div>
+  </div>
+
+  <!-- PANEL INV (vacío, mantenido por compatibilidad) -->
+  <div class="side-panel" id="panel-inv"></div>
+
+  <!-- PANEL FACTURAS Y GASTOS -->
+  <div class="side-panel" id="panel-fac">
+    <!-- SERVICIOS FIJOS - resumen arriba -->
+    <div>
+      <div class="s-head">Servicios fijos (facturas)</div>
       <div id="facturasResumen" style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px 12px;margin-top:4px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span style="font-family:var(--mono);font-size:10px;color:var(--t2);">Total servicios</span>
@@ -286,9 +307,16 @@ body.experimental .exp-compare{display:block;}
         </div>
         <div id="facCargadasResumen" style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:3px;">— sin datos —</div>
       </div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn acc" style="flex:1;font-size:10px;" onclick="procesarFacturasFaltantes()">Verificar faltantes</button>
+        <button class="btn ghost" style="flex:1;font-size:10px;" onclick="loadFacturasFromSheet()">Recargar Sheet</button>
+      </div>
+      <div id="facStatusDiv" style="margin-top:8px;"></div>
     </div>
+    <!-- GRILLA DE FACTURAS -->
+    <div id="facGrid" style="margin-top:8px;"></div>
     <!-- GASTOS VARIABLES -->
-    <div>
+    <div style="margin-top:8px;">
       <div class="s-head">Gastos variables del mes</div>
       <div class="field"><label>Gasoil</label><div class="iu"><input type="number" id="cGasoil" value="0" oninput="saveGastosLS();recalc()"><span class="u">ARS</span></div></div>
       <div class="field"><label>Almuerzos</label><div class="iu"><input type="number" id="cAlmuerzos" value="0" oninput="saveGastosLS();recalc()"><span class="u">ARS</span></div></div>
@@ -315,55 +343,7 @@ body.experimental .exp-compare{display:block;}
         <button class="btn acc sm" style="width:100%;" onclick="addProrr()">Agregar</button>
       </div>
     </div>
-  </div><!-- /panel-gastos -->
-
-  <!-- PANEL FORMULA -->
-  <div class="side-panel" id="panel-formula">
-    <div>
-      <div class="s-head">Composicion del hilo (debe sumar 100%)</div>
-      <div id="compRows"></div>
-      <div id="compTotal" class="pct-total">Total: 0%</div>
-      <button class="btn ghost sm" style="margin-top:8px;width:100%;" onclick="addCompRow()">+ Agregar componente</button>
-    </div>
-    <div class="nota info">Cada componente se costea con el precio del grupo MP asignado. El coating laminado se calcula aparte con los kg reales de la Dinamica.</div>
-  </div>
-
-  <!-- PANEL NAVEGANTE -->
-  <div class="side-panel" id="panel-nav">
-    <div>
-      <div class="s-head">Precios Navegante ($/mts)</div>
-      <div id="navInputs"></div>
-    </div>
-  </div>
-
-  <!-- PANEL INVERSIONES -->
-  <div class="side-panel" id="panel-inv">
-    <div>
-      <div class="s-head">Inversiones en amortizacion</div>
-      <div id="invList"></div>
-      <button class="btn ghost sm" style="margin-top:8px;width:100%;" onclick="openAddInv()">+ Agregar inversion manual</button>
-    </div>
-    <div id="addInvForm" style="display:none;margin-top:8px;">
-      <div class="field" style="margin-bottom:6px;"><label>Descripcion</label><input type="text" id="newInvDesc" placeholder="Ej: Chiller hiladora"></div>
-      <div class="field" style="margin-bottom:6px;"><label>Importe total (sin IVA)</label><div class="iu"><input type="number" id="newInvMonto" placeholder="0"><span class="u">ARS</span></div></div>
-      <div class="field" style="margin-bottom:6px;"><label>Mes inicio (Ej: Enero 2026)</label><input type="text" id="newInvMesInicio" placeholder="Enero 2026"></div>
-      <div class="field" style="margin-bottom:8px;"><label>Vida util (meses)</label><input type="number" id="newInvVida" value="60" min="1"></div>
-      <button class="btn acc sm" style="width:100%;" onclick="addInvManual()">Agregar</button>
-    </div>
-    <div class="nota info" style="margin-top:8px;">La cuota mensual se suma automaticamente al costo del mes.</div>
-  </div>
-
-  <!-- PANEL FACTURAS -->
-  <div class="side-panel" id="panel-fac">
-    <div>
-      <div class="s-head">Estado de facturas del mes</div>
-      <div class="nota info" style="margin-bottom:10px;font-size:9px;">Los valores se cargan automaticamente via Apps Script cuando subis el PDF a la carpeta de Drive correspondiente. Tambien podes cargar manualmente.</div>
-      <button class="btn acc" style="width:100%;margin-bottom:6px;" onclick="procesarFacturasFaltantes()">Verificar faltantes en Drive</button>
-      <button class="btn ghost" style="width:100%;font-size:10px;" onclick="loadFacturasFromSheet()">Recargar desde Sheet</button>
-      <div id="facStatusDiv" style="margin-top:8px;"></div>
-    </div>
-    <div id="facGrid" style="margin-top:8px;"></div>
-  </div>
+  </div><!-- /panel-fac -->
 
   <!-- PANEL CONFIG -->
   <div class="side-panel" id="panel-cfg">
@@ -1364,55 +1344,31 @@ function renderHistorial(){
 }
 
 // ==============================================================
-// DOLAR BNA
+// DOLAR BNA — lee directamente bna.com.ar/Personas via proxy
 // ==============================================================
 async function fetchDolarBNA(){
   var statusEl = document.getElementById('dolarStatus');
-  statusEl.textContent = 'Actualizando...';
-  statusEl.style.color = 'var(--t3)';
   var venta = null;
-
-  // Fuente 1: dolarapi.com
   try{
-    var r1 = await fetch('https://dolarapi.com/v1/dolares/oficial',{signal:AbortSignal.timeout(4000)});
-    var d1 = await r1.json();
-    if(d1.venta && d1.venta>100) venta = d1.venta;
+    var res = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent('https://www.bna.com.ar/Personas'),{signal:AbortSignal.timeout(10000)});
+    var d = await res.json();
+    var doc = new DOMParser().parseFromString(d.contents,'text/html');
+    doc.querySelectorAll('table tr').forEach(function(row){
+      if(venta) return;
+      var cells = row.querySelectorAll('td');
+      if(cells.length>=3 && cells[0].textContent.toLowerCase().includes('dolar')){
+        var v = parseFloat(cells[2].textContent.trim().replace(/\./g,'').replace(',','.'));
+        if(v>100) venta = v;
+      }
+    });
   }catch(e){}
-
-  // Fuente 2: bluelytics (BNA oficial)
-  if(!venta){
-    try{
-      var r2 = await fetch('https://api.bluelytics.com.ar/v2/latest',{signal:AbortSignal.timeout(4000)});
-      var d2 = await r2.json();
-      if(d2.oficial && d2.oficial.value_sell>100) venta = d2.oficial.value_sell;
-    }catch(e){}
-  }
-
-  // Fuente 3: BNA directo — parsea la tabla de bna.com.ar/Personas via proxy
-  if(!venta){
-    try{
-      var proxyUrl = 'https://api.allorigins.win/get?url='+encodeURIComponent('https://www.bna.com.ar/Personas');
-      var r3 = await fetch(proxyUrl,{signal:AbortSignal.timeout(8000)});
-      var d3 = await r3.json();
-      var doc = new DOMParser().parseFromString(d3.contents,'text/html');
-      doc.querySelectorAll('table tr').forEach(function(row){
-        if(venta) return;
-        var cells = row.querySelectorAll('td');
-        if(cells.length>=3 && cells[0].textContent.toLowerCase().includes('dolar')){
-          var v = parseFloat(cells[2].textContent.trim().replace(/\./g,'').replace(',','.'));
-          if(v>100) venta = v;
-        }
-      });
-    }catch(e){}
-  }
-
   if(venta){
     document.getElementById('dolar').value = venta;
     statusEl.textContent = 'BNA venta $'+venta.toLocaleString('es-AR')+' · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     statusEl.style.color = 'var(--ok)';
     recalc();
   } else {
-    statusEl.textContent = 'Sin conexión — ingresá manualmente';
+    statusEl.textContent = 'Sin conexión';
     statusEl.style.color = 'var(--acc3)';
   }
 }
@@ -1497,6 +1453,7 @@ async function readSheet(sheetId, range){
 async function loadAllFromDrive(){
   if(_loadingDrive) return;
   _loadingDrive = true;
+  try{
   var statusEl = document.getElementById('driveStatus');
   statusEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--warn);text-align:center;"><span class="spinner"></span> Cargando desde Drive...</div>';
 
@@ -1630,7 +1587,7 @@ async function loadAllFromDrive(){
   updateDriveStatus(results, errors);
   recalc();
   refreshFmtHints();
-  _loadingDrive = false;
+  } finally { _loadingDrive = false; }
 }
 
 function updateDriveStatus(results, errors){
@@ -1971,14 +1928,11 @@ async function loadGastosManuales(){
 
 var _loadingDrive = false;
 
-// Cuando el usuario cambia el mes/año: recarga todo desde Drive si está logueado
-async function onMesChange(){
+// Cuando el usuario cambia el mes/año: recarga facturas + gastos del mes seleccionado
+function onMesChange(){
   recalc();
-  if(accessToken){
-    await loadAllFromDrive();
-  } else {
-    loadGastosManuales();
-  }
+  loadGastosManuales();
+  if(accessToken) loadFacturasFromSheet();
 }
 
 window.addEventListener('load', function(){
