@@ -1346,19 +1346,27 @@ function renderHistorial(){
 // ==============================================================
 // DOLAR BNA — lee directamente bna.com.ar/Personas via proxy
 // ==============================================================
+function fetchConTimeout(url, ms){
+  return Promise.race([
+    fetch(url),
+    new Promise(function(_,reject){ setTimeout(function(){ reject(new Error('timeout')); }, ms); })
+  ]);
+}
+
 async function fetchDolarBNA(){
   var statusEl = document.getElementById('dolarStatus');
+  if(statusEl){ statusEl.textContent = 'Actualizando...'; statusEl.style.color = 'var(--t3)'; }
   var venta = null;
-  // Fuente 1: dolarapi.com (JSON directo, rapido ~1s)
+  // Fuente 1: dolarapi.com (JSON directo, ~1s)
   try{
-    var r1 = await fetch('https://dolarapi.com/v1/dolares/oficial',{signal:AbortSignal.timeout(5000)});
+    var r1 = await fetchConTimeout('https://dolarapi.com/v1/dolares/oficial', 5000);
     var d1 = await r1.json();
     if(d1.venta && d1.venta>100) venta = d1.venta;
   }catch(e){}
-  // Fuente 2: BNA directo via proxy (si falla la anterior)
+  // Fuente 2: BNA via proxy si la anterior falla
   if(!venta){
     try{
-      var r2 = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent('https://www.bna.com.ar/Personas'),{signal:AbortSignal.timeout(10000)});
+      var r2 = await fetchConTimeout('https://api.allorigins.win/get?url='+encodeURIComponent('https://www.bna.com.ar/Personas'), 10000);
       var d2 = await r2.json();
       var doc = new DOMParser().parseFromString(d2.contents,'text/html');
       doc.querySelectorAll('table tr').forEach(function(row){
@@ -1371,14 +1379,13 @@ async function fetchDolarBNA(){
       });
     }catch(e){}
   }
+  if(!statusEl) statusEl = document.getElementById('dolarStatus');
   if(venta){
     document.getElementById('dolar').value = venta;
-    statusEl.textContent = 'BNA $'+venta.toLocaleString('es-AR')+' · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-    statusEl.style.color = 'var(--ok)';
+    if(statusEl){ statusEl.textContent = 'BNA $'+venta.toLocaleString('es-AR')+' · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); statusEl.style.color = 'var(--ok)'; }
     recalc();
   } else {
-    statusEl.textContent = 'Sin conexión';
-    statusEl.style.color = 'var(--acc3)';
+    if(statusEl){ statusEl.textContent = 'Sin conexión'; statusEl.style.color = 'var(--acc3)'; }
   }
 }
 
@@ -1460,9 +1467,6 @@ async function readSheet(sheetId, range){
 // - Sueldos: usa parseArgentino() correctamente
 // ==============================================================
 async function loadAllFromDrive(){
-  if(_loadingDrive) return;
-  _loadingDrive = true;
-  try{
   var statusEl = document.getElementById('driveStatus');
   statusEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--warn);text-align:center;"><span class="spinner"></span> Cargando desde Drive...</div>';
 
@@ -1597,7 +1601,6 @@ async function loadAllFromDrive(){
   updateDriveStatus(results, errors);
   recalc();
   refreshFmtHints();
-  } finally { _loadingDrive = false; }
 }
 
 function updateDriveStatus(results, errors){
