@@ -1368,18 +1368,29 @@ function renderHistorial(){
 // ==============================================================
 async function fetchDolarBNA(){
   var statusEl = document.getElementById('dolarStatus');
+  var venta = null;
+  // Fuente 1: dolarapi.com
   try{
-    var res = await fetch('https://dolarapi.com/v1/dolares/oficial',{signal:AbortSignal.timeout(5000)});
-    var d   = await res.json();
-    if(d.venta && d.venta>100){
-      document.getElementById('dolar').value = d.venta;
-      statusEl.textContent = 'BNA venta: $'+d.venta.toLocaleString('es-AR')+' - '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-      statusEl.style.color='var(--ok)';
-      recalc();
-    }
-  }catch(e){
-    statusEl.textContent='Sin conexion - valor manual';
-    statusEl.style.color='var(--acc3)';
+    var r1 = await fetch('https://dolarapi.com/v1/dolares/oficial',{signal:AbortSignal.timeout(5000)});
+    var d1 = await r1.json();
+    if(d1.venta && d1.venta>100) venta = d1.venta;
+  }catch(e){}
+  // Fuente 2 (fallback): bluelytics
+  if(!venta){
+    try{
+      var r2 = await fetch('https://api.bluelytics.com.ar/v2/latest',{signal:AbortSignal.timeout(5000)});
+      var d2 = await r2.json();
+      if(d2.oficial && d2.oficial.value_sell>100) venta = d2.oficial.value_sell;
+    }catch(e){}
+  }
+  if(venta){
+    document.getElementById('dolar').value = venta;
+    statusEl.textContent = 'BNA venta $'+venta.toLocaleString('es-AR')+' · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    statusEl.style.color = 'var(--ok)';
+    recalc();
+  } else {
+    statusEl.textContent = 'Sin conexión — ingresá manualmente';
+    statusEl.style.color = 'var(--acc3)';
   }
 }
 
@@ -1929,8 +1940,8 @@ async function loadGastosManuales(){
 // Cuando el usuario cambia el mes: recalcula Y recarga facturas + gastos
 function onMesChange(){
   recalc();
-  loadGastosManuales();
-  if(accessToken) loadFacturasFromSheet();
+  loadGastosManuales(); // siempre (usa localStorage si no hay Drive)
+  if(accessToken) loadAllFromDrive(); // recarga todo: sueldos, produccion, facturas, gastos
 }
 
 window.addEventListener('load', function(){
