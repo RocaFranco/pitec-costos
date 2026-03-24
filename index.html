@@ -235,7 +235,7 @@ body.experimental .exp-compare{display:block;}
     <!-- SUELDOS -->
     <div>
       <div class="s-head">Sueldos</div>
-      <div class="nota info" style="margin-bottom:6px;font-size:9px;">Se carga automaticamente desde el Sheet del mes (celda M26, hoja Sueldos). Configura el ID en panel Config.</div>
+      <div class="nota info" style="margin-bottom:6px;font-size:9px;">Se carga automaticamente desde el Sheet del mes. Configura el ID y la celda en panel Config.</div>
       <div class="field">
         <label>Total sueldos del mes</label>
         <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div>
@@ -1011,13 +1011,19 @@ async function processSueldos(input){
   try{
     var ab = await file.arrayBuffer();
     var wb = XLSX.read(ab, {type:'array', cellFormula:false});
-    var sheetName = wb.SheetNames.find(function(n){ return n.toLowerCase().includes('sueldo'); }) || wb.SheetNames[0];
+    var sueldosCelda = getSueldosCelda(); // ej: "Sueldos!AA2"
+    var celdaParts   = sueldosCelda.split('!');
+    var tabName      = celdaParts[0] || 'Sueldos';
+    var cellRef      = celdaParts[1] || 'AA2';
+    var sheetName = wb.SheetNames.find(function(n){ return n.toLowerCase()===tabName.toLowerCase(); })
+                 || wb.SheetNames.find(function(n){ return n.toLowerCase().includes('sueldo'); })
+                 || wb.SheetNames[0];
     var ws   = wb.Sheets[sheetName];
-    if(!ws) throw new Error('No se encontro hoja Sueldos. Hojas: '+wb.SheetNames.join(', '));
-    var cell = ws['M26'];
+    if(!ws) throw new Error('No se encontro hoja "'+tabName+'". Hojas: '+wb.SheetNames.join(', '));
+    var cell = ws[cellRef];
     var val  = cell ? (cell.v || cell.w) : null;
     var num  = typeof val === 'number' ? val : parseArgentino(String(val||''));
-    if(!num || num<=0) throw new Error('Celda M26 vacia o es 0. Valor encontrado: '+val);
+    if(!num || num<=0) throw new Error('Celda '+cellRef+' vacia o es 0. Valor encontrado: '+val);
     document.getElementById('sueldos').value = Math.round(num);
     statusEl.innerHTML = '<span style="color:var(--ok);">OK $'+Math.round(num).toLocaleString('es-AR')+'</span>';
     refreshFmtHints(); recalc();
@@ -1480,13 +1486,14 @@ async function loadAllFromDrive(){
   try{
     var idSueldos = getSueldoIdForMes(mes, anio);
     if(idSueldos){
-      var dataSue = await readSheet(idSueldos, 'Sueldos!M26');
+      var sueldosCelda = getSueldosCelda();
+      var dataSue = await readSheet(idSueldos, sueldosCelda);
       var valSue  = parseArgentino(dataSue[0]&&dataSue[0][0] ? dataSue[0][0] : '0');
       if(valSue>0){
         document.getElementById('sueldos').value = Math.round(valSue);
         results.push('OK Sueldos: $'+Math.round(valSue).toLocaleString('es-AR'));
       } else {
-        errors.push('Sueldos: celda M26 vacia en '+mes);
+        errors.push('Sueldos: celda '+sueldosCelda+' vacia en '+mes);
       }
     } else {
       results.push('AVISO Sueldos: configurar ID del Sheet en panel Config');
@@ -1628,6 +1635,11 @@ function buildCfgSueldoFields(){
   if(!el) return;
   el.innerHTML =
     '<div class="field" style="margin-bottom:10px;">'
+    +'<label>Celda total sueldos</label>'
+    +'<input type="text" id="cfg_sue_celda" placeholder="Ej: Sueldos!AA2" style="font-size:11px;padding:5px 8px;font-family:var(--mono);" oninput="saveCfg()">'
+    +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:3px;">Hoja!Celda donde esta el total (default: Sueldos!AA2)</div>'
+    +'</div>'
+    +'<div class="field" style="margin-bottom:10px;">'
     +'<label>Año</label>'
     +'<div style="display:flex;align-items:center;gap:8px;">'
     +'<button class="btn ghost sm" onclick="changeCfgAnio(-1)" style="padding:2px 10px;">◀</button>'
@@ -1655,6 +1667,9 @@ function changeCfgAnio(delta){
 
 function saveCfg(){
   var cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
+  // guardar celda configurable
+  var celdaEl = document.getElementById('cfg_sue_celda');
+  if(celdaEl) cfg['sue_celda'] = celdaEl.value.trim() || '';
   MESES.forEach(function(m){
     var el = document.getElementById('cfg_sue_'+m.toLowerCase());
     if(el && el.value.trim()){
@@ -1668,6 +1683,9 @@ function saveCfg(){
 function loadCfg(){
   try{
     var cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
+    // cargar celda configurable
+    var celdaEl = document.getElementById('cfg_sue_celda');
+    if(celdaEl) celdaEl.value = cfg['sue_celda'] || '';
     MESES.forEach(function(m){
       var el = document.getElementById('cfg_sue_'+m.toLowerCase());
       if(el){
@@ -1682,6 +1700,8 @@ function loadCfg(){
 function clearCfg(){
   if(confirm('Borrar toda la configuracion guardada?')){
     localStorage.removeItem('pitec_cfg');
+    var celdaEl = document.getElementById('cfg_sue_celda');
+    if(celdaEl) celdaEl.value = '';
     MESES.forEach(function(m){
       var el = document.getElementById('cfg_sue_'+m.toLowerCase());
       if(el) el.value = '';
@@ -1695,6 +1715,14 @@ function getSueldoIdForMes(mes, anio){
     // busca primero por mes+año, luego clave vieja
     return cfg['sue_'+mes.toLowerCase()+'_'+(anio||CFG_ANIO)] || cfg['sue_'+mes.toLowerCase()] || null;
   }catch(e){ return null; }
+}
+
+function getSueldosCelda(){
+  try{
+    var cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
+    var c = (cfg['sue_celda']||'').trim();
+    return c || 'Sueldos!AA2';
+  }catch(e){ return 'Sueldos!AA2'; }
 }
 
 // ==============================================================
