@@ -220,6 +220,7 @@ body.experimental .exp-compare{display:block;}
     <div class="side-tab" onclick="showSidePanel('formula',this)">Formula</div>
     <div class="side-tab" onclick="showSidePanel('nav',this)">Navegante</div>
     <div class="side-tab" onclick="showSidePanel('fac',this)">Facturas y Gastos</div>
+    <div class="side-tab" onclick="showSidePanel('mat',this)">Materiales</div>
     <div class="side-tab" onclick="showSidePanel('cfg',this)">Config</div>
   </div>
 
@@ -345,8 +346,45 @@ body.experimental .exp-compare{display:block;}
     </div>
   </div><!-- /panel-fac -->
 
+  <!-- PANEL MATERIALES -->
+  <div class="side-panel" id="panel-mat">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="s-head" style="margin:0">Materiales</div>
+      <button class="btn ghost sm" onclick="loadMateriales()" style="padding:4px 10px;">↺ Actualizar</button>
+    </div>
+    <div id="matStatus" style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:10px;"></div>
+
+    <!-- PRECIOS MP -->
+    <div class="s-head" style="margin-top:0;">Precios MP <span style="font-weight:400;font-size:9px;color:var(--t3);">← última OC</span></div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Configura los aliases en panel Config → Aliases MP</div>
+    <div id="matPreciosMP" style="margin-bottom:8px;"></div>
+    <button class="btn acc sm" onclick="aplicarPreciosMP()" style="width:100%;margin-bottom:14px;">✓ Aplicar precios al cálculo</button>
+
+    <!-- CONSUMIBLES -->
+    <div class="s-head">Consumibles del proceso</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Frecuencia y último precio de insumos de proceso. Configura en Config → Consumibles.</div>
+    <div id="matConsumibles" style="margin-bottom:14px;"></div>
+
+    <!-- MANTENIMIENTO -->
+    <div class="s-head">Mantenimiento Pitec</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Promedio histórico mensual desde OC.</div>
+    <div id="matMant"></div>
+  </div>
+
   <!-- PANEL CONFIG -->
   <div class="side-panel" id="panel-cfg">
+    <!-- ALIASES MP -->
+    <div style="margin-bottom:16px;">
+      <div class="s-head" style="margin-top:0">Aliases Materia Prima</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Palabras clave separadas por coma para matchear en la descripción de las OC. Ej: 1102L, KYD 6200T, LYD 6200K</div>
+      <div id="cfgAliasFields"></div>
+    </div>
+    <!-- CONSUMIBLES CONFIG -->
+    <div style="margin-bottom:16px;">
+      <div class="s-head">Consumibles del proceso</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Palabras clave para identificar cada insumo en las OC. Separadas por coma.</div>
+      <div id="cfgConsumFields"></div>
+    </div>
     <div>
       <div class="s-head">IDs Sheets de Sueldos por mes</div>
       <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Pega el ID del Google Sheet de sueldos de cada mes (la parte larga de la URL). Se guarda en el navegador.</div>
@@ -586,6 +624,8 @@ function refreshFmtHints(){
 // ==============================================================
 function init(){
   buildCfgSueldoFields();
+  buildCfgAliasFields();
+  buildCfgConsumFields();
   loadCfg();
   buildNavInputs();
   buildFtoInputRows();
@@ -1408,6 +1448,28 @@ var SHEET_IDS = {
   facturas: '1cWKvSWw9tEpRWnbnFEpb7WBkee_9xwspuAMhqBY4kAM',
 };
 
+var SHEET_ID_RETIRO = '1mt-vatf9b-G2KHyEl6g0NX2uANhJi-hNT9ewOOTLA4w';
+
+var MP_ITEMS = [
+  { key: 'gh',   label: 'Grumo Hilo',     campo: 'pGH'   },
+  { key: 'gl',   label: 'Grumo Laminado', campo: 'pGL'   },
+  { key: 'pe',   label: 'Polietileno',    campo: 'pPE'   },
+  { key: 'carb', label: 'Carbonato',      campo: 'pCarb' },
+  { key: 'mast', label: 'Masterbatch',    campo: 'pMast' },
+];
+
+var CONSUMIBLES_ITEMS = [
+  { key: 'cuchillas', label: 'Cuchillas OLFA 9mm',   defaultKw: 'olfa,ABB-50,cuchilla 9mm' },
+  { key: 'aceite',    label: 'Aceite Needle S2 M32', defaultKw: 'needle,aceite textil,S2 M32' },
+  { key: 'fleje',     label: 'Fleje Poliester 12mm', defaultKw: 'fleje,FLEJE POLIESTER' },
+  { key: 'cintadf',   label: 'Cinta Doble Faz 48',   defaultKw: 'doble faz,doble face' },
+  { key: 'cintaemb',  label: 'Cinta Embalar 48',     defaultKw: 'cinta embalar,embalar 48' },
+  { key: 'desengrasan',label:'Desengrasante 537/C',  defaultKw: 'desengrasante,537' },
+];
+
+var _ocFullData = null; // cache OC data
+var _matPreciosSugeridos = {}; // {campo: valor} para aplicar
+
 var accessToken = null;
 var tokenClient = null;
 
@@ -1554,7 +1616,7 @@ async function loadAllFromDrive(){
   // 5. PRECIOS MP - ultimas OC de PITEC
   try{
     var ocData = [];
-    var ocSheetNames = ['OC','Hoja1','Sheet1','Hoja 1','Sheet 1','Ordenes de compra','Ordenes','PITEC','Data','Compras'];
+    var ocSheetNames = ['Órdenes','OC','Hoja1','Sheet1','Hoja 1','Sheet 1','Ordenes de compra','Ordenes','PITEC','Data','Compras'];
     for(var si=0; si<ocSheetNames.length; si++){
       try{
         ocData = await readSheet(SHEET_IDS.oc, ocSheetNames[si]+'!A2:J5000');
@@ -1654,6 +1716,49 @@ function buildCfgSueldoFields(){
     }).join('');
 }
 
+function buildCfgAliasFields(){
+  var el = document.getElementById('cfgAliasFields');
+  if(!el) return;
+  el.innerHTML = MP_ITEMS.map(function(mp){
+    return '<div class="field" style="margin-bottom:5px;">'
+      +'<label>'+mp.label+'</label>'
+      +'<input type="text" id="cfg_alias_'+mp.key+'" placeholder="Ej: codigo1, codigo2, ..." style="font-size:11px;padding:5px 8px;font-family:var(--mono);" oninput="saveCfg()">'
+      +'</div>';
+  }).join('');
+}
+
+function buildCfgConsumFields(){
+  var el = document.getElementById('cfgConsumFields');
+  if(!el) return;
+  el.innerHTML = CONSUMIBLES_ITEMS.map(function(c){
+    return '<div class="field" style="margin-bottom:5px;">'
+      +'<label>'+c.label+'</label>'
+      +'<input type="text" id="cfg_consum_'+c.key+'" placeholder="'+c.defaultKw+'" style="font-size:11px;padding:5px 8px;font-family:var(--mono);" oninput="saveCfg()">'
+      +'</div>';
+  }).join('');
+}
+
+function getMPAliases(key){
+  try{
+    var cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
+    var raw = cfg['mp_alias_'+key]||'';
+    return raw.split(',').map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
+  }catch(e){ return []; }
+}
+
+function getConsumKw(key, defaultKw){
+  try{
+    var cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
+    var raw = cfg['consum_kw_'+key]||defaultKw||'';
+    return raw.split(',').map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
+  }catch(e){ return []; }
+}
+
+function matchDesc(desc, keywords){
+  var d = (desc||'').toLowerCase();
+  return keywords.some(function(k){ return k && d.includes(k); });
+}
+
 function changeCfgAnio(delta){
   CFG_ANIO += delta;
   var lbl = document.getElementById('cfgAnioLabel');
@@ -1677,6 +1782,16 @@ function saveCfg(){
       cfg['sue_'+m.toLowerCase()] = el.value.trim(); // backward compat
     }
   });
+  // aliases MP
+  MP_ITEMS.forEach(function(mp){
+    var el = document.getElementById('cfg_alias_'+mp.key);
+    if(el) cfg['mp_alias_'+mp.key] = el.value.trim();
+  });
+  // consumibles keywords
+  CONSUMIBLES_ITEMS.forEach(function(c){
+    var el = document.getElementById('cfg_consum_'+c.key);
+    if(el) cfg['consum_kw_'+c.key] = el.value.trim();
+  });
   localStorage.setItem('pitec_cfg', JSON.stringify(cfg));
 }
 
@@ -1692,6 +1807,14 @@ function loadCfg(){
         // primero busca por año, luego clave vieja
         el.value = cfg['sue_'+m.toLowerCase()+'_'+CFG_ANIO] || cfg['sue_'+m.toLowerCase()] || '';
       }
+    });
+    MP_ITEMS.forEach(function(mp){
+      var el = document.getElementById('cfg_alias_'+mp.key);
+      if(el) el.value = cfg['mp_alias_'+mp.key]||'';
+    });
+    CONSUMIBLES_ITEMS.forEach(function(c){
+      var el = document.getElementById('cfg_consum_'+c.key);
+      if(el) el.value = cfg['consum_kw_'+c.key]||'';
     });
     return cfg;
   }catch(e){ return {}; }
@@ -1723,6 +1846,236 @@ function getSueldosCelda(){
     var c = (cfg['sue_celda']||'').trim();
     return c || 'Sueldos!AA2';
   }catch(e){ return 'Sueldos!AA2'; }
+}
+
+// ==============================================================
+// MATERIALES - Precios MP, Consumibles, Mantenimiento
+// ==============================================================
+async function loadMateriales(){
+  if(!accessToken){
+    var el=document.getElementById('matStatus');
+    if(el) el.textContent='Conectar Drive primero';
+    return;
+  }
+  var statusEl = document.getElementById('matStatus');
+  if(statusEl){ statusEl.textContent='Cargando OC...'; statusEl.style.color='var(--t3)'; }
+  try{
+    // Leer OC - pestaña "Órdenes"
+    _ocFullData = null;
+    var rows = await readSheet(SHEET_IDS.oc, 'Órdenes!A2:Z5000');
+    _ocFullData = rows.map(function(r){
+      // Parsear fecha - puede ser número serial Excel o string
+      var fechaRaw = r[1]||'';
+      var fechaObj = null;
+      if(typeof fechaRaw === 'number'){
+        // Excel serial date
+        var d = new Date(Math.round((fechaRaw - 25569)*86400*1000));
+        if(!isNaN(d)) fechaObj = d;
+      } else if(fechaRaw){
+        var d2 = new Date(fechaRaw);
+        if(!isNaN(d2)) fechaObj = d2;
+      }
+      return {
+        fecha:      fechaObj,
+        fabrica:    String(r[2]||'').trim(),
+        categoria:  String(r[3]||'').trim(),
+        descripcion:String(r[4]||'').trim(),
+        cantidad:   parseArgentino(String(r[5]||'0')),
+        unidad:     String(r[6]||'').trim(),
+        precio_unit:parseArgentino(String(r[8]||'0')),
+        importe_ars:parseArgentino(String(r[9]||'0')),
+      };
+    }).filter(function(r){ return r.descripcion||r.fabrica; });
+
+    var pitecOC = _ocFullData.filter(function(r){
+      var f = r.fabrica.toLowerCase();
+      return f.includes('pitec');
+    });
+
+    // Renderizar las 3 secciones
+    renderMatPreciosMP(pitecOC);
+    renderMatConsumibles(pitecOC);
+    renderMatMant(pitecOC);
+
+    if(statusEl){
+      statusEl.textContent = pitecOC.length+' OC Pitec procesadas · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      statusEl.style.color='var(--ok)';
+    }
+  }catch(e){
+    if(statusEl){ statusEl.textContent='Error: '+e.message; statusEl.style.color='var(--acc3)'; }
+  }
+}
+
+function renderMatPreciosMP(ocRows){
+  var el = document.getElementById('matPreciosMP');
+  if(!el) return;
+  _matPreciosSugeridos = {};
+
+  var html = '';
+  MP_ITEMS.forEach(function(mp){
+    var aliases = getMPAliases(mp.key);
+    if(!aliases.length){
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);font-family:var(--mono);font-size:11px;">'
+        +'<span style="color:var(--t2);">'+mp.label+'</span>'
+        +'<span style="color:var(--t3);font-size:9px;">sin aliases config.</span></div>';
+      return;
+    }
+    // Filtrar OC que matcheen los aliases, no mantenimiento
+    var matched = ocRows.filter(function(r){
+      return !r.fabrica.toLowerCase().includes('mantenimiento') && matchDesc(r.descripcion, aliases);
+    });
+    if(!matched.length){
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);font-family:var(--mono);font-size:11px;">'
+        +'<span style="color:var(--t2);">'+mp.label+'</span>'
+        +'<span style="color:var(--acc3);font-size:9px;">sin OC encontradas</span></div>';
+      return;
+    }
+    // Tomar la más reciente (última por fecha, si no por posición)
+    var sorted = matched.slice().sort(function(a,b){
+      if(a.fecha && b.fecha) return b.fecha - a.fecha;
+      return 0;
+    });
+    var last = sorted[0];
+    var precio = last.precio_unit;
+    if(precio > 0){
+      _matPreciosSugeridos[mp.campo] = precio;
+      var fechaStr = last.fecha ? last.fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '?';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);">'
+        +'<div><div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+mp.label+'</div>'
+        +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">OC: '+fechaStr+' · '+last.unidad+'</div></div>'
+        +'<div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--acc2);">$'+precio.toLocaleString('es-AR')+'</div>'
+        +'</div>';
+    } else {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);font-family:var(--mono);font-size:11px;">'
+        +'<span style="color:var(--t2);">'+mp.label+'</span>'
+        +'<span style="color:var(--t3);font-size:9px;">precio $0 en OC</span></div>';
+    }
+  });
+  el.innerHTML = html || '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">No hay aliases configurados.</div>';
+}
+
+function aplicarPreciosMP(){
+  var aplicados = 0;
+  Object.keys(_matPreciosSugeridos).forEach(function(campo){
+    var el = document.getElementById(campo);
+    if(el){
+      el.value = _matPreciosSugeridos[campo];
+      aplicados++;
+    }
+  });
+  if(aplicados>0){ recalc(); alert('✓ '+aplicados+' precios actualizados'); }
+  else alert('Sin precios para aplicar. Configurá los aliases primero.');
+}
+
+function renderMatConsumibles(ocRows){
+  var el = document.getElementById('matConsumibles');
+  if(!el) return;
+
+  // Filtrar solo Pitec (no mantenimiento)
+  var pitecSolo = ocRows.filter(function(r){ return !r.fabrica.toLowerCase().includes('mantenimiento'); });
+
+  var html = '';
+  CONSUMIBLES_ITEMS.forEach(function(item){
+    var kws = getConsumKw(item.key, item.defaultKw);
+    var matched = pitecSolo.filter(function(r){ return matchDesc(r.descripcion, kws); });
+
+    if(!matched.length){
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
+        +'<div style="display:flex;justify-content:space-between;">'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+item.label+'</span>'
+        +'<span style="font-family:var(--mono);font-size:9px;color:var(--t3);">sin OC</span></div></div>';
+      return;
+    }
+
+    // Calcular frecuencia de compra y último precio
+    var sorted = matched.slice().sort(function(a,b){
+      if(a.fecha && b.fecha) return b.fecha - a.fecha;
+      return 0;
+    });
+    var lastOC = sorted[0];
+    var ultimoPrecio = lastOC.importe_ars;
+    var ultimaFecha = lastOC.fecha ? lastOC.fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '?';
+
+    // Calcular promedio mensual de gasto (últimas 12 compras o menos)
+    var recientes = sorted.slice(0,12);
+    var totalARS = recientes.reduce(function(s,r){ return s+(r.importe_ars||0); }, 0);
+    var mesesSpan = 1;
+    if(recientes.length > 1 && recientes[0].fecha && recientes[recientes.length-1].fecha){
+      var ms = recientes[0].fecha - recientes[recientes.length-1].fecha;
+      mesesSpan = Math.max(1, Math.round(ms / (30*24*3600*1000)));
+    }
+    var promMensual = Math.round(totalARS / mesesSpan);
+
+    html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+      +'<div>'
+      +'<div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+item.label+'</div>'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">Última OC: '+ultimaFecha+' · '+matched.length+' compras</div>'
+      +'</div>'
+      +'<div style="text-align:right;">'
+      +'<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acc2);">$'+promMensual.toLocaleString('es-AR')+'/mes</div>'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">último: $'+ultimoPrecio.toLocaleString('es-AR')+'</div>'
+      +'</div>'
+      +'</div>'
+      +'</div>';
+  });
+
+  el.innerHTML = html || '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">Configura los keywords en Config → Consumibles.</div>';
+}
+
+function renderMatMant(ocRows){
+  var el = document.getElementById('matMant');
+  if(!el) return;
+
+  var mantOC = ocRows.filter(function(r){ return r.fabrica.toLowerCase().includes('mantenimiento'); });
+  if(!mantOC.length){
+    el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">Sin OC de Mantenimiento Pitec.</div>';
+    return;
+  }
+
+  // Agrupar por mes para calcular promedio
+  var porMes = {};
+  mantOC.forEach(function(r){
+    if(!r.fecha) return;
+    var key = r.fecha.getFullYear()+'-'+String(r.fecha.getMonth()+1).padStart(2,'0');
+    if(!porMes[key]) porMes[key] = 0;
+    porMes[key] += (r.importe_ars||0);
+  });
+  var meses = Object.keys(porMes);
+  var totalMeses = meses.length;
+  var totalGasto = Object.values(porMes).reduce(function(s,v){ return s+v; }, 0);
+  var promMensual = totalMeses > 0 ? Math.round(totalGasto / totalMeses) : 0;
+
+  // Último mes con compras
+  var ultimoMes = meses.sort().reverse()[0] || '—';
+
+  // Agrupar por categoría
+  var porCat = {};
+  mantOC.forEach(function(r){
+    var cat = r.categoria || 'Sin categoría';
+    if(!porCat[cat]) porCat[cat] = 0;
+    porCat[cat] += (r.importe_ars||0);
+  });
+  var topCats = Object.entries(porCat).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+
+  var html = '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'
+    +'<div style="font-family:var(--mono);font-size:10px;color:var(--t2);">Promedio mensual</div>'
+    +'<div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--acc2);">$'+promMensual.toLocaleString('es-AR')+'</div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:10px;">'
+    +'<div style="font-family:var(--mono);font-size:10px;color:var(--t2);">Último mes c/ compras</div>'
+    +'<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">'+ultimoMes+'</div>'
+    +'</div>'
+    +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;">Top categorías</div>';
+
+  topCats.forEach(function(entry){
+    html += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-family:var(--mono);font-size:10px;">'
+      +'<span style="color:var(--t2);">'+entry[0]+'</span>'
+      +'<span style="color:var(--t1);">$'+Math.round(entry[1]).toLocaleString('es-AR')+'</span>'
+      +'</div>';
+  });
+
+  el.innerHTML = html;
 }
 
 // ==============================================================
