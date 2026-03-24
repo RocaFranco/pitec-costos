@@ -1368,21 +1368,44 @@ function renderHistorial(){
 // ==============================================================
 async function fetchDolarBNA(){
   var statusEl = document.getElementById('dolarStatus');
+  statusEl.textContent = 'Actualizando...';
+  statusEl.style.color = 'var(--t3)';
   var venta = null;
+
   // Fuente 1: dolarapi.com
   try{
-    var r1 = await fetch('https://dolarapi.com/v1/dolares/oficial',{signal:AbortSignal.timeout(5000)});
+    var r1 = await fetch('https://dolarapi.com/v1/dolares/oficial',{signal:AbortSignal.timeout(4000)});
     var d1 = await r1.json();
     if(d1.venta && d1.venta>100) venta = d1.venta;
   }catch(e){}
-  // Fuente 2 (fallback): bluelytics
+
+  // Fuente 2: bluelytics (BNA oficial)
   if(!venta){
     try{
-      var r2 = await fetch('https://api.bluelytics.com.ar/v2/latest',{signal:AbortSignal.timeout(5000)});
+      var r2 = await fetch('https://api.bluelytics.com.ar/v2/latest',{signal:AbortSignal.timeout(4000)});
       var d2 = await r2.json();
       if(d2.oficial && d2.oficial.value_sell>100) venta = d2.oficial.value_sell;
     }catch(e){}
   }
+
+  // Fuente 3: BNA directo — parsea la tabla de bna.com.ar/Personas via proxy
+  if(!venta){
+    try{
+      var proxyUrl = 'https://api.allorigins.win/get?url='+encodeURIComponent('https://www.bna.com.ar/Personas');
+      var r3 = await fetch(proxyUrl,{signal:AbortSignal.timeout(8000)});
+      var d3 = await r3.json();
+      var doc = new DOMParser().parseFromString(d3.contents,'text/html');
+      doc.querySelectorAll('table tr').forEach(function(row){
+        if(venta) return;
+        var cells = row.querySelectorAll('td');
+        if(cells.length>=3 && cells[0].textContent.toLowerCase().includes('dolar')){
+          var v = parseFloat(cells[2].textContent.trim().replace(/\./g,'').replace(',','.'));
+          if(v>100) venta = v;
+        }
+      });
+    }catch(e){}
+  }
+
   if(venta){
     document.getElementById('dolar').value = venta;
     statusEl.textContent = 'BNA venta $'+venta.toLocaleString('es-AR')+' · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
