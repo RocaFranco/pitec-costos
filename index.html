@@ -156,7 +156,7 @@ body.experimental .exp-compare{display:block;}
     <span id="alertLabel" class="hbadge warn" style="display:none;"></span>
     <button class="exp-toggle" id="btnExp" onclick="toggleExp()" title="Modo experimental: jugá con los números sin tocar datos reales">⚗ REAL</button>
     <span style="font-family:var(--mono);font-size:10px;color:var(--t3);" id="tsLabel">-</span>
-    <button id="btnLogin" onclick="handleLogin()" class="btn acc" style="font-size:10px;padding:5px 14px;">Conectar Drive</button>
+    <button id="btnLogin" onclick="handleLogin()" class="btn acc" style="font-size:10px;padding:5px 14px;" disabled>Cargando...</button>
     <button id="btnLogout" onclick="handleLogout()" class="btn ghost" style="font-size:10px;padding:5px 14px;display:none;">Desconectar</button>
     <span id="userLabel" style="font-family:var(--mono);font-size:10px;color:var(--ok);display:none;"></span>
   </div>
@@ -1409,6 +1409,9 @@ function initGoogleAuth(){
       }, 55*60*1000);
     }
   });
+  // GSI listo — habilitar el botón
+  var btn = document.getElementById('btnLogin');
+  if(btn){ btn.textContent = 'Conectar Drive'; btn.disabled = false; }
 }
 
 function handleLogin(){
