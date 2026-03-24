@@ -30,9 +30,12 @@ header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;di
 .ctrl-lbl{font-family:var(--mono);font-size:9px;color:var(--t3);white-space:nowrap;}
 .ctrl-bar select,.ctrl-bar input[type=number]{background:var(--surf2);border:1px solid var(--b2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:10px;padding:4px 8px;outline:none;}
 .ctrl-bar input[type=number]{width:72px;}
-.wrap{display:grid;grid-template-columns:560px 1fr;min-height:calc(100vh - 90px);}
-.side{background:var(--surf);border-right:1px solid var(--b);overflow-y:auto;display:flex;flex-direction:column;}
-.content{overflow-y:auto;background:var(--bg);}
+.wrap{display:flex;min-height:calc(100vh - 90px);}
+.side{background:var(--surf);border-right:1px solid var(--b);overflow-y:auto;display:flex;flex-direction:column;width:560px;min-width:560px;transition:width .3s ease,min-width .3s ease,opacity .3s ease;}
+.side.collapsed{width:0;min-width:0;opacity:0;overflow:hidden;border-right:none;}
+.content{overflow-y:auto;background:var(--bg);flex:1;transition:all .3s ease;}
+.sidebar-toggle{background:none;border:1px solid var(--b2);border-radius:5px;color:var(--t2);font-family:var(--mono);font-size:12px;padding:4px 10px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.sidebar-toggle:hover{border-color:var(--acc2);color:var(--acc2);}
 .side-tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;}
 .side-tab{flex:1;padding:10px 4px;text-align:center;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .side-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
@@ -151,10 +154,13 @@ body.experimental .exp-compare{display:block;}
 <body>
 
 <header>
-  <div class="logo">
-    <div class="pulse"></div>
-    <span>Costos Rafia</span>
-    <span style="color:var(--t3);font-weight:400;font-size:12px;margin-left:4px;">PITEC v4</span>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="sidebar-toggle" id="btnSidebarToggle" onclick="toggleSidebar()" title="Mostrar/ocultar panel lateral">◀ Panel</button>
+    <div class="logo">
+      <div class="pulse"></div>
+      <span>Costos Rafia</span>
+      <span style="color:var(--t3);font-weight:400;font-size:12px;margin-left:4px;">PITEC v4</span>
+    </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
     <a href="https://rocafranco.github.io/alamo-erp/" style="font-family:var(--mono);font-size:9px;color:var(--t3);text-decoration:none;padding:3px 8px;border:1px solid var(--b);border-radius:4px;">ERP Home</a>
@@ -2567,6 +2573,15 @@ function restoreSnapshot(snap){
   syncFacturasInputs();
   renderFacturasGrid();
   recalc();
+}
+
+function toggleSidebar(){
+  var side = document.querySelector('.side');
+  var btn  = document.getElementById('btnSidebarToggle');
+  if(!side) return;
+  var isCollapsed = side.classList.contains('collapsed');
+  side.classList.toggle('collapsed');
+  if(btn) btn.textContent = isCollapsed ? '◀ Panel' : '▶ Panel';
 }
 
 function toggleExp(){
