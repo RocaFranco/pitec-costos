@@ -1107,7 +1107,7 @@ function buildCompList(){
 
     return '<div style="margin-bottom:6px;border:1px solid '+brd+';border-radius:6px;background:'+bg+';overflow:hidden;">'
       +'<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;">'
-      +'<input type="radio" name="compRad" '+(isActive?'checked':'')+' onchange="setCompActivo('+i+')" style="cursor:pointer;accent-color:var(--acc2);flex-shrink:0;">'
+      +'<input type="radio" name="compRad" '+(isActive?'checked':'')+' onclick="if(compActivo==='+i+'){compActivo=-1;saveCompetidores();buildCompList();}else{setCompActivo('+i+');}" style="cursor:pointer;accent-color:var(--acc2);flex-shrink:0;">'
       +'<input type="text" value="'+escapeHtml(c.nombre)+'" placeholder="Nombre competidor" id="comp_nombre_'+i+'" '
       +'oninput="competidores['+i+'].nombre=this.value;saveCompetidores()" '
       +'style="flex:1;font-size:13px;padding:5px 8px;font-family:var(--mono);color:'+txtColor+';background:var(--surf3);border:1px solid var(--brd);border-radius:5px;">'
