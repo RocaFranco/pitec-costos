@@ -1928,11 +1928,11 @@ async function loadGastosManuales(){
 
 var _loadingDrive = false;
 
-// Cuando el usuario cambia el mes/año: recarga facturas + gastos del mes seleccionado
+// Cuando el usuario cambia el mes/año: recarga todo desde Drive si está conectado
 function onMesChange(){
   recalc();
-  loadGastosManuales();
-  if(accessToken) loadFacturasFromSheet();
+  if(accessToken) loadAllFromDrive();
+  else loadGastosManuales();
 }
 
 window.addEventListener('load', function(){
