@@ -1413,17 +1413,7 @@ function initGoogleAuth(){
 
 function handleLogin(){
   if(!tokenClient){
-    // GSI todavía no cargó — reintentar silenciosamente
-    var waited = 0;
-    var waitGSI = setInterval(function(){
-      waited += 100;
-      if(tokenClient){
-        clearInterval(waitGSI);
-        tokenClient.requestAccessToken({prompt:'select_account'});
-      } else if(waited >= 8000){
-        clearInterval(waitGSI);
-      }
-    }, 100);
+    alert('Google Sign-In aún no terminó de cargarse. Esperá unos segundos y hacé click de nuevo. Si el problema persiste, recargá la página (F5).');
     return;
   }
   tokenClient.requestAccessToken({prompt:'select_account'});
@@ -1920,13 +1910,16 @@ window.addEventListener('load', function(){
   }
   recalc();
 
-  var checkGIS = setInterval(function(){
-    if(window.google && window.google.accounts && window.google.accounts.oauth2){
-      clearInterval(checkGIS);
-      initGoogleAuth();
-    }
-  }, 200);
+  // Fallback por si onGoogleLibraryLoad ya corrió antes del load event
+  if(window.google && window.google.accounts && window.google.accounts.oauth2){
+    initGoogleAuth();
+  }
 });
+
+// Callback oficial de Google — se llama cuando el script GSI termina de cargar
+window.onGoogleLibraryLoad = function(){
+  initGoogleAuth();
+};
 
 // Auto-refresh cada 30 minutos si esta conectado
 setInterval(async function(){
