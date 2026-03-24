@@ -30,7 +30,7 @@ header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;di
 .ctrl-lbl{font-family:var(--mono);font-size:9px;color:var(--t3);white-space:nowrap;}
 .ctrl-bar select,.ctrl-bar input[type=number]{background:var(--surf2);border:1px solid var(--b2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:10px;padding:4px 8px;outline:none;}
 .ctrl-bar input[type=number]{width:72px;}
-.wrap{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 90px);}
+.wrap{display:grid;grid-template-columns:440px 1fr;min-height:calc(100vh - 90px);}
 .side{background:var(--surf);border-right:1px solid var(--b);overflow-y:auto;display:flex;flex-direction:column;}
 .content{overflow-y:auto;background:var(--bg);}
 .side-tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;}
@@ -2065,35 +2065,61 @@ async function loadMateriales(){
   }
 }
 
+function getMatManual(){
+  try{ return JSON.parse(localStorage.getItem('pitec_mat_manual')||'{}'); }catch(e){ return {}; }
+}
+function saveMatManual(key, val){
+  var d = getMatManual();
+  var v = parseFloat(String(val).replace(',','.'))||0;
+  if(v>0) d[key]=v; else delete d[key];
+  localStorage.setItem('pitec_mat_manual', JSON.stringify(d));
+}
+function _manualInput(storeKey, campo, placeholder, unidad){
+  var manual = getMatManual();
+  var val = manual[storeKey]||'';
+  if(val && campo) _matPreciosSugeridos[campo] = val;
+  return '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">'
+    +'<div class="iu" style="flex:1;"><input type="number" value="'+val+'" placeholder="'+placeholder+'" '
+    +'oninput="saveMatManual(\''+storeKey+'\',this.value)'+(campo?';_matPreciosSugeridos[\''+campo+'\']=parseFloat(this.value)||0':'')+'" '
+    +'style="font-size:11px;padding:4px 6px;border-color:var(--warn);"><span class="u">'+unidad+'</span></div>'
+    +'<span style="font-family:var(--mono);font-size:9px;color:var(--warn);">manual</span>'
+    +'</div>';
+}
+
 function renderMatPreciosMP(ocRows){
   var el = document.getElementById('matPreciosMP');
   if(!el) return;
   _matPreciosSugeridos = {};
 
+  // Cargar valores manuales guardados como base
+  var manual = getMatManual();
+  MP_ITEMS.forEach(function(mp){ if(manual['mp_'+mp.key]) _matPreciosSugeridos[mp.campo] = manual['mp_'+mp.key]; });
+
   var html = '';
   MP_ITEMS.forEach(function(mp){
     var aliases = getMPAliases(mp.key);
     if(!aliases.length){
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);font-family:var(--mono);font-size:11px;">'
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;">'
         +'<span style="color:var(--t2);">'+mp.label+'</span>'
-        +'<span style="color:var(--t3);font-size:9px;">sin aliases config.</span></div>';
+        +'<span style="color:var(--t3);font-size:9px;">configurar aliases →</span></div>'
+        +_manualInput('mp_'+mp.key, mp.campo, '$/kg estimado', '$/kg')
+        +'</div>';
       return;
     }
-    // Filtrar OC que matcheen los aliases, no mantenimiento
     var matched = ocRows.filter(function(r){
       return !r.fabrica.toLowerCase().includes('mantenimiento') && matchDesc(r.descripcion, aliases);
     });
     if(!matched.length){
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);font-family:var(--mono);font-size:11px;">'
-        +'<span style="color:var(--t2);">'+mp.label+'</span>'
-        +'<span style="color:var(--acc3);font-size:9px;">sin OC encontradas</span></div>';
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+mp.label+'</span>'
+        +'<span style="font-family:var(--mono);font-size:9px;color:var(--acc3);">sin OC — ingresá valor</span></div>'
+        +_manualInput('mp_'+mp.key, mp.campo, '$/kg estimado', '$/kg')
+        +'</div>';
       return;
     }
-    // Tomar la más reciente (última por fecha, si no por posición)
-    var sorted = matched.slice().sort(function(a,b){
-      if(a.fecha && b.fecha) return b.fecha - a.fecha;
-      return 0;
-    });
+    var sorted = matched.slice().sort(function(a,b){ if(a.fecha&&b.fecha) return b.fecha-a.fecha; return 0; });
     var last = sorted[0];
     var precio = last.precio_unit;
     if(precio > 0){
@@ -2105,9 +2131,12 @@ function renderMatPreciosMP(ocRows){
         +'<div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--acc2);">$'+precio.toLocaleString('es-AR')+'</div>'
         +'</div>';
     } else {
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);font-family:var(--mono);font-size:11px;">'
-        +'<span style="color:var(--t2);">'+mp.label+'</span>'
-        +'<span style="color:var(--t3);font-size:9px;">precio $0 en OC</span></div>';
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+mp.label+'</span>'
+        +'<span style="font-family:var(--mono);font-size:9px;color:var(--t3);">precio $0 en OC</span></div>'
+        +_manualInput('mp_'+mp.key, mp.campo, '$/kg estimado', '$/kg')
+        +'</div>';
     }
   });
   el.innerHTML = html || '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">No hay aliases configurados.</div>';
@@ -2140,9 +2169,11 @@ function renderMatConsumibles(ocRows){
 
     if(!matched.length){
       html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
-        +'<div style="display:flex;justify-content:space-between;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
         +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+item.label+'</span>'
-        +'<span style="font-family:var(--mono);font-size:9px;color:var(--t3);">sin OC</span></div></div>';
+        +'<span style="font-family:var(--mono);font-size:9px;color:var(--acc3);">sin OC — ingresá valor</span></div>'
+        +_manualInput('consum_'+item.key, null, '$/mes estimado', '$/mes')
+        +'</div>';
       return;
     }
 
@@ -2186,10 +2217,13 @@ function renderMatConsumibles(ocRows){
     var kws = item.kw.split(',').map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
     var matched = pitecSolo.filter(function(r){ return matchDesc(r.descripcion, kws); });
     if(!matched.length){
+      var customKey = 'consum_custom_'+i;
       html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
-        +'<div style="display:flex;justify-content:space-between;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
         +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+item.label+'</span>'
-        +'<span style="font-family:var(--mono);font-size:9px;color:var(--t3);">sin OC</span></div></div>';
+        +'<span style="font-family:var(--mono);font-size:9px;color:var(--acc3);">sin OC — ingresá valor</span></div>'
+        +_manualInput(customKey, null, '$/mes estimado', '$/mes')
+        +'</div>';
       return;
     }
     var sorted = matched.slice().sort(function(a,b){ if(a.fecha&&b.fecha) return b.fecha-a.fecha; return 0; });
