@@ -38,7 +38,7 @@ header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;di
 .side-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
 .side-panel{padding:16px;display:none;flex-direction:column;gap:12px;}
 .side-panel.active{display:flex;}
-.s-head{font-family:var(--mono);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--t2);padding-bottom:6px;border-bottom:1px solid var(--b);margin-bottom:6px;}
+.s-head{font-family:var(--mono);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text);padding-bottom:7px;border-bottom:1px solid var(--b);margin-bottom:8px;}
 .field{display:flex;flex-direction:column;gap:3px;}
 .field label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);}
 .iu{position:relative;}
@@ -241,7 +241,7 @@ body.experimental .exp-compare{display:block;}
     <!-- SUELDOS -->
     <div>
       <div class="s-head">Sueldos</div>
-      <div class="nota info" style="margin-bottom:8px;">Se carga automaticamente desde el Sheet del mes. Configura el ID y la celda en panel Config.</div>
+      <div class="nota info" style="margin-bottom:8px;font-size:9px;line-height:1.3;">Se carga automaticamente desde el Sheet del mes. Configura el ID y la celda en panel Config.</div>
       <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div>
       <div class="fmt-hint" id="hint_sueldos"></div>
     </div>
@@ -981,10 +981,10 @@ function buildLamCompSection(){
     var borderColor = isActive ? 'var(--acc2)' : 'var(--brd)';
     var bg = isActive ? 'rgba(100,200,100,0.06)' : 'var(--surf2)';
     return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;padding:6px 8px;border:1px solid '+borderColor+';border-radius:6px;background:'+bg+';">'
-      +'<input type="radio" name="mastLamRad" '+(isActive?'checked':'')+' onchange="setMastLamActivo('+i+')" style="cursor:pointer;accent-color:var(--acc2);">'
-      +'<input type="text" value="'+c.label+'" placeholder="Código/color" oninput="mastLamColores['+i+'].label=this.value;saveMastLam()" style="flex:1;font-size:11px;padding:3px 6px;font-family:var(--mono);">'
-      +'<div class="iu" style="width:110px;flex-shrink:0;"><input type="number" value="'+c.precio+'" placeholder="$/kg" oninput="mastLamColores['+i+'].precio=parseFloat(this.value)||0;saveMastLam();recalc();updateMastLamResumen()" style="font-size:11px;padding:3px 6px;"><span class="u" style="font-size:9px;">$/kg</span></div>'
-      +'<button class="btn danger sm" onclick="removeMastLamColor('+i+')" style="padding:2px 7px;font-size:11px;">x</button>'
+      +'<input type="radio" name="mastLamRad" '+(isActive?'checked':'')+' onchange="setMastLamActivo('+i+')" style="cursor:pointer;accent-color:var(--acc2);flex-shrink:0;">'
+      +'<input type="text" value="'+c.label+'" placeholder="Código/color" id="mast_label_'+i+'" oninput="mastLamColores['+i+'].label=this.value;saveMastLam()" style="flex:1;font-size:12px;padding:4px 8px;font-family:var(--mono);background:var(--surf3);border:1px solid var(--brd);border-radius:5px;">'
+      +'<div class="iu" style="width:120px;flex-shrink:0;"><input type="number" value="'+c.precio+'" placeholder="$/kg" oninput="mastLamColores['+i+'].precio=parseFloat(this.value)||0;saveMastLam();recalc();updateMastLamResumen()" style="font-size:12px;padding:4px 6px;"><span class="u">$/kg</span></div>'
+      +'<button class="btn danger sm" onclick="removeMastLamColor('+i+')" style="padding:2px 7px;">x</button>'
       +'</div>';
   }).join('');
   updateMastLamResumen();
@@ -1073,13 +1073,12 @@ function buildCompList(){
     var bg   = isActive ? 'rgba(71,200,255,0.07)' : 'var(--surf2)';
     var brd  = isActive ? 'var(--acc2)' : 'var(--brd)';
     var txtColor = isActive ? 'var(--acc2)' : 'var(--t1)';
-    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:8px 10px;border:1px solid '+brd+';border-radius:6px;background:'+bg+';cursor:pointer;" onclick="setCompActivo('+i+')">'
-      +'<input type="radio" name="compRad" '+(isActive?'checked':'')+' onchange="setCompActivo('+i+')" style="cursor:pointer;accent-color:var(--acc2);" onclick="event.stopPropagation()">'
-      +'<input type="text" value="'+escapeHtml(c.nombre)+'" placeholder="Nombre competidor" '
+    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:8px 10px;border:1px solid '+brd+';border-radius:6px;background:'+bg+';">'
+      +'<input type="radio" name="compRad" '+(isActive?'checked':'')+' onchange="setCompActivo('+i+')" style="cursor:pointer;accent-color:var(--acc2);flex-shrink:0;">'
+      +'<input type="text" value="'+escapeHtml(c.nombre)+'" placeholder="Nombre competidor" id="comp_nombre_'+i+'" '
       +'oninput="competidores['+i+'].nombre=this.value;saveCompetidores()" '
-      +'onclick="event.stopPropagation()" '
-      +'style="flex:1;font-size:13px;padding:3px 6px;font-family:var(--mono);color:'+txtColor+';background:transparent;border:none;border-bottom:1px solid var(--brd);">'
-      +'<button class="btn danger sm" onclick="event.stopPropagation();removeCompetidor('+i+')" style="padding:2px 8px;flex-shrink:0;">x</button>'
+      +'style="flex:1;font-size:13px;padding:5px 8px;font-family:var(--mono);color:'+txtColor+';background:var(--surf3);border:1px solid var(--brd);border-radius:5px;">'
+      +'<button class="btn danger sm" onclick="removeCompetidor('+i+')" style="padding:2px 8px;flex-shrink:0;">x</button>'
       +'</div>';
   }).join('');
 }
@@ -1140,9 +1139,10 @@ function setCompPrecio(idx, fto, campo, val){
 }
 
 function setCompActivo(idx){
+  var changed = compActivo !== idx;
   compActivo = idx;
   saveCompetidores();
-  buildCompList();
+  if(changed) buildCompList(); // solo rebuillea si cambia el activo, para no perder foco
   buildCompPrecios();
   aplicarCompPrecios();
 }
