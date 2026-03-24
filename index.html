@@ -585,8 +585,8 @@ function refreshFmtHints(){
 // INIT
 // ==============================================================
 function init(){
-  loadCfg();
   buildCfgSueldoFields();
+  loadCfg();
   buildNavInputs();
   buildFtoInputRows();
   buildFacturasGrid();
@@ -1349,22 +1349,31 @@ function renderHistorial(){
 async function fetchDolarBNA(){
   var statusEl = document.getElementById('dolarStatus');
   var venta = null;
+  // Fuente 1: dolarapi.com (JSON directo, rapido ~1s)
   try{
-    var res = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent('https://www.bna.com.ar/Personas'),{signal:AbortSignal.timeout(10000)});
-    var d = await res.json();
-    var doc = new DOMParser().parseFromString(d.contents,'text/html');
-    doc.querySelectorAll('table tr').forEach(function(row){
-      if(venta) return;
-      var cells = row.querySelectorAll('td');
-      if(cells.length>=3 && cells[0].textContent.toLowerCase().includes('dolar')){
-        var v = parseFloat(cells[2].textContent.trim().replace(/\./g,'').replace(',','.'));
-        if(v>100) venta = v;
-      }
-    });
+    var r1 = await fetch('https://dolarapi.com/v1/dolares/oficial',{signal:AbortSignal.timeout(5000)});
+    var d1 = await r1.json();
+    if(d1.venta && d1.venta>100) venta = d1.venta;
   }catch(e){}
+  // Fuente 2: BNA directo via proxy (si falla la anterior)
+  if(!venta){
+    try{
+      var r2 = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent('https://www.bna.com.ar/Personas'),{signal:AbortSignal.timeout(10000)});
+      var d2 = await r2.json();
+      var doc = new DOMParser().parseFromString(d2.contents,'text/html');
+      doc.querySelectorAll('table tr').forEach(function(row){
+        if(venta) return;
+        var cells = row.querySelectorAll('td');
+        if(cells.length>=3 && cells[0].textContent.toLowerCase().includes('dolar')){
+          var v = parseFloat(cells[2].textContent.trim().replace(/\./g,'').replace(',','.'));
+          if(v>100) venta = v;
+        }
+      });
+    }catch(e){}
+  }
   if(venta){
     document.getElementById('dolar').value = venta;
-    statusEl.textContent = 'BNA venta $'+venta.toLocaleString('es-AR')+' · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    statusEl.textContent = 'BNA $'+venta.toLocaleString('es-AR')+' · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     statusEl.style.color = 'var(--ok)';
     recalc();
   } else {
@@ -1463,8 +1472,9 @@ async function loadAllFromDrive(){
   var mesIdx  = MESES.indexOf(mes);
 
   // 1. SUELDOS
+  var anio = document.getElementById('selAnio').value;
   try{
-    var idSueldos = getSueldoIdForMes(mes);
+    var idSueldos = getSueldoIdForMes(mes, anio);
     if(idSueldos){
       var dataSue = await readSheet(idSueldos, 'Sueldos!M26');
       var valSue  = parseArgentino(dataSue[0]&&dataSue[0][0] ? dataSue[0][0] : '0');
@@ -1608,22 +1618,46 @@ function updateDriveStatus(results, errors){
 // ==============================================================
 var MESES_LOWER = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
+var CFG_ANIO = new Date().getFullYear();
+
 function buildCfgSueldoFields(){
   var el = document.getElementById('cfgSueldoFields');
   if(!el) return;
-  el.innerHTML = MESES.map(function(m){
-    return '<div class="field" style="margin-bottom:5px;">'
-      +'<label>'+m+'</label>'
-      +'<input type="text" id="cfg_sue_'+m.toLowerCase()+'" placeholder="ID del Sheet de sueldos de '+m+'" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">'
-      +'</div>';
-  }).join('');
+  el.innerHTML =
+    '<div class="field" style="margin-bottom:10px;">'
+    +'<label>Año</label>'
+    +'<div style="display:flex;align-items:center;gap:8px;">'
+    +'<button class="btn ghost sm" onclick="changeCfgAnio(-1)" style="padding:2px 10px;">◀</button>'
+    +'<span id="cfgAnioLabel" style="font-family:var(--mono);font-size:14px;font-weight:600;min-width:44px;text-align:center;">'+CFG_ANIO+'</span>'
+    +'<button class="btn ghost sm" onclick="changeCfgAnio(1)" style="padding:2px 10px;">▶</button>'
+    +'</div></div>'
+    + MESES.map(function(m){
+      return '<div class="field" style="margin-bottom:5px;">'
+        +'<label>'+m+'</label>'
+        +'<input type="text" id="cfg_sue_'+m.toLowerCase()+'" placeholder="ID Sheet sueldos '+m+' '+CFG_ANIO+'" style="font-size:11px;padding:5px 8px;" oninput="saveCfg()">'
+        +'</div>';
+    }).join('');
+}
+
+function changeCfgAnio(delta){
+  CFG_ANIO += delta;
+  var lbl = document.getElementById('cfgAnioLabel');
+  if(lbl) lbl.textContent = CFG_ANIO;
+  MESES.forEach(function(m){
+    var f = document.getElementById('cfg_sue_'+m.toLowerCase());
+    if(f) f.placeholder = 'ID Sheet sueldos '+m+' '+CFG_ANIO;
+  });
+  loadCfg();
 }
 
 function saveCfg(){
-  var cfg = {};
+  var cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
   MESES.forEach(function(m){
     var el = document.getElementById('cfg_sue_'+m.toLowerCase());
-    if(el && el.value.trim()) cfg['sue_'+m.toLowerCase()] = el.value.trim();
+    if(el && el.value.trim()){
+      cfg['sue_'+m.toLowerCase()+'_'+CFG_ANIO] = el.value.trim();
+      cfg['sue_'+m.toLowerCase()] = el.value.trim(); // backward compat
+    }
   });
   localStorage.setItem('pitec_cfg', JSON.stringify(cfg));
 }
@@ -1633,7 +1667,10 @@ function loadCfg(){
     var cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
     MESES.forEach(function(m){
       var el = document.getElementById('cfg_sue_'+m.toLowerCase());
-      if(el && cfg['sue_'+m.toLowerCase()]) el.value = cfg['sue_'+m.toLowerCase()];
+      if(el){
+        // primero busca por año, luego clave vieja
+        el.value = cfg['sue_'+m.toLowerCase()+'_'+CFG_ANIO] || cfg['sue_'+m.toLowerCase()] || '';
+      }
     });
     return cfg;
   }catch(e){ return {}; }
@@ -1649,10 +1686,11 @@ function clearCfg(){
   }
 }
 
-function getSueldoIdForMes(mes){
+function getSueldoIdForMes(mes, anio){
   try{
     var cfg = JSON.parse(localStorage.getItem('pitec_cfg')||'{}');
-    return cfg['sue_'+mes.toLowerCase()] || null;
+    // busca primero por mes+año, luego clave vieja
+    return cfg['sue_'+mes.toLowerCase()+'_'+(anio||CFG_ANIO)] || cfg['sue_'+mes.toLowerCase()] || null;
   }catch(e){ return null; }
 }
 
@@ -1904,8 +1942,11 @@ async function loadGastosManuales(){
 
   try{
     var fila    = 7 + mesIdx; // fila 7=Enero, 8=Feb...
-    var gasData = await readSheet(SHEET_IDS.gastos, 'Gastos_Manuales!C'+fila+':H'+fila);
-    var gasRow  = gasData[0] || [];
+    var gasData = null;
+    // intentar nombre de pestaña con guion bajo, luego con espacio
+    try{ gasData = await readSheet(SHEET_IDS.gastos, 'Gastos_Manuales!C'+fila+':H'+fila); }
+    catch(e1){ gasData = await readSheet(SHEET_IDS.gastos, 'Gastos Manuales!C'+fila+':H'+fila); }
+    var gasRow  = (gasData && gasData[0]) || [];
     var cargados = 0;
     GASTOS_CAMPOS.forEach(function(campo,i){
       var v = parseArgentino(gasRow[i]||'0');
@@ -1913,14 +1954,14 @@ async function loadGastosManuales(){
       if(v>0) cargados++;
     });
     if(cargados > 0) saveGastosLS();
-    else loadGastosLS(mes, anio);
+    else { try{ loadGastosLS(mes, anio); }catch(e){} }
     recalc();
     return cargados;
   }catch(e){
-    console.error('[Gastos] Error cargando hoja:', e.message);
-    var ds = document.getElementById('driveStatus');
-    if(ds) ds.innerHTML += '<div style="font-family:var(--mono);font-size:9px;color:var(--acc3);margin-top:4px;">⚠ Gastos: '+e.message+'</div>';
-    loadGastosLS(mes, anio);
+    console.error('[Gastos] Error:', e.message);
+    try{ loadGastosLS(mes, anio); }catch(e2){
+      GASTOS_CAMPOS.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    }
     recalc();
     return 0;
   }
