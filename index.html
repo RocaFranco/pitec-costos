@@ -235,11 +235,19 @@ tr.hi td{background:rgba(71,255,178,.04);}
 
   <!-- PANEL GASTOS -->
   <div class="side-panel" id="panel-gastos">
-    <!-- SERVICIOS FIJOS (facturas) -->
+    <!-- SERVICIOS FIJOS - resumen compacto (detalle en tab FACTURAS) -->
     <div>
-      <div class="s-head">Servicios fijos (facturas)</div>
-      <div class="nota info" style="margin-bottom:6px;font-size:9px;">Valores sin IVA. Se cargan automaticamente desde el Sheet de Facturas al conectar Drive. El Apps Script los actualiza al subir PDFs.</div>
-      <div id="facturasGrid"></div>
+      <div class="s-head" style="display:flex;align-items:center;justify-content:space-between;">
+        Servicios fijos (facturas)
+        <span style="font-family:var(--mono);font-size:9px;color:var(--t3);font-weight:normal;text-transform:none;letter-spacing:0;">Ver detalle → tab FACTURAS</span>
+      </div>
+      <div id="facturasResumen" style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px 12px;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--t2);">Total servicios</span>
+          <span id="facTotalResumen" style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);">$0</span>
+        </div>
+        <div id="facCargadasResumen" style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:3px;">— sin datos —</div>
+      </div>
     </div>
     <!-- GASTOS VARIABLES -->
     <div>
@@ -1020,6 +1028,18 @@ function recalc(){
   var cProrr  = getCuotasProrrateos();
   var totalFijos = sueldos+edesur+expensas+agua+residuos+starlink+ia+gili+incendio+fumig+cProrr;
 
+  // Actualizar resumen compacto de facturas en panel GASTOS
+  var totalServicios = edesur+expensas+agua+residuos+starlink+ia+gili+incendio+fumig;
+  var elTot = document.getElementById('facTotalResumen');
+  var elCarg = document.getElementById('facCargadasResumen');
+  if(elTot) elTot.textContent = fc(totalServicios);
+  if(elCarg){
+    var cargadas = SERVICIOS_FAC.filter(function(s){ return s.val>0; }).length;
+    var total    = SERVICIOS_FAC.length;
+    var color    = cargadas===total?'var(--ok)':cargadas===0?'var(--acc3)':'var(--warn)';
+    elCarg.innerHTML = '<span style="color:'+color+'">'+cargadas+'/'+total+' facturas cargadas</span> · <span style="cursor:pointer;color:var(--acc2);" onclick="showSidePanel('fac', document.querySelector('.side-tab:last-of-type'))">Ver detalle ↗</span>';
+  }
+
   // MP HILO
   var totalMPHilo = 0;
   var mpDetalle = composicion.map(function(c){
@@ -1391,17 +1411,9 @@ async function loadAllFromDrive(){
     results.push('OK Produccion por formato cargada');
   }catch(e){ errors.push('Produccion: '+e.message); }
 
-  // 3. GASTOS MANUALES - FIX: una sola llamada al rango C:H en lugar de 6 separadas
+  // 3. GASTOS MANUALES
   try{
-    var fila = 7 + mesIdx; // fila 7=Enero, 8=Feb...
-    var gasData = await readSheet(SHEET_IDS.gastos, 'Gastos_Manuales!C'+fila+':H'+fila);
-    var gasRow  = gasData[0] || [];
-    var campos  = ['cGasoil','cAlmuerzos','cFletes','cVarios','cMant','cOtros'];
-    var cargados = 0;
-    campos.forEach(function(campo,i){
-      var v = parseArgentino(gasRow[i]||'0');
-      if(v>0){ document.getElementById(campo).value = v; cargados++; }
-    });
+    var cargados = await loadGastosManuales();
     if(cargados>0) results.push('OK Gastos manuales cargados ('+cargados+'/6)');
   }catch(e){ errors.push('Gastos manuales: '+e.message); }
 
@@ -1543,10 +1555,34 @@ function getSueldoIdForMes(mes){
 // ==============================================================
 init();
 
-// Cuando el usuario cambia el mes: recalcula Y recarga facturas del sheet
+// Carga gastos variables del mes desde el sheet de Gastos_Manuales
+async function loadGastosManuales(){
+  if(!accessToken) return 0;
+  var mes    = document.getElementById('selMes').value;
+  var mesIdx = MESES.indexOf(mes);
+  if(mesIdx < 0) return 0;
+  var fila   = 7 + mesIdx; // fila 7=Enero, 8=Feb...
+  var gasData = await readSheet(SHEET_IDS.gastos, 'Gastos_Manuales!C'+fila+':H'+fila);
+  var gasRow  = gasData[0] || [];
+  var campos  = ['cGasoil','cAlmuerzos','cFletes','cVarios','cMant','cOtros'];
+  var cargados = 0;
+  campos.forEach(function(campo,i){
+    var v = parseArgentino(gasRow[i]||'0');
+    // Si el sheet tiene 0, limpiar el campo tambien para no dejar datos del mes anterior
+    document.getElementById(campo).value = v || '';
+    if(v>0) cargados++;
+  });
+  recalc();
+  return cargados;
+}
+
+// Cuando el usuario cambia el mes: recalcula Y recarga facturas + gastos del sheet
 function onMesChange(){
   recalc();
-  if(accessToken) loadFacturasFromSheet();
+  if(accessToken){
+    loadFacturasFromSheet();
+    loadGastosManuales();
+  }
 }
 
 window.addEventListener('load', function(){
