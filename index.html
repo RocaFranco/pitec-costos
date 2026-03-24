@@ -38,7 +38,7 @@ header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;di
 .side-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
 .side-panel{padding:16px;display:none;flex-direction:column;gap:12px;}
 .side-panel.active{display:flex;}
-.s-head{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);padding-bottom:6px;border-bottom:1px solid var(--b);margin-bottom:4px;}
+.s-head{font-family:var(--mono);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--t2);padding-bottom:6px;border-bottom:1px solid var(--b);margin-bottom:6px;}
 .field{display:flex;flex-direction:column;gap:3px;}
 .field label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);}
 .iu{position:relative;}
@@ -218,7 +218,7 @@ body.experimental .exp-compare{display:block;}
   <div class="side-tabs">
     <div class="side-tab active" onclick="showSidePanel('datos',this)">Datos</div>
     <div class="side-tab" onclick="showSidePanel('formula',this)">Formula</div>
-    <div class="side-tab" onclick="showSidePanel('nav',this)">Navegante</div>
+    <div class="side-tab" onclick="showSidePanel('nav',this)">Competencias</div>
     <div class="side-tab" onclick="showSidePanel('fac',this)">Facturas y Gastos</div>
     <div class="side-tab" onclick="showSidePanel('mat',this)">Materiales</div>
     <div class="side-tab" onclick="showSidePanel('cfg',this)">Config</div>
@@ -227,27 +227,23 @@ body.experimental .exp-compare{display:block;}
   <!-- PANEL DATOS -->
   <div class="side-panel active" id="panel-datos">
     <div>
-      <div class="s-head">Estado Drive</div>
-      <div id="driveStatus" style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-bottom:8px;">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--t3);text-align:center;">Sin conectar</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;border-bottom:1px solid var(--b);margin-bottom:6px;">
+        <span class="s-head" style="border:none;padding:0;margin:0;">Estado Drive</span>
+        <button class="btn ghost sm" onclick="toggleDriveStatus(this)" style="padding:3px 10px;font-size:10px;">▼ Ver</button>
+      </div>
+      <div id="driveStatusWrap" style="display:none;">
+        <div id="driveStatus" style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-bottom:8px;">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--t3);text-align:center;">Sin conectar</div>
+        </div>
       </div>
       <button onclick="loadAllFromDrive()" id="btnRefresh" class="btn ghost" style="width:100%;font-size:10px;display:none;">Actualizar desde Drive</button>
     </div>
     <!-- SUELDOS -->
     <div>
       <div class="s-head">Sueldos</div>
-      <div class="nota info" style="margin-bottom:6px;font-size:9px;">Se carga automaticamente desde el Sheet del mes. Configura el ID y la celda en panel Config.</div>
-      <div class="field">
-        <label>Total sueldos del mes</label>
-        <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div>
-        <div class="fmt-hint" id="hint_sueldos"></div>
-      </div>
-      <div style="margin-top:6px;">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:4px;">O subir Excel manualmente:</div>
-        <button class="btn ghost sm" style="width:100%;" onclick="document.getElementById('fileSueldos').click()">Subir Excel de sueldos</button>
-        <input type="file" id="fileSueldos" accept=".xlsx,.xls" style="display:none" onchange="processSueldos(this)">
-        <div id="sueldosFileStatus" style="font-family:var(--mono);font-size:9px;margin-top:4px;"></div>
-      </div>
+      <div class="nota info" style="margin-bottom:8px;">Se carga automaticamente desde el Sheet del mes. Configura el ID y la celda en panel Config.</div>
+      <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div>
+      <div class="fmt-hint" id="hint_sueldos"></div>
     </div>
     <!-- PRODUCCION -->
     <div>
@@ -314,10 +310,28 @@ body.experimental .exp-compare{display:block;}
     </div>
   </div>
 
-  <!-- PANEL NAVEGANTE -->
+  <!-- PANEL COMPETENCIAS -->
   <div class="side-panel" id="panel-nav">
+    <!-- Lista de competidores -->
     <div>
-      <div class="s-head">Precios Navegante ($/mts)</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="s-head" style="border:none;padding:0;margin:0;">Competencias</div>
+        <button class="btn ghost sm" onclick="addCompetidor()">+ Agregar</button>
+      </div>
+      <div id="compList" style="margin-bottom:10px;"></div>
+    </div>
+    <!-- Precios del competidor activo -->
+    <div id="compPreciosSection" style="display:none;">
+      <div id="compPreciosTabs" style="display:flex;gap:6px;margin-bottom:10px;">
+        <button id="compTabConv" class="btn acc sm" onclick="setCompTipoTab('conv')" style="flex:1;">Conv</button>
+        <button id="compTabLam" class="btn ghost sm" onclick="setCompTipoTab('lam')" style="flex:1;">Laminada</button>
+      </div>
+      <div class="s-head" id="compPreciosTitle">Precios competidor</div>
+      <div id="compPreciosRows"></div>
+      <button class="btn acc" style="width:100%;margin-top:10px;" onclick="aplicarCompPrecios()">✓ Usar estos precios</button>
+    </div>
+    <!-- Inputs ocultos para compatibilidad con recalc() -->
+    <div style="display:none;" id="navInputsHidden">
       <div id="navInputs"></div>
     </div>
   </div>
@@ -551,6 +565,9 @@ let tipo = 'lam';
 const HIST = {};
 var mastLamColores = []; // [{label, precio}]
 var mastLamActivo  = -1; // índice del color activo, -1 = sin color
+var competidores   = []; // [{nombre, precios_conv:{fto:{precio,gr}}, precios_lam:{fto:{precio,gr}}}]
+var compActivo     = -1; // índice del competidor activo
+var compTipoTab    = 'conv'; // 'conv' o 'lam'
 // ─── EXPERIMENTAL MODE STATE ──────────────────────────────
 var modoExp  = false;
 var snapReal = null; // snapshot of real input values
@@ -668,6 +685,8 @@ function init(){
   renderProrrList();
   loadMastLam();
   buildLamCompSection();
+  loadCompetidores();
+  buildCompPanel();
   setTipo('lam', document.getElementById('btnLam'));
   fetchDolarBNA();
   setInterval(fetchDolarBNA, 30*60*1000);
@@ -1022,6 +1041,141 @@ function removeMastLamColor(idx){
 function getMastLamPrecioActivo(){
   if(mastLamActivo < 0 || !mastLamColores[mastLamActivo]) return 0;
   return mastLamColores[mastLamActivo].precio || 0;
+}
+
+// ==============================================================
+// COMPETENCIAS — competidores con precios por formato
+// ==============================================================
+function loadCompetidores(){
+  try{ competidores = JSON.parse(localStorage.getItem('pitec_competidores')||'[]'); }catch(e){ competidores=[]; }
+  try{ compActivo   = parseInt(localStorage.getItem('pitec_comp_activo')||'-1'); }catch(e){ compActivo=-1; }
+}
+
+function saveCompetidores(){
+  localStorage.setItem('pitec_competidores', JSON.stringify(competidores));
+  localStorage.setItem('pitec_comp_activo',  String(compActivo));
+}
+
+function buildCompPanel(){
+  buildCompList();
+  buildCompPrecios();
+}
+
+function buildCompList(){
+  var el = document.getElementById('compList');
+  if(!el) return;
+  if(!competidores.length){
+    el.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--t3);padding:8px 0;">Sin competidores. Agregá con el botón +.</div>';
+    return;
+  }
+  el.innerHTML = competidores.map(function(c,i){
+    var isActive = i===compActivo;
+    var bg   = isActive ? 'rgba(71,200,255,0.07)' : 'var(--surf2)';
+    var brd  = isActive ? 'var(--acc2)' : 'var(--brd)';
+    var txtColor = isActive ? 'var(--acc2)' : 'var(--t1)';
+    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:8px 10px;border:1px solid '+brd+';border-radius:6px;background:'+bg+';cursor:pointer;" onclick="setCompActivo('+i+')">'
+      +'<input type="radio" name="compRad" '+(isActive?'checked':'')+' onchange="setCompActivo('+i+')" style="cursor:pointer;accent-color:var(--acc2);" onclick="event.stopPropagation()">'
+      +'<input type="text" value="'+escapeHtml(c.nombre)+'" placeholder="Nombre competidor" '
+      +'oninput="competidores['+i+'].nombre=this.value;saveCompetidores()" '
+      +'onclick="event.stopPropagation()" '
+      +'style="flex:1;font-size:13px;padding:3px 6px;font-family:var(--mono);color:'+txtColor+';background:transparent;border:none;border-bottom:1px solid var(--brd);">'
+      +'<button class="btn danger sm" onclick="event.stopPropagation();removeCompetidor('+i+')" style="padding:2px 8px;flex-shrink:0;">x</button>'
+      +'</div>';
+  }).join('');
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildCompPrecios(){
+  var secEl = document.getElementById('compPreciosSection');
+  if(!secEl) return;
+  if(compActivo<0 || !competidores[compActivo]){
+    secEl.style.display='none';
+    return;
+  }
+  secEl.style.display='block';
+  var c = competidores[compActivo];
+  var titleEl = document.getElementById('compPreciosTitle');
+  if(titleEl) titleEl.textContent = c.nombre + ' — ' + (compTipoTab==='conv'?'Rafia Convencional':'Rafia Laminada');
+
+  // Tab buttons
+  var btnConv = document.getElementById('compTabConv');
+  var btnLam  = document.getElementById('compTabLam');
+  if(btnConv){ btnConv.className = compTipoTab==='conv'?'btn acc sm':'btn ghost sm'; }
+  if(btnLam){  btnLam.className  = compTipoTab==='lam' ?'btn acc sm':'btn ghost sm'; }
+
+  var rowsEl = document.getElementById('compPreciosRows');
+  if(!rowsEl) return;
+  var precioKey = compTipoTab==='conv' ? 'precios_conv' : 'precios_lam';
+  if(!c[precioKey]) c[precioKey]={};
+  var ftos = ['40','47','53','57','60','71','82','102','120'];
+  rowsEl.innerHTML = ftos.map(function(fto){
+    var datos = c[precioKey][fto] || {precio:0, gr:0};
+    return '<div style="display:grid;grid-template-columns:40px 1fr 1fr;gap:6px;align-items:center;margin-bottom:6px;">'
+      +'<span style="font-family:var(--mono);font-size:13px;color:var(--t2);font-weight:500;">'+fto+'cm</span>'
+      +'<div class="iu"><input type="number" value="'+(datos.precio||'')+'" placeholder="$/mts" '
+      +'oninput="setCompPrecio('+compActivo+',\''+fto+'\',\'precio\',this.value)" '
+      +'style="font-size:12px;padding:5px 36px 5px 8px;"><span class="u">$/mts</span></div>'
+      +'<div class="iu"><input type="number" value="'+(datos.gr||'')+'" placeholder="gr/m²" '
+      +'oninput="setCompPrecio('+compActivo+',\''+fto+'\',\'gr\',this.value)" '
+      +'style="font-size:12px;padding:5px 42px 5px 8px;"><span class="u">gr/m²</span></div>'
+      +'</div>';
+  }).join('');
+}
+
+function setCompPrecio(idx, fto, campo, val){
+  if(!competidores[idx]) return;
+  var precioKey = compTipoTab==='conv' ? 'precios_conv' : 'precios_lam';
+  if(!competidores[idx][precioKey]) competidores[idx][precioKey]={};
+  if(!competidores[idx][precioKey][fto]) competidores[idx][precioKey][fto]={precio:0,gr:0};
+  competidores[idx][precioKey][fto][campo] = parseFloat(val)||0;
+  saveCompetidores();
+  // Actualizar nv input en tiempo real si este es el activo
+  if(idx===compActivo && campo==='precio'){
+    var nvEl = document.getElementById('nv'+fto);
+    if(nvEl){ nvEl.value = val; recalc(); }
+  }
+}
+
+function setCompActivo(idx){
+  compActivo = idx;
+  saveCompetidores();
+  buildCompList();
+  buildCompPrecios();
+  aplicarCompPrecios();
+}
+
+function setCompTipoTab(t){
+  compTipoTab = t;
+  buildCompPrecios();
+  aplicarCompPrecios();
+}
+
+function addCompetidor(){
+  competidores.push({nombre:'Nuevo competidor', precios_conv:{}, precios_lam:{}});
+  saveCompetidores();
+  buildCompList();
+}
+
+function removeCompetidor(idx){
+  competidores.splice(idx,1);
+  if(compActivo>=competidores.length) compActivo=-1;
+  saveCompetidores();
+  buildCompPanel();
+}
+
+function aplicarCompPrecios(){
+  if(compActivo<0 || !competidores[compActivo]) return;
+  var c = competidores[compActivo];
+  var precioKey = compTipoTab==='conv' ? 'precios_conv' : 'precios_lam';
+  var precios = c[precioKey] || {};
+  Object.keys(precios).forEach(function(fto){
+    var nvEl = document.getElementById('nv'+fto);
+    if(nvEl) nvEl.value = precios[fto].precio || 0;
+  });
+  recalc();
 }
 
 // ==============================================================
@@ -1660,8 +1814,21 @@ async function readSheet(sheetId, range){
 // - Prorrateos de Drive eliminados (el codigo los leia y los descartaba, desperdicio de API calls)
 // - Sueldos: usa parseArgentino() correctamente
 // ==============================================================
+function toggleDriveStatus(btn){
+  var wrap = document.getElementById('driveStatusWrap');
+  if(!wrap) return;
+  var visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? '▼ Ver' : '▲ Ocultar';
+}
+
 async function loadAllFromDrive(){
   var statusEl = document.getElementById('driveStatus');
+  // Auto-expand on load
+  var wrap = document.getElementById('driveStatusWrap');
+  if(wrap) wrap.style.display = 'block';
+  var toggleBtn = wrap && wrap.previousElementSibling && wrap.previousElementSibling.querySelector('button');
+  if(toggleBtn) toggleBtn.textContent = '▲ Ocultar';
   statusEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--warn);text-align:center;"><span class="spinner"></span> Cargando desde Drive...</div>';
 
   var results = [];
