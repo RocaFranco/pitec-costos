@@ -2036,7 +2036,7 @@ async function loadAllFromDrive(){
     var ocSheetNames = ['Órdenes','OC','Hoja1','Sheet1','Hoja 1','Sheet 1','Ordenes de compra','Ordenes','PITEC','Data','Compras'];
     for(var si=0; si<ocSheetNames.length; si++){
       try{
-        ocData = await readSheet(SHEET_IDS.oc, ocSheetNames[si]+'!A2:J5000');
+        ocData = await readSheet(SHEET_IDS.oc, ocSheetNames[si]+'!A2:L5000');
         if(ocData.length>0){ results.push('OK OC: '+ocData.length+' registros'); break; }
       }catch(e2){ continue; }
     }
@@ -2051,37 +2051,42 @@ async function loadAllFromDrive(){
     };
     var preciosPorGrupo = {grumoHilo:[],grumoLam:[],pe:[],carb:[],mast:[]};
 
+    var tcActual = parseFloat(document.getElementById('dolar')?.value)||1415;
     ocData.forEach(function(row){
       var fabrica = String(row[2]||'').trim();
       if(!fabrica.toLowerCase().includes('pitec')) return;
-      var desc    = String(row[4]||'').trim().toUpperCase();
-      var precio  = parseArgentino(String(row[8]||'0'));
-      if(!precio || precio<=0) return;
-      var fecha   = row[1]||'';
+      var desc     = String(row[4]||'').trim().toUpperCase();
+      var cantidad = parseArgentino(String(row[5]||'0'));
+      var impUSD   = parseArgentino(String(row[11]||'0')); // col L: Importe total (USD)
+      // precio_usd = importe_usd / cantidad  → siempre dolarizado
+      var precUSD  = (cantidad>0 && impUSD>0) ? impUSD/cantidad : 0;
+      if(!precUSD || precUSD<=0) return;
+      var fecha = row[1]||'';
       Object.keys(GRUPOS_MP).forEach(function(grupo){
         if(GRUPOS_MP[grupo].some(function(cod){ return desc.includes(cod.toUpperCase()); })){
-          preciosPorGrupo[grupo].push({precio:precio, fecha:fecha});
+          preciosPorGrupo[grupo].push({precUSD:precUSD, fecha:fecha});
         }
       });
     });
 
-    function ultimoPrecio(arr){
+    function ultimoPrecioUSD(arr){
       if(!arr.length) return null;
       arr.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
-      return arr[0].precio;
+      return arr[0].precUSD; // USD/kg
     }
 
-    var pGH   = ultimoPrecio(preciosPorGrupo.grumoHilo);
-    var pGL   = ultimoPrecio(preciosPorGrupo.grumoLam);
-    var pPE   = ultimoPrecio(preciosPorGrupo.pe);
-    var pCarb = ultimoPrecio(preciosPorGrupo.carb);
-    var pMast = ultimoPrecio(preciosPorGrupo.mast);
+    var pGH_usd   = ultimoPrecioUSD(preciosPorGrupo.grumoHilo);
+    var pGL_usd   = ultimoPrecioUSD(preciosPorGrupo.grumoLam);
+    var pPE_usd   = ultimoPrecioUSD(preciosPorGrupo.pe);
+    var pCarb_usd = ultimoPrecioUSD(preciosPorGrupo.carb);
+    var pMast_usd = ultimoPrecioUSD(preciosPorGrupo.mast);
 
-    if(pGH)   { document.getElementById('pGH').value   = pGH;   results.push('OK Grumo hilo: $'+pGH.toLocaleString('es-AR')+'/kg'); }
-    if(pGL)   { document.getElementById('pGL').value   = pGL;   results.push('OK Grumo lam: $'+pGL.toLocaleString('es-AR')+'/kg'); }
-    if(pPE)   { document.getElementById('pPE').value   = pPE;   results.push('OK PE: $'+pPE.toLocaleString('es-AR')+'/kg'); }
-    if(pCarb) { document.getElementById('pCarb').value = pCarb; results.push('OK Carbonato: $'+pCarb.toLocaleString('es-AR')+'/kg'); }
-    if(pMast) { document.getElementById('pMast').value = pMast; results.push('OK Master: $'+pMast.toLocaleString('es-AR')+'/kg'); }
+    // Convertir USD → ARS usando TC actual para los campos del formulario
+    if(pGH_usd)   { var v=Math.round(pGH_usd*tcActual);   document.getElementById('pGH').value   = v; results.push('OK Grumo hilo: USD '+pGH_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
+    if(pGL_usd)   { var v=Math.round(pGL_usd*tcActual);   document.getElementById('pGL').value   = v; results.push('OK Grumo lam: USD '+pGL_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
+    if(pPE_usd)   { var v=Math.round(pPE_usd*tcActual);   document.getElementById('pPE').value   = v; results.push('OK PE: USD '+pPE_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
+    if(pCarb_usd) { var v=Math.round(pCarb_usd*tcActual); document.getElementById('pCarb').value = v; results.push('OK Carbonato: USD '+pCarb_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
+    if(pMast_usd) { var v=Math.round(pMast_usd*tcActual); document.getElementById('pMast').value = v; results.push('OK Master: USD '+pMast_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
   }catch(e){ errors.push('Precios MP: '+e.message); }
 
   updateDriveStatus(results, errors);
@@ -2325,15 +2330,22 @@ async function loadMateriales(){
         var d2 = new Date(fechaRaw);
         if(!isNaN(d2)) fechaObj = d2;
       }
+      var cantidad    = parseArgentino(String(r[5]||'0'));
+      var impUSD      = parseArgentino(String(r[11]||'0')); // col L: Importe total (USD)
+      // precio_usd = Importe total USD / Cantidad  → siempre en dólares, sin importar
+      // si la OC original fue en ARS o USD.
+      var precio_usd  = (cantidad > 0 && impUSD > 0) ? impUSD / cantidad : 0;
       return {
         fecha:      fechaObj,
         fabrica:    String(r[2]||'').trim(),
         categoria:  String(r[3]||'').trim(),
         descripcion:String(r[4]||'').trim(),
-        cantidad:   parseArgentino(String(r[5]||'0')),
+        cantidad:   cantidad,
         unidad:     String(r[6]||'').trim(),
-        precio_unit:parseArgentino(String(r[8]||'0')),
+        precio_unit:parseArgentino(String(r[8]||'0')), // ARS o USD según OC (mantener por compatibilidad)
         importe_ars:parseArgentino(String(r[9]||'0')),
+        importe_usd:impUSD,                             // col L: Importe total (USD)
+        precio_usd: precio_usd,                         // ← USAR ESTE: siempre en USD/unidad
       };
     }).filter(function(r){ return r.descripcion||r.fabrica; });
 
@@ -2414,15 +2426,16 @@ function renderMatPreciosMP(ocRows){
     }
     var sorted = matched.slice().sort(function(a,b){ if(a.fecha&&b.fecha) return b.fecha-a.fecha; return 0; });
     var last = sorted[0];
-    var precio = last.precio_unit;
-    if(precio > 0){
-      _matPreciosSugeridos[mp.campo] = precio;
-      var usdPrecio = (precio / dolarTc).toFixed(2);
+    // Usar precio_usd = importe_total_usd / cantidad → siempre dolarizado
+    var precioUSD = last.precio_usd;
+    if(precioUSD > 0){
+      _matPreciosSugeridos[mp.campo] = precioUSD * dolarTc; // guardar en ARS para recalc
       var fechaStr = last.fecha ? last.fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '?';
+      var arsEquiv = Math.round(precioUSD * dolarTc).toLocaleString('es-AR');
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);">'
         +'<div><div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+mp.label+'</div>'
-        +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">OC: '+fechaStr+' · '+last.unidad+' · $'+precio.toLocaleString('es-AR')+' ARS</div></div>'
-        +'<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--acc2);">USD '+usdPrecio+'/kg</div>'
+        +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">OC: '+fechaStr+' · cant: '+last.cantidad.toLocaleString('es-AR')+' '+last.unidad+' · ≈ $'+arsEquiv+' ARS al TC actual</div></div>'
+        +'<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--acc2);">USD '+precioUSD.toFixed(2)+'/kg</div>'
         +'</div>';
     } else {
       html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
