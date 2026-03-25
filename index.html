@@ -28,8 +28,9 @@ header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;di
 .ctrl-bar{background:var(--surf);border-bottom:1px solid var(--b);padding:7px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:70px;z-index:250;flex-wrap:wrap;}
 .ctrl-sep{width:1px;height:20px;background:var(--b2);flex-shrink:0;}
 .ctrl-lbl{font-family:var(--mono);font-size:12px;color:var(--t3);white-space:nowrap;font-weight:600;}
-.ctrl-bar select,.ctrl-bar input[type=number]{background:var(--surf2);border:1px solid var(--b2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:10px;padding:4px 8px;outline:none;}
+.ctrl-bar select,.ctrl-bar input[type=number]{background:var(--surf2);border:1px solid var(--b2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:13px;padding:5px 8px;outline:none;}
 .ctrl-bar input[type=number]{width:72px;}
+.ctrl-bar input[type=number]#dolar{width:100%;font-size:20px;font-weight:700;padding:6px 52px 6px 14px;letter-spacing:.02em;}
 .wrap{display:flex;min-height:calc(100vh - 110px);}
 .side{background:var(--surf);border-right:1px solid var(--b);overflow-y:auto;display:flex;flex-direction:column;width:560px;min-width:560px;transition:width .3s ease,min-width .3s ease,opacity .3s ease;}
 .side.collapsed{width:0;min-width:0;opacity:0;overflow:hidden;border-right:none;}
@@ -180,7 +181,7 @@ body.experimental .exp-compare{display:block;}
 <!-- BARRA CONTROL RAPIDO -->
 <div class="ctrl-bar">
   <span class="ctrl-lbl">USD BNA</span>
-  <div class="iu" style="width:230px;"><input type="number" id="dolar" value="1415" step="10" oninput="recalc()" style="font-size:20px;font-weight:700;padding:6px 52px 6px 14px;letter-spacing:.02em;"><span class="u" style="font-size:14px;font-weight:600;">ARS</span></div>
+  <div class="iu" style="width:230px;"><input type="number" id="dolar" value="1415" step="10" oninput="recalc()"><span class="u" style="font-size:14px;font-weight:600;">ARS</span></div>
   <span id="dolarStatus" style="font-family:var(--mono);font-size:12px;color:var(--t3);">Obteniendo...</span>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
     <select id="selMes" onchange="onMesChange()" style="font-size:13px;padding:5px 10px;">
