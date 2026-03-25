@@ -272,7 +272,7 @@ body.experimental .exp-compare{display:block;}
       <div class="field"><label>Grumo laminado XSD (USD/kg)</label><div class="iu"><input type="number" id="pGL" value="1.33" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
       <div class="field"><label>Polietileno BC818/APP (USD/kg)</label><div class="iu"><input type="number" id="pPE" value="1.36" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
       <div class="field"><label>Carbonato 1001BR/APC (USD/kg)</label><div class="iu"><input type="number" id="pCarb" value="0.75" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-      <div class="field"><label>Masterbatch promedio (USD/kg)</label><div class="iu"><input type="number" id="pMast" value="2.35" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+      <div class="field"><label>Masterbatch hilo (USD/kg)</label><div class="iu"><input type="number" id="pMast" value="2.35" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
     </div>
   </div><!-- /panel-datos -->
 
@@ -1860,7 +1860,7 @@ var MP_ITEMS = [
   { key: 'gl',   label: 'Grumo Laminado', campo: 'pGL'   },
   { key: 'pe',   label: 'Polietileno',    campo: 'pPE'   },
   { key: 'carb', label: 'Carbonato',      campo: 'pCarb' },
-  { key: 'mast', label: 'Masterbatch',    campo: 'pMast' },
+  { key: 'mast', label: 'Masterbatch hilo', campo: 'pMast' },
 ];
 
 var CONSUMIBLES_ITEMS = [
@@ -2337,16 +2337,17 @@ async function loadMateriales(){
       // si la OC original fue en ARS o USD.
       var precio_usd  = (cantidad > 0 && impUSD > 0) ? impUSD / cantidad : 0;
       return {
+        oc:         String(r[0]||'').trim(),             // col A: número de OC
         fecha:      fechaObj,
         fabrica:    String(r[2]||'').trim(),
         categoria:  String(r[3]||'').trim(),
         descripcion:String(r[4]||'').trim(),
         cantidad:   cantidad,
         unidad:     String(r[6]||'').trim(),
-        precio_unit:parseArgentino(String(r[8]||'0')), // ARS o USD según OC (mantener por compatibilidad)
+        precio_unit:parseArgentino(String(r[8]||'0')),
         importe_ars:parseArgentino(String(r[9]||'0')),
-        importe_usd:impUSD,                             // col L: Importe total (USD)
-        precio_usd: precio_usd,                         // ← USAR ESTE: siempre en USD/unidad
+        importe_usd:impUSD,
+        precio_usd: precio_usd,
       };
     }).filter(function(r){ return r.descripcion||r.fabrica; });
 
@@ -2435,7 +2436,7 @@ function renderMatPreciosMP(ocRows){
       var arsEquiv = Math.round(precioUSD * dolarTc).toLocaleString('es-AR');
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);">'
         +'<div><div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+mp.label+'</div>'
-        +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">OC: '+fechaStr+' · cant: '+last.cantidad.toLocaleString('es-AR')+' '+last.unidad+' · ≈ $'+arsEquiv+' ARS al TC actual</div></div>'
+        +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">OC #'+last.oc+' · '+fechaStr+' · "'+last.descripcion+'" · '+last.cantidad.toLocaleString('es-AR')+' '+last.unidad+'</div></div>'
         +'<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--acc2);">USD '+precioUSD.toFixed(2)+'/kg</div>'
         +'</div>';
     } else {
