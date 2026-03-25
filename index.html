@@ -42,16 +42,16 @@ header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;di
 .side-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
 .side-panel{padding:16px;display:none;flex-direction:column;gap:12px;}
 .side-panel.active{display:flex;}
-.s-head{font-family:var(--mono);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text);padding-bottom:7px;border-bottom:1px solid var(--b);margin-bottom:8px;}
-.field{display:flex;flex-direction:column;gap:3px;}
-.field label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);}
+.s-head{font-family:var(--mono);font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text);padding-bottom:7px;border-bottom:1px solid var(--b);margin-bottom:8px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-family:var(--mono);font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);}
 .iu{position:relative;}
 .iu input{padding-right:38px;}
 .iu .u{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:11px;color:var(--t3);pointer-events:none;}
-input,select,textarea{background:var(--surf2);border:1px solid var(--b);border-radius:6px;color:var(--text);font-family:var(--sans);font-size:14px;padding:9px 12px;outline:none;width:100%;transition:border-color .15s;}
+input,select,textarea{background:var(--surf2);border:1px solid var(--b);border-radius:6px;color:var(--text);font-family:var(--sans);font-size:16px;padding:9px 12px;outline:none;width:100%;transition:border-color .15s;}
 input:focus,select:focus{border-color:var(--acc2);}
 input[type="radio"],input[type="checkbox"]{width:auto;height:auto;padding:0;background:none;border:none;border-radius:0;font-size:inherit;}
-.nota{background:rgba(255,179,71,.06);border:1px solid rgba(255,179,71,.2);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--warn);line-height:1.5;}
+.nota{background:rgba(255,179,71,.06);border:1px solid rgba(255,179,71,.2);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:14px;color:var(--warn);line-height:1.5;}
 .nota.ok{background:rgba(71,255,178,.06);border-color:rgba(71,255,178,.2);color:var(--ok);}
 .nota.info{background:rgba(71,200,255,.05);border-color:rgba(71,200,255,.2);color:var(--acc2);}
 .nota.red{background:rgba(255,107,71,.06);border-color:rgba(255,107,71,.2);color:var(--acc3);}
@@ -115,7 +115,7 @@ tr.hi td{background:rgba(71,255,178,.04);}
 .sens-cell{padding:7px 10px;font-family:var(--mono);font-size:11px;flex:1;}
 .sens-row.cur{background:rgba(232,255,71,.04);}
 .sens-row.cur .sens-cell{color:var(--acc);}
-.fmt-hint{font-family:var(--mono);font-size:11px;color:var(--ok);margin-top:2px;text-align:right;}
+.fmt-hint{font-family:var(--mono);font-size:14px;color:var(--ok);margin-top:2px;text-align:right;}
 .spinner{width:14px;height:14px;border:2px solid var(--b2);border-top-color:var(--acc2);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
 /* ─── EXPERIMENTAL MODE ─────────────────────────────────── */
@@ -268,11 +268,11 @@ body.experimental .exp-compare{display:block;}
     <!-- PRECIOS MP -->
     <div>
       <div class="s-head">Precios MP (ultimo precio OC - sin IVA)</div>
-      <div class="field"><label>Grumo hilo KYD/LYD ($/kg)</label><div class="iu"><input type="number" id="pGH" value="1880" oninput="recalc()"><span class="u">$/kg</span></div></div>
-      <div class="field"><label>Grumo laminado XSD ($/kg)</label><div class="iu"><input type="number" id="pGL" value="1880" oninput="recalc()"><span class="u">$/kg</span></div></div>
-      <div class="field"><label>Polietileno BC818/APP ($/kg)</label><div class="iu"><input type="number" id="pPE" value="1920" oninput="recalc()"><span class="u">$/kg</span></div></div>
-      <div class="field"><label>Carbonato 1001BR/APC ($/kg)</label><div class="iu"><input type="number" id="pCarb" value="1061" oninput="recalc()"><span class="u">$/kg</span></div></div>
-      <div class="field"><label>Masterbatch promedio ($/kg)</label><div class="iu"><input type="number" id="pMast" value="3325" oninput="recalc()"><span class="u">$/kg</span></div></div>
+      <div class="field"><label>Grumo hilo KYD/LYD (USD/kg)</label><div class="iu"><input type="number" id="pGH" value="1.33" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+      <div class="field"><label>Grumo laminado XSD (USD/kg)</label><div class="iu"><input type="number" id="pGL" value="1.33" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+      <div class="field"><label>Polietileno BC818/APP (USD/kg)</label><div class="iu"><input type="number" id="pPE" value="1.36" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+      <div class="field"><label>Carbonato 1001BR/APC (USD/kg)</label><div class="iu"><input type="number" id="pCarb" value="0.75" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+      <div class="field"><label>Masterbatch promedio (USD/kg)</label><div class="iu"><input type="number" id="pMast" value="2.35" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
     </div>
   </div><!-- /panel-datos -->
 
@@ -1507,7 +1507,8 @@ function recalc(){
   var peLam    = tipo==='lam'?g('peLam'):0;
   var DESP     = 1.05;
 
-  var preciosGrupo = {pGH:g('pGH'),pGL:g('pGL'),pPE:g('pPE'),pCarb:g('pCarb'),pMast:g('pMast')};
+  // pGH/pGL/pPE/pCarb/pMast now stored in USD → multiply by TC to get ARS for formula
+  var preciosGrupo = {pGH:g('pGH')*dolar,pGL:g('pGL')*dolar,pPE:g('pPE')*dolar,pCarb:g('pCarb')*dolar,pMast:g('pMast')*dolar};
 
   // FIJOS
   var sueldos = g('sueldos');
@@ -1918,9 +1919,9 @@ function updateLoginUI(loggedIn){
   if(loggedIn) document.getElementById('userLabel').textContent = 'Drive conectado';
 }
 
-async function readSheet(sheetId, range){
+async function readSheet(sheetId, range, unformatted){
   if(!accessToken) throw new Error('No autenticado');
-  var url = 'https://sheets.googleapis.com/v4/spreadsheets/'+sheetId+'/values/'+encodeURIComponent(range);
+  var url = 'https://sheets.googleapis.com/v4/spreadsheets/'+sheetId+'/values/'+encodeURIComponent(range)+(unformatted?'?valueRenderOption=UNFORMATTED_VALUE':'');
   var res = await fetch(url,{headers:{Authorization:'Bearer '+accessToken}});
   if(!res.ok){
     var err = await res.json();
@@ -2036,7 +2037,7 @@ async function loadAllFromDrive(){
     var ocSheetNames = ['Órdenes','OC','Hoja1','Sheet1','Hoja 1','Sheet 1','Ordenes de compra','Ordenes','PITEC','Data','Compras'];
     for(var si=0; si<ocSheetNames.length; si++){
       try{
-        ocData = await readSheet(SHEET_IDS.oc, ocSheetNames[si]+'!A2:L5000');
+        ocData = await readSheet(SHEET_IDS.oc, ocSheetNames[si]+'!A2:L5000', true);
         if(ocData.length>0){ results.push('OK OC: '+ocData.length+' registros'); break; }
       }catch(e2){ continue; }
     }
@@ -2081,12 +2082,12 @@ async function loadAllFromDrive(){
     var pCarb_usd = ultimoPrecioUSD(preciosPorGrupo.carb);
     var pMast_usd = ultimoPrecioUSD(preciosPorGrupo.mast);
 
-    // Convertir USD → ARS usando TC actual para los campos del formulario
-    if(pGH_usd)   { var v=Math.round(pGH_usd*tcActual);   document.getElementById('pGH').value   = v; results.push('OK Grumo hilo: USD '+pGH_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
-    if(pGL_usd)   { var v=Math.round(pGL_usd*tcActual);   document.getElementById('pGL').value   = v; results.push('OK Grumo lam: USD '+pGL_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
-    if(pPE_usd)   { var v=Math.round(pPE_usd*tcActual);   document.getElementById('pPE').value   = v; results.push('OK PE: USD '+pPE_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
-    if(pCarb_usd) { var v=Math.round(pCarb_usd*tcActual); document.getElementById('pCarb').value = v; results.push('OK Carbonato: USD '+pCarb_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
-    if(pMast_usd) { var v=Math.round(pMast_usd*tcActual); document.getElementById('pMast').value = v; results.push('OK Master: USD '+pMast_usd.toFixed(2)+'/kg (≈ $'+v.toLocaleString('es-AR')+')'); }
+    // Campos ahora en USD — guardar directo sin convertir
+    if(pGH_usd)   { document.getElementById('pGH').value   = pGH_usd.toFixed(4);   results.push('OK Grumo hilo: USD '+pGH_usd.toFixed(2)+'/kg'); }
+    if(pGL_usd)   { document.getElementById('pGL').value   = pGL_usd.toFixed(4);   results.push('OK Grumo lam: USD '+pGL_usd.toFixed(2)+'/kg'); }
+    if(pPE_usd)   { document.getElementById('pPE').value   = pPE_usd.toFixed(4);   results.push('OK PE: USD '+pPE_usd.toFixed(2)+'/kg'); }
+    if(pCarb_usd) { document.getElementById('pCarb').value = pCarb_usd.toFixed(4); results.push('OK Carbonato: USD '+pCarb_usd.toFixed(2)+'/kg'); }
+    if(pMast_usd) { document.getElementById('pMast').value = pMast_usd.toFixed(4); results.push('OK Master: USD '+pMast_usd.toFixed(2)+'/kg'); }
   }catch(e){ errors.push('Precios MP: '+e.message); }
 
   updateDriveStatus(results, errors);
@@ -2317,7 +2318,7 @@ async function loadMateriales(){
   try{
     // Leer OC - pestaña "Órdenes"
     _ocFullData = null;
-    var rows = await readSheet(SHEET_IDS.oc, 'Órdenes!A2:Z5000');
+    var rows = await readSheet(SHEET_IDS.oc, 'Órdenes!A2:Z5000', true);
     _ocFullData = rows.map(function(r){
       // Parsear fecha - puede ser número serial Excel o string
       var fechaRaw = r[1]||'';
@@ -2381,10 +2382,10 @@ function _manualInput(storeKey, campo, placeholder, unidad){
   var manual = getMatManual();
   var val = manual[storeKey]||''; // stored in USD
   var dolarTc = g('dolar')||1415;
-  if(val && campo) _matPreciosSugeridos[campo] = parseFloat(val)*dolarTc; // convert to ARS for recalc
+  if(val && campo) _matPreciosSugeridos[campo] = parseFloat(val)||0; // ya es USD
   return '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">'
     +'<div class="iu" style="flex:1;"><input type="number" value="'+val+'" placeholder="'+placeholder+'" '
-    +'oninput="saveMatManual(\''+storeKey+'\',this.value)'+(campo?';_matPreciosSugeridos[\''+campo+'\']=(parseFloat(this.value)||0)*g(\'dolar\')':'')+'" '
+    +'oninput="saveMatManual(\''+storeKey+'\',this.value)'+(campo?';_matPreciosSugeridos[\''+campo+'\']=parseFloat(this.value)||0':'')+'" '
     +'style="font-size:11px;padding:4px 6px;border-color:var(--warn);"><span class="u">'+unidad+'</span></div>'
     +'<span style="font-family:var(--mono);font-size:9px;color:var(--warn);">manual</span>'
     +'</div>';
@@ -2396,9 +2397,9 @@ function renderMatPreciosMP(ocRows){
   _matPreciosSugeridos = {};
   var dolarTc = g('dolar') || 1415;
 
-  // Cargar valores manuales guardados como base (guardados en USD → convertir a ARS para recalc)
+  // Cargar valores manuales guardados como base (en USD, campos también en USD)
   var manual = getMatManual();
-  MP_ITEMS.forEach(function(mp){ if(manual['mp_'+mp.key]) _matPreciosSugeridos[mp.campo] = manual['mp_'+mp.key] * dolarTc; });
+  MP_ITEMS.forEach(function(mp){ if(manual['mp_'+mp.key]) _matPreciosSugeridos[mp.campo] = parseFloat(manual['mp_'+mp.key])||0; });
 
   var html = '';
   MP_ITEMS.forEach(function(mp){
@@ -2429,7 +2430,7 @@ function renderMatPreciosMP(ocRows){
     // Usar precio_usd = importe_total_usd / cantidad → siempre dolarizado
     var precioUSD = last.precio_usd;
     if(precioUSD > 0){
-      _matPreciosSugeridos[mp.campo] = precioUSD * dolarTc; // guardar en ARS para recalc
+      _matPreciosSugeridos[mp.campo] = precioUSD; // guardar en USD (campo ya es USD)
       var fechaStr = last.fecha ? last.fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '?';
       var arsEquiv = Math.round(precioUSD * dolarTc).toLocaleString('es-AR');
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);">'
