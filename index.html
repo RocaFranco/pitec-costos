@@ -636,6 +636,29 @@ function parseArgentino(s) {
   return parseFloat(s.replace(/[^0-9.]/g,'')) || 0;
 }
 
+// Acepta string "DD-MM-YYYY", "DD/MM/YYYY", "DD-MM-YY", o serial Excel (numero).
+// Retorna Date o null si no se pudo parsear.
+function parseFechaOC(v){
+  if(v===null || v===undefined || v==='') return null;
+  if(typeof v === 'number' && v > 0){
+    // Excel serial: 25569 = dias entre 1899-12-30 y 1970-01-01
+    var ms = (v - 25569) * 86400 * 1000;
+    var d  = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  var s = String(v).trim();
+  var m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(m){
+    var dd = parseInt(m[1],10);
+    var mm = parseInt(m[2],10);
+    var yy = parseInt(m[3],10);
+    if(yy < 100) yy += 2000;
+    var d = new Date(yy, mm-1, dd);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 // ==============================================================
 // HELPERS
 // ==============================================================
@@ -2030,7 +2053,7 @@ async function loadAllFromDrive(){
     results.push('OK Facturas: '+cargadas+'/'+SERVICIOS_FAC.length+' cargadas');
   }catch(e){ errors.push('Facturas: '+e.message); }
 
-  // 5. PRECIOS MP - ultimas OC de PITEC
+  // 5. PRECIOS MP - ultima OC del ultimo año por grupo, usando aliases del CONFIG
   try{
     var ocData = [];
     var ocSheetNames = ['Órdenes','OC','Hoja1','Sheet1','Hoja 1','Sheet 1','Ordenes de compra','Ordenes','PITEC','Data','Compras'];
@@ -2042,51 +2065,54 @@ async function loadAllFromDrive(){
     }
     if(!ocData.length) throw new Error('No se encontro la hoja de OC');
 
-    var GRUPOS_MP = {
-      grumoHilo:['KYD 6110','LYD6200K','LYD 6200K','1102L'],
-      grumoLam: ['XSD 6200T','XSD6200T'],
-      pe:       ['BC818','BC 818','722','APP'],
-      carb:     ['1001 BR','1001BR','APC'],
-      mast:     ['09408','30080','30040','AMARILLO 114247','VERDE 113227','60SW','901021'],
-    };
-    var preciosPorGrupo = {grumoHilo:[],grumoLam:[],pe:[],carb:[],mast:[]};
+    // Limite: 365 dias desde hoy
+    var hoy       = new Date();
+    var hace1Anio = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
 
-    var tcActual = parseFloat(document.getElementById('dolar')?.value)||1415;
+    // Acumulador por grupo (clave = MP_ITEMS.key)
+    var preciosPorGrupo = {};
+    MP_ITEMS.forEach(function(mp){ preciosPorGrupo[mp.key] = []; });
+
     ocData.forEach(function(row){
-      var fabrica = String(row[2]||'').trim();
-      if(!fabrica.toLowerCase().includes('pitec')) return;
-      var desc     = String(row[4]||'').trim().toUpperCase();
+      var desc     = String(row[4]||'').trim().toLowerCase();
       var cantidad = parseArgentino(String(row[5]||'0'));
       var impUSD   = parseArgentino(String(row[11]||'0')); // col L: Importe total (USD)
-      // precio_usd = importe_usd / cantidad  → siempre dolarizado
       var precUSD  = (cantidad>0 && impUSD>0) ? impUSD/cantidad : 0;
       if(!precUSD || precUSD<=0) return;
-      var fecha = row[1]||'';
-      Object.keys(GRUPOS_MP).forEach(function(grupo){
-        if(GRUPOS_MP[grupo].some(function(cod){ return desc.includes(cod.toUpperCase()); })){
-          preciosPorGrupo[grupo].push({precUSD:precUSD, fecha:fecha});
+
+      var fechaOC = parseFechaOC(row[1]);
+      if(!fechaOC || fechaOC < hace1Anio) return;
+
+      MP_ITEMS.forEach(function(mp){
+        var aliases = getMPAliases(mp.key);
+        if(!aliases.length) return; // sin alias en CONFIG -> skip
+        if(aliases.some(function(kw){ return desc.includes(kw); })){
+          preciosPorGrupo[mp.key].push({precUSD:precUSD, fecha:fechaOC});
         }
       });
     });
 
     function ultimoPrecioUSD(arr){
       if(!arr.length) return null;
-      arr.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
-      return arr[0].precUSD; // USD/kg
+      arr.sort(function(a,b){ return b.fecha - a.fecha; });
+      return arr[0].precUSD;
     }
 
-    var pGH_usd   = ultimoPrecioUSD(preciosPorGrupo.grumoHilo);
-    var pGL_usd   = ultimoPrecioUSD(preciosPorGrupo.grumoLam);
-    var pPE_usd   = ultimoPrecioUSD(preciosPorGrupo.pe);
-    var pCarb_usd = ultimoPrecioUSD(preciosPorGrupo.carb);
-    var pMast_usd = ultimoPrecioUSD(preciosPorGrupo.mast);
-
-    // Campos ahora en USD — guardar directo sin convertir
-    if(pGH_usd)   { document.getElementById('pGH').value   = pGH_usd.toFixed(4);   results.push('OK Grumo hilo: USD '+pGH_usd.toFixed(2)+'/kg'); }
-    if(pGL_usd)   { document.getElementById('pGL').value   = pGL_usd.toFixed(4);   results.push('OK Grumo lam: USD '+pGL_usd.toFixed(2)+'/kg'); }
-    if(pPE_usd)   { document.getElementById('pPE').value   = pPE_usd.toFixed(4);   results.push('OK PE: USD '+pPE_usd.toFixed(2)+'/kg'); }
-    if(pCarb_usd) { document.getElementById('pCarb').value = pCarb_usd.toFixed(4); results.push('OK Carbonato: USD '+pCarb_usd.toFixed(2)+'/kg'); }
-    if(pMast_usd) { document.getElementById('pMast').value = pMast_usd.toFixed(4); results.push('OK Master: USD '+pMast_usd.toFixed(2)+'/kg'); }
+    MP_ITEMS.forEach(function(mp){
+      var aliases = getMPAliases(mp.key);
+      if(!aliases.length){
+        errors.push(mp.label+': sin alias en CONFIG');
+        return;
+      }
+      var p = ultimoPrecioUSD(preciosPorGrupo[mp.key]);
+      if(p){
+        var el = document.getElementById(mp.campo);
+        if(el) el.value = p.toFixed(4);
+        results.push('OK '+mp.label+': USD '+p.toFixed(2)+'/kg');
+      } else {
+        errors.push(mp.label+': sin OC en ultimo año');
+      }
+    });
   }catch(e){ errors.push('Precios MP: '+e.message); }
 
   updateDriveStatus(results, errors);
