@@ -199,29 +199,6 @@ body.experimental .exp-compare{display:block;}
   </div>
 </div>
 
-<!-- MODAL INVERSION -->
-<div class="modal-overlay" id="invModal">
-  <div class="modal">
-    <div class="modal-title">Compra grande detectada</div>
-    <div id="invModalContent"></div>
-    <div style="display:flex;gap:8px;margin-top:20px;">
-      <button class="btn ghost" onclick="classifyInv('gasto')">Es gasto del mes</button>
-      <button class="btn acc" onclick="showInvForm()">Es inversion - prorratear</button>
-    </div>
-    <div id="invForm" style="display:none;margin-top:14px;">
-      <div class="field" style="margin-bottom:10px;">
-        <label>Vida util (meses)</label>
-        <input type="number" id="invVidaUtil" value="60" min="1" max="360">
-      </div>
-      <div class="field" style="margin-bottom:10px;">
-        <label>Descripcion</label>
-        <input type="text" id="invDesc" placeholder="Ej: Chiller hiladora 2">
-      </div>
-      <button class="btn acc" style="width:100%;" onclick="confirmInv()">Confirmar inversion</button>
-    </div>
-  </div>
-</div>
-
 <div class="wrap">
 <!-- ========== SIDEBAR ========== -->
 <div class="side">
@@ -584,9 +561,7 @@ var compTipoTab    = 'conv'; // 'conv' o 'lam'
 var modoExp  = false;
 var snapReal = null; // snapshot of real input values
 var calcReal = null; // real calculation results for comparison
-let inversiones = [];
 let prorrateos  = [];
-let invPending  = null;
 let _calc       = {}; // Ultimo calculo completo, usado por saveCurrentMonth()
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -716,7 +691,6 @@ function init(){
   buildFacturasGrid();
   renderFacturasGrid();
   buildCompRows();
-  renderInvList();
   renderProrrList();
   loadMastLam();
   buildLamCompSection();
@@ -1264,78 +1238,6 @@ function aplicarCompPrecios(){
 }
 
 // ==============================================================
-// INVERSIONES
-// ==============================================================
-function renderInvList(){
-  var el = document.getElementById('invList');
-  if(!el) return;
-  if(!inversiones.length){
-    el.innerHTML='<div style="color:var(--t3);font-family:var(--mono);font-size:10px;padding:8px;">Sin inversiones en amortizacion</div>';
-    return;
-  }
-  el.innerHTML = inversiones.map(function(inv,i){
-    var cuota     = inv.monto/inv.vida;
-    var pagadas   = inv.mesesTranscurridos||0;
-    var restantes = inv.vida - pagadas;
-    return '<div style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-bottom:6px;">'
-      +'<div style="display:flex;justify-content:space-between;align-items:start;">'
-      +'<div><div style="font-family:var(--mono);font-size:11px;color:var(--text);">'+inv.desc+'</div>'
-      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:2px;">'+inv.mesInicio+' - '+inv.vida+' meses</div></div>'
-      +'<button class="btn danger sm" onclick="removeInv('+i+')">x</button>'
-      +'</div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;">'
-      +'<div><div style="font-family:var(--mono);font-size:8px;color:var(--t3);">CUOTA/MES</div><div style="font-family:var(--mono);font-size:12px;color:var(--acc);">$'+Math.round(cuota).toLocaleString('es-AR')+'</div></div>'
-      +'<div><div style="font-family:var(--mono);font-size:8px;color:var(--t3);">RESTANTES</div><div style="font-family:var(--mono);font-size:12px;color:var(--acc2);">'+restantes+' meses</div></div>'
-      +'<div><div style="font-family:var(--mono);font-size:8px;color:var(--t3);">SALDO</div><div style="font-family:var(--mono);font-size:12px;color:var(--warn);">$'+Math.round(cuota*restantes).toLocaleString('es-AR')+'</div></div>'
-      +'</div></div>';
-  }).join('');
-}
-
-function openAddInv(){
-  var f = document.getElementById('addInvForm');
-  f.style.display = f.style.display==='none'?'block':'none';
-}
-
-function addInvManual(){
-  var desc  = document.getElementById('newInvDesc').value||'Sin descripcion';
-  var monto = parseArgentino(document.getElementById('newInvMonto').value);
-  var inicio= document.getElementById('newInvMesInicio').value||'-';
-  var vida  = parseInt(document.getElementById('newInvVida').value)||60;
-  if(!monto){ alert('Ingresa el monto'); return; }
-  inversiones.push({desc:desc,monto:monto,mesInicio:inicio,vida:vida,mesesTranscurridos:0});
-  renderInvList(); recalc();
-  document.getElementById('addInvForm').style.display='none';
-}
-
-function removeInv(i){ inversiones.splice(i,1); renderInvList(); recalc(); }
-
-function showInvModal(item){
-  invPending = item;
-  document.getElementById('invModalContent').innerHTML =
-    '<div style="background:var(--surf2);border-radius:6px;padding:12px;margin-bottom:12px;">'
-    +'<div style="font-family:var(--mono);font-size:11px;color:var(--text);">'+item.desc+'</div>'
-    +'<div style="font-family:var(--mono);font-size:18px;color:var(--warn);margin-top:4px;">$'+item.monto.toLocaleString('es-AR')+'</div>'
-    +'</div>'
-    +'<div style="font-family:var(--sans);font-size:13px;color:var(--t2);">Esta compra parece ser una inversion. La amortizamos o la incluimos como gasto del mes?</div>';
-  document.getElementById('invForm').style.display='none';
-  document.getElementById('invModal').classList.add('open');
-}
-
-function classifyInv(t){ document.getElementById('invModal').classList.remove('open'); if(t==='gasto'){ invPending=null; recalc(); } }
-function showInvForm(){ document.getElementById('invForm').style.display='block'; }
-
-function confirmInv(){
-  if(!invPending) return;
-  var vida = parseInt(document.getElementById('invVidaUtil').value)||60;
-  var desc = document.getElementById('invDesc').value||invPending.desc;
-  var mes  = document.getElementById('selMes').value+' '+document.getElementById('selAnio').value;
-  inversiones.push({desc:desc,monto:invPending.monto,mesInicio:mes,vida:vida,mesesTranscurridos:0});
-  invPending = null;
-  document.getElementById('invModal').classList.remove('open');
-  renderInvList(); recalc();
-}
-
-// ==============================================================
 // PRORRATEOS
 // ==============================================================
 function renderProrrList(){
@@ -1459,10 +1361,6 @@ function calcAlerts(){
     }
   });
 
-  inversiones.forEach(function(inv){
-    if(inv.mesesTranscurridos>=inv.vida) alerts.push({msg:'Inversion "'+inv.desc+'" completamente amortizada', tipo:'ok'});
-  });
-
   var mes2  = document.getElementById('selMes').value;
   var anio2 = parseInt(document.getElementById('selAnio').value);
   var mesIdx2 = MESES.indexOf(mes2) + (anio2-2026)*12;
@@ -1583,12 +1481,7 @@ function recalc(){
   var cOtros    = g('cOtros');
   var totalVarProd = cGasoil+cAlm+cFletes+cVarios+cMant+cOtros;
 
-  // INVERSIONES
-  var cInversiones = inversiones.reduce(function(s,inv){
-    return s + (inv.vida>0 && inv.mesesTranscurridos<inv.vida ? inv.monto/inv.vida : 0);
-  },0);
-
-  var totalGeneral = totalFijos+totalMPHilo+totalMPLam+totalVarProd+cInversiones;
+  var totalGeneral = totalFijos+totalMPHilo+totalMPLam+totalVarProd;
   var costoPorKg   = totKg>0  ? totalGeneral/totKg  : 0;
   var costoPorMts  = totMts>0 ? totalGeneral/totMts : 0;
   var grM2Prom     = totMts>0 ? (totKg/totMts)*1000 : 0;
@@ -1609,11 +1502,11 @@ function recalc(){
   // Guardar para saveCurrentMonth()
   _calc = {dolar:dolar,totMts:totMts,totKg:totKg,grM2Prom:grM2Prom,totalGeneral:totalGeneral,
     costoPorKg:costoPorKg,costoPorMts:costoPorMts,ftoResults:ftoResults,
-    totalFijos:totalFijos,totalMPHilo:totalMPHilo,totalMPLam:totalMPLam,totalVarProd:totalVarProd,cInversiones:cInversiones,
+    totalFijos:totalFijos,totalMPHilo:totalMPHilo,totalMPLam:totalMPLam,totalVarProd:totalVarProd,
     sueldos:sueldos,edesur:edesur,mpDetalle:mpDetalle,cGrumoLam:cGrumoLam,cPeLam:cPeLam,cMastLam:cMastLam,cGasoil:cGasoil,cAlm:cAlm,cFletes:cFletes};
 
   renderKPIs(costoPorKg,costoPorMts,grM2Prom,totalGeneral,ftoResults['47'],dolar);
-  renderCostBreakdown(totalFijos,totalMPHilo,totalMPLam,totalVarProd,cInversiones,totalGeneral,_calc);
+  renderCostBreakdown(totalFijos,totalMPHilo,totalMPLam,totalVarProd,totalGeneral,_calc);
   renderFtoTable(ftoResults, costoPorKg);
   // Actualizar fila TOTAL en la tabla de inputs por formato
   var _totMts = FTO_LIST.reduce(function(s,f){ return s+(parseFloat(document.getElementById('fmts_'+f)?.value)||0); },0);
@@ -1622,7 +1515,7 @@ function recalc(){
   var _tlKg   = document.getElementById('totalKgLabel');
   if(_tlMts) _tlMts.textContent = _totMts>0 ? _totMts.toLocaleString('es-AR') : '—';
   if(_tlKg)  _tlKg.textContent  = _totKg>0  ? _totKg.toLocaleString('es-AR')  : '—';
-  renderSens(ftoResults['47']?.kgPorMts||0.0658, totalFijos,totalVarProd,totKg,composicion,preciosGrupo,grumoLam,g('pGL'),peLam,g('pPE'),cInversiones);
+  renderSens(ftoResults['47']?.kgPorMts||0.0658, totalFijos,totalVarProd,totKg,composicion,preciosGrupo,grumoLam,g('pGL'),peLam,g('pPE'));
   renderNavChart(ftoResults);
   renderUSD(ftoResults,dolar);
   renderAlerts();
@@ -1657,7 +1550,7 @@ function renderKPIs(cPorKg,cPorMts,grM2,total,r47,dolar){
     +'<div class="kpi-sub">'+(r47&&r47.diffPct!==null&&r47.diffPct!==undefined?(r47.diffPct>0?'mas barato ':'mas caro ')+Math.abs(r47.diffPct).toFixed(1)+'%':'')+'</div></div>';
 }
 
-function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,cInv,total,c){
+function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
   function bar(val,color){
     var pct = total>0 ? Math.min(100,val/total*100) : 0;
     return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
@@ -1689,8 +1582,7 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,cInv,total,c){
       +row('Grumo XSD',c.cGrumoLam,'var(--warn)')+row('PE BC818/APP',c.cPeLam,'var(--warn)')+(c.cMastLam>0?row('Master ('+(mastLamActivo>=0&&mastLamColores[mastLamActivo]?mastLamColores[mastLamActivo].label:'color')+')',c.cMastLam,'var(--warn)'):'')+'</div>':'')
     +'<div style="margin-bottom:6px;">'+secHead('PRODUCCIÓN / VARIABLES','var(--ok)')
     +row('Gasoil + fletes',c.cGasoil+c.cFletes,'var(--ok)')
-    +row('Almuerzos + varios',c.cAlm,'var(--ok)')
-    +(cInv>0?row('Cuotas inversiones',cInv,'var(--acc2)'):'')+'</div>'
+    +row('Almuerzos + varios',c.cAlm,'var(--ok)')+'</div>'
     +'<div style="padding:10px 14px;background:var(--surf2);border-radius:6px;border:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;margin-top:4px;">'
     +'<span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;">TOTAL MENSUAL</span>'
     +'<span style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--acc);">'+fc(total/1000000,2)+'M ARS</span></div>';
@@ -1733,12 +1625,12 @@ function renderFtoTable(results, cPorKg){
   document.getElementById('ftoBody').innerHTML = rows||'<tr><td colspan="6" style="color:var(--t3);text-align:center;padding:16px;">Sin datos — cargá mts y kg por formato</td></tr>';
 }
 
-function renderSens(kgMts47,totFijos,totVarProd,kgActual,comp,precios,grumoLam,pGL,peLam,pPE,cInv){
+function renderSens(kgMts47,totFijos,totVarProd,kgActual,comp,precios,grumoLam,pGL,peLam,pPE){
   var varMPporKg = comp.reduce(function(s,c){ return s+(c.pct/100)*(precios[c.grupo]||0); },0);
   var ratioCoat  = kgActual>0 ? (grumoLam*pGL+peLam*pPE)/kgActual : 0;
   var rows = [20,30,40,50,60,70,80,100].map(function(vk){
     var kg   = vk*1000;
-    var tot  = totFijos+kg*varMPporKg+kg*ratioCoat+totVarProd+cInv;
+    var tot  = totFijos+kg*varMPporKg+kg*ratioCoat+totVarProd;
     var cPKg = tot/kg;
     var cPMts= cPKg*kgMts47;
     var isCur= Math.abs(kg-kgActual)<5001;
@@ -2792,7 +2684,6 @@ function renderGramajeSim(){
   // Componentes de costo que NO cambian con el gramaje
   var totalFijos   = calc.totalFijos;
   var totalVarProd = calc.totalVarProd;
-  var cInversiones = calc.cInversiones;
 
   // Costo de MP por kg de hilo (formula × precios actuales × desperdicio)
   var DESP = 1.05;
@@ -2811,7 +2702,7 @@ function renderGramajeSim(){
 
   // Costo al gramaje actual para calcular Δ
   var kgRef   = mts * anchoM * (grActual||57) / 1000;
-  var costRef = totalFijos + kgRef*(varMPporKg+lamPorKg) + totalVarProd + cInversiones;
+  var costRef = totalFijos + kgRef*(varMPporKg+lamPorKg) + totalVarProd;
   var cPMtsRef = mts>0 ? costRef/mts : 0;
 
   // Construir filas para cada gramaje del rango
@@ -2826,7 +2717,7 @@ function renderGramajeSim(){
     // FÓRMULA CORRECTA: kg = mts × ancho(m) × gramaje(gr/m²) / 1000
     var kg        = mts * anchoM * grm2 / 1000;
     var totalMP   = kg * (varMPporKg + lamPorKg);
-    var totalCost = totalFijos + totalMP + totalVarProd + cInversiones;
+    var totalCost = totalFijos + totalMP + totalVarProd;
     var cPMts     = mts>0 ? totalCost/mts : 0;
     var cPKg      = kg>0  ? totalCost/kg  : 0;
     var margen    = nav>0 ? nav-cPMts : null;
