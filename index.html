@@ -2224,24 +2224,15 @@ async function loadMateriales(){
     _ocFullData = null;
     var rows = await readSheet(SHEET_IDS.oc, 'Órdenes!A2:Z5000', true);
     _ocFullData = rows.map(function(r){
-      // Parsear fecha - puede ser número serial Excel o string
-      var fechaRaw = r[1]||'';
-      var fechaObj = null;
-      if(typeof fechaRaw === 'number'){
-        // Excel serial date
-        var d = new Date(Math.round((fechaRaw - 25569)*86400*1000));
-        if(!isNaN(d)) fechaObj = d;
-      } else if(fechaRaw){
-        var d2 = new Date(fechaRaw);
-        if(!isNaN(d2)) fechaObj = d2;
-      }
+      // parseFechaOC maneja "DD-MM-YYYY", "DD/MM/YYYY" y serial Excel
+      var fechaObj    = parseFechaOC(r[1]);
       var cantidad    = parseArgentino(String(r[5]||'0'));
       var impUSD      = parseArgentino(String(r[11]||'0')); // col L: Importe total (USD)
       // precio_usd = Importe total USD / Cantidad  → siempre en dólares, sin importar
       // si la OC original fue en ARS o USD.
       var precio_usd  = (cantidad > 0 && impUSD > 0) ? impUSD / cantidad : 0;
       return {
-        oc:         String(r[0]||'').trim(),             // col A: número de OC
+        oc:         String(r[0]||'').trim(),
         fecha:      fechaObj,
         fabrica:    String(r[2]||'').trim(),
         categoria:  String(r[3]||'').trim(),
@@ -2255,18 +2246,20 @@ async function loadMateriales(){
       };
     }).filter(function(r){ return r.descripcion||r.fabrica; });
 
-    var pitecOC = _ocFullData.filter(function(r){
-      var f = r.fabrica.toLowerCase();
-      return f.includes('pitec');
+    // Filtro: cualquier fabrica, fecha >= hoy - 365 dias
+    var hoy       = new Date();
+    var hace1Anio = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
+    var ocFiltradas = _ocFullData.filter(function(r){
+      return r.fecha && r.fecha >= hace1Anio;
     });
 
     // Renderizar las 3 secciones
-    renderMatPreciosMP(pitecOC);
-    renderMatConsumibles(pitecOC);
-    renderMatMant(pitecOC);
+    renderMatPreciosMP(ocFiltradas);
+    renderMatConsumibles(ocFiltradas);
+    renderMatMant(ocFiltradas);
 
     if(statusEl){
-      statusEl.textContent = pitecOC.length+' OC Pitec procesadas · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      statusEl.textContent = ocFiltradas.length+' OC del ultimo año procesadas · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
       statusEl.style.color='var(--ok)';
     }
   }catch(e){
