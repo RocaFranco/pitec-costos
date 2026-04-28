@@ -1254,6 +1254,19 @@ function aplicarCompPrecios(){
 // ==============================================================
 // PRORRATEOS
 // ==============================================================
+// Parsea "Abril 2026" / "abril 2026" / "ABRIL 2026" -> indice mensual
+// desde Enero 2026 = 0. Tolerante a mayusculas/minusculas y espacios.
+function parseInicioProrrIdx(inicio){
+  var s = String(inicio||'').trim();
+  if(!s) return 0;
+  var parts  = s.split(/\s+/);
+  var mesStr = (parts[0]||'').toLowerCase();
+  var idx = MESES.findIndex(function(m){ return m.toLowerCase() === mesStr; });
+  if(idx < 0) return 0;
+  var anio = parseInt(parts[1]) || 2026;
+  return idx + (anio - 2026) * 12;
+}
+
 function renderProrrList(){
   var el = document.getElementById('prorrList');
   if(!el) return;
@@ -1266,8 +1279,7 @@ function renderProrrList(){
   var mesActualIdx = MESES.indexOf(mes) + (anio - 2026)*12;
   el.innerHTML = prorrateos.map(function(p,i){
     var cuota    = p.monto / p.vida;
-    var parts    = p.inicio.split(' ');
-    var inicioIdx= MESES.indexOf(parts[0]) + (parseInt(parts[1]||'2026') - 2026)*12;
+    var inicioIdx= parseInicioProrrIdx(p.inicio);
     var restantes= p.vida - Math.max(0, mesActualIdx - inicioIdx);
     var vencido  = restantes <= 0;
     var porVencer= restantes > 0 && restantes <= 2;
@@ -1293,8 +1305,7 @@ function getCuotasProrrateos(){
   var mesActualIdx = MESES.indexOf(mes) + (anio - 2026)*12;
   return prorrateos.reduce(function(sum,p){
     var cuota    = p.monto / p.vida;
-    var parts    = p.inicio.split(' ');
-    var inicioIdx= MESES.indexOf(parts[0]) + (parseInt(parts[1]||'2026') - 2026)*12;
+    var inicioIdx= parseInicioProrrIdx(p.inicio);
     var transcurridos = Math.max(0, mesActualIdx - inicioIdx);
     if(transcurridos >= 0) return sum + cuota;
     return sum;
@@ -1384,8 +1395,7 @@ function calcAlerts(){
   var anio2 = parseInt(document.getElementById('selAnio').value);
   var mesIdx2 = MESES.indexOf(mes2) + (anio2-2026)*12;
   prorrateos.forEach(function(p){
-    var parts  = p.inicio.split(' ');
-    var initIdx= MESES.indexOf(parts[0]) + (parseInt(parts[1]||'2026')-2026)*12;
+    var initIdx= parseInicioProrrIdx(p.inicio);
     var rest   = p.vida - Math.max(0, mesIdx2-initIdx);
     if(rest<=0)  alerts.push({msg:'Prorrateo "'+p.desc+'" VENCIDO - actualizar', tipo:'warn'});
     else if(rest<=2) alerts.push({msg:'Prorrateo "'+p.desc+'" vence en '+rest+' mes'+(rest>1?'es':''), tipo:'warn'});
