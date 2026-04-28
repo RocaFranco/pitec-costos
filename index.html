@@ -864,6 +864,50 @@ async function saveFacturaToSheet(svcId, valor){
 }
 
 // ==============================================================
+// PRORRATEOS - persistencia en hoja "Prorrateos" del Sheet de Facturas
+// Cols: A=Descripcion, B=Monto, C=Vida_Meses, D=Inicio
+// ==============================================================
+async function loadProrrateosFromSheet(){
+  if(!accessToken) return;
+  try{
+    var data = await readSheet(SHEET_IDS.facturas, 'Prorrateos!A2:D200');
+    prorrateos = (data||[])
+      .filter(function(r){ return r && r[0] && r[1]; })
+      .map(function(r){
+        return {
+          desc:   String(r[0]||'').trim(),
+          monto:  parseArgentino(String(r[1]||'0')),
+          vida:   parseInt(r[2])||12,
+          inicio: String(r[3]||'').trim()
+        };
+      });
+    renderProrrList();
+    recalc();
+  }catch(e){ console.warn('Error leyendo Prorrateos:', e.message); }
+}
+
+async function saveProrrateosToSheet(){
+  if(!accessToken) return;
+  try{
+    // Limpiar el rango primero (por si se eliminaron filas)
+    await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_IDS.facturas+'/values/Prorrateos!A2:D200:clear',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
+      body:'{}'
+    });
+    if(!prorrateos.length) return;
+    var values = prorrateos.map(function(p){
+      return [p.desc, p.monto, p.vida, p.inicio];
+    });
+    await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_IDS.facturas+'/values/Prorrateos!A2:D'+(1+values.length)+'?valueInputOption=RAW',{
+      method:'PUT',
+      headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
+      body: JSON.stringify({values: values})
+    });
+  }catch(e){ console.warn('Error guardando Prorrateos:', e.message); }
+}
+
+// ==============================================================
 // NAVEGANTE
 // ==============================================================
 function buildNavInputs(){
@@ -1273,9 +1317,14 @@ function addProrr(){
   document.getElementById('addProrrForm').style.display='none';
   document.getElementById('newProrrDesc').value='';
   document.getElementById('newProrrMonto').value='';
+  saveProrrateosToSheet();
 }
 
-function removeProrrAteo(i){ prorrateos.splice(i,1); renderProrrList(); recalc(); }
+function removeProrrAteo(i){
+  prorrateos.splice(i,1);
+  renderProrrList(); recalc();
+  saveProrrateosToSheet();
+}
 
 // ==============================================================
 // SUELDOS - procesar Excel subido manualmente
@@ -1993,6 +2042,12 @@ async function loadAllFromDrive(){
       }
     });
   }catch(e){ errors.push('Precios MP: '+e.message); }
+
+  // 6. PRORRATEOS - desde hoja "Prorrateos" del Sheet de Facturas
+  try{
+    await loadProrrateosFromSheet();
+    results.push('OK Prorrateos: '+prorrateos.length+' activos');
+  }catch(e){ errors.push('Prorrateos: '+e.message); }
 
   updateDriveStatus(results, errors);
   recalc();
