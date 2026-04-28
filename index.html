@@ -653,12 +653,13 @@ function setSvcVal(id, rawVal, saveToSheet){
   const svc = SERVICIOS_FAC.find(s=>s.id===id);
   if(!svc) return;
   const v = parseArgentino(String(rawVal));
-  svc.val    = v;
-  svc.loaded = v > 0;
+  svc.val     = v;
+  svc.loaded  = v > 0;
+  svc.fromMes = null; // edicion manual -> ya no es fallback del mes anterior
   // Sync ambos paneles sin disparar otro setSvcVal
   ['finput_','fstatus_'].forEach(function(prefix){
     const inp = document.getElementById(prefix+id);
-    if(inp && document.activeElement !== inp) inp.value = v || '';
+    if(inp && document.activeElement !== inp) inp.value = formatArs(v);
   });
   recalc();
   if(saveToSheet && accessToken && v > 0) saveFacturaToSheet(id, v);
@@ -674,6 +675,17 @@ function refreshFmtHints(){
       el.nextElementSibling.textContent = Math.round(v).toLocaleString('es-AR');
     }
   });
+}
+
+// Auto-formato argentino para inputs de facturas (type=text).
+// Devuelve "1.234.567" o '' si no hay valor.
+function formatArs(n){
+  return (n>0) ? Math.round(n).toLocaleString('es-AR') : '';
+}
+// Reformatea el input con puntos de miles. Llamado en onblur.
+function formatFactInput(el){
+  var n = parseArgentino(el.value);
+  el.value = formatArs(n);
 }
 
 // ==============================================================
@@ -734,33 +746,38 @@ function buildFacturasGrid(){
     var badge = svc.grupo==='vencido'
       ? '<span class="chip w" style="font-size:8px;">mes ant.</span>'
       : '<span class="chip b" style="font-size:8px;">mes act.</span>';
+    var chipFallback = svc.fromMes ? ' <span class="chip w" style="font-size:8px;" title="Valor del mes anterior">\u2190 '+svc.fromMes+'</span>' : '';
     return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;">'
       +'<div style="flex:1;min-width:0;">'
-      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+svc.label+' '+badge+'</div>'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+svc.label+' '+badge+chipFallback+'</div>'
       +'</div>'
       +'<div class="iu" style="width:130px;">'
-      +'<input type="number" id="finput_'+svc.id+'" value="'+(svc.val||'')+'" placeholder="0"'
-      +' style="font-size:11px;padding:5px 8px;" oninput="setSvcVal(\''+svc.id+'\',this.value)">'
+      +'<input type="text" inputmode="numeric" id="finput_'+svc.id+'" value="'+formatArs(svc.val)+'" placeholder="0"'
+      +' style="font-size:11px;padding:5px 8px;font-family:var(--mono);"'
+      +' oninput="setSvcVal(\''+svc.id+'\',this.value)" onblur="formatFactInput(this)">'
       +'<span class="u">ARS</span>'
       +'</div>'
       +'</div>';
   }).join('');
 }
 
-// Panel FACTURAS - vista de estado con chip y boton de Drive
+// Panel FACTURAS - vista de estado con chip e input manual
 function renderFacturasGrid(){
   var el = document.getElementById('facGrid');
   if(!el) return;
   el.innerHTML = SERVICIOS_FAC.map(function(svc){
     var v  = svc.val;
     var ok = v > 0;
+    var chipPrincipal = '<span class="chip '+(ok?'g':'r')+'" style="font-size:9px;">'+(ok?'$'+Math.round(v).toLocaleString('es-AR'):'Falta factura')+'</span>';
+    var chipFallback = svc.fromMes ? '<span class="chip w" style="font-size:9px;margin-left:4px;" title="Valor del mes anterior, sin factura cargada para el mes actual">\u2190 '+svc.fromMes+'</span>' : '';
     return '<div style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-bottom:6px;">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px;">'
       +'<span style="font-family:var(--mono);font-size:10px;color:var(--t2);">'+svc.label+'</span>'
-      +'<span class="chip '+(ok?'g':'r')+'" style="font-size:9px;">'+(ok?'$'+Math.round(v).toLocaleString('es-AR'):'Falta factura')+'</span>'
+      +'<div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:2px;">'+chipPrincipal+chipFallback+'</div>'
       +'</div>'
-      +'<input type="number" id="fstatus_'+svc.id+'" value="'+(v||'')+'" placeholder="Valor manual (ARS)"'
-      +' style="font-size:11px;padding:5px 8px;width:100%;" oninput="setSvcVal(\''+svc.id+'\',this.value)">'
+      +'<input type="text" inputmode="numeric" id="fstatus_'+svc.id+'" value="'+formatArs(v)+'" placeholder="Valor manual (ARS)"'
+      +' style="font-size:11px;padding:5px 8px;width:100%;font-family:var(--mono);"'
+      +' oninput="setSvcVal(\''+svc.id+'\',this.value)" onblur="formatFactInput(this)">'
       +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:4px;">'+svc.hint+(svc.dividir2?' (div 2)':'')+'</div>'
       +'</div>';
   }).join('');
@@ -771,7 +788,7 @@ function syncFacturasInputs(){
   SERVICIOS_FAC.forEach(function(svc){
     ['finput_','fstatus_'].forEach(function(prefix){
       var inp = document.getElementById(prefix+svc.id);
-      if(inp && document.activeElement !== inp) inp.value = svc.val || '';
+      if(inp && document.activeElement !== inp) inp.value = formatArs(svc.val);
     });
   });
 }
@@ -794,16 +811,34 @@ async function loadFacturasFromSheet(){
   var mes    = document.getElementById('selMes').value;
   var mesIdx = MESES.indexOf(mes);
   if(mesIdx < 0) return;
-  var fila = 3 + mesIdx; // Enero=fila3, Febrero=fila4...
+  var fila    = 3 + mesIdx;             // Enero=fila3, Febrero=fila4...
+  var prevIdx = mesIdx - 1;             // mes anterior dentro del año actual
+  var prevFila= prevIdx >= 0 ? 3 + prevIdx : null;
   try{
-    // FIX: antes parseaba con .replace(/[^0-9.]/g,'') que rompia el formato argentino.
-    // Ahora usa parseArgentino() correctamente.
-    var data = await readSheet(SHEET_IDS.facturas, 'Facturas!B'+fila+':J'+fila);
-    var vals = data[0] || [];
+    // Si hay mes anterior dentro del año, leer 2 filas en una sola llamada
+    var range = prevFila ? 'Facturas!B'+prevFila+':J'+fila : 'Facturas!B'+fila+':J'+fila;
+    var data  = await readSheet(SHEET_IDS.facturas, range);
+    var actuals = prevFila ? (data[1] || []) : (data[0] || []);
+    var prevs   = prevFila ? (data[0] || []) : [];
     SERVICIOS_FAC.forEach(function(svc,i){
-      var v   = parseArgentino(vals[i]);
-      svc.val    = v;
-      svc.loaded = v > 0;
+      var v = parseArgentino(actuals[i]);
+      if(v > 0){
+        svc.val     = v;
+        svc.loaded  = true;
+        svc.fromMes = null;
+      } else {
+        // Fallback: si la celda del mes actual esta en 0 y el mes anterior tiene valor, usarlo
+        var pv = prevFila ? parseArgentino(prevs[i]) : 0;
+        if(pv > 0){
+          svc.val     = pv;
+          svc.loaded  = true;
+          svc.fromMes = MESES[prevIdx];
+        } else {
+          svc.val     = 0;
+          svc.loaded  = false;
+          svc.fromMes = null;
+        }
+      }
     });
     syncFacturasInputs();
     renderFacturasGrid();
@@ -1385,10 +1420,27 @@ function recalc(){
   var elCarg = document.getElementById('facCargadasResumen');
   if(elTot) elTot.textContent = fc(totalServicios);
   if(elCarg){
-    var cargadas = SERVICIOS_FAC.filter(function(s){ return s.val>0; }).length;
-    var total    = SERVICIOS_FAC.length;
-    var color    = cargadas===total?'var(--ok)':cargadas===0?'var(--acc3)':'var(--warn)';
-    elCarg.innerHTML = '<span style="color:'+color+'">'+cargadas+'/'+total+' facturas cargadas</span> · <span style="cursor:pointer;color:var(--acc2);" onclick="showSidePanel(\'fac\', document.querySelector(\'.side-tab:last-of-type\'))">Ver detalle \u2197</span>';
+    var cargadas    = SERVICIOS_FAC.filter(function(s){ return s.val>0 && !s.fromMes; });
+    var conFallback = SERVICIOS_FAC.filter(function(s){ return s.val>0 && s.fromMes; });
+    var faltantes   = SERVICIOS_FAC.filter(function(s){ return s.val<=0; });
+    var totalCount  = SERVICIOS_FAC.length;
+    var color       = faltantes.length===0 ? 'var(--ok)' : cargadas.length===0 ? 'var(--acc3)' : 'var(--warn)';
+    var html = '<span style="color:'+color+';">'+(cargadas.length+conFallback.length)+'/'+totalCount+' facturas cargadas</span>';
+    if(faltantes.length){
+      html += '<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;">'
+        + faltantes.map(function(s){
+            return '<span style="background:rgba(255,107,71,.15);color:var(--acc3);padding:2px 6px;border-radius:3px;font-size:9px;cursor:pointer;" onclick="document.getElementById(\'fstatus_'+s.id+'\')?.focus()" title="Click para cargar manual">'+s.label+'</span>';
+          }).join('')
+        + '</div>';
+    }
+    if(conFallback.length){
+      html += '<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;">'
+        + conFallback.map(function(s){
+            return '<span style="background:rgba(255,179,71,.15);color:var(--warn);padding:2px 6px;border-radius:3px;font-size:9px;" title="Sin factura cargada del mes actual, usando valor de '+s.fromMes+'">'+s.label+' \u2190 '+s.fromMes+'</span>';
+          }).join('')
+        + '</div>';
+    }
+    elCarg.innerHTML = html;
   }
 
   // MP HILO
