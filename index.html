@@ -334,16 +334,16 @@ body.experimental .exp-compare{display:block;}
     <!-- GASTOS VARIABLES -->
     <div style="margin-top:8px;">
       <div class="s-head">Gastos variables del mes</div>
-      <div class="field"><label>Gasoil</label><div class="iu"><input type="number" id="cGasoil" value="0" oninput="saveGastosLS();recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Almuerzos</label><div class="iu"><input type="number" id="cAlmuerzos" value="0" oninput="saveGastosLS();recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Fletes internos</label><div class="iu"><input type="number" id="cFletes" value="0" oninput="saveGastosLS();recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Gastos varios</label><div class="iu"><input type="number" id="cVarios" value="0" oninput="saveGastosLS();recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Gasoil</label><div class="iu"><input type="text" inputmode="numeric" id="cGasoil" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Almuerzos</label><div class="iu"><input type="text" inputmode="numeric" id="cAlmuerzos" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Fletes internos</label><div class="iu"><input type="text" inputmode="numeric" id="cFletes" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Gastos varios</label><div class="iu"><input type="text" inputmode="numeric" id="cVarios" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
     </div>
     <!-- MANTENIMIENTO -->
     <div>
       <div class="s-head">Mantenimiento</div>
-      <div class="field"><label>Mantenimiento extra</label><div class="iu"><input type="number" id="cMant" value="0" oninput="saveGastosLS();recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Otros</label><div class="iu"><input type="number" id="cOtros" value="0" oninput="saveGastosLS();recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Mantenimiento extra</label><div class="iu"><input type="text" inputmode="numeric" id="cMant" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
+      <div class="field"><label>Otros</label><div class="iu"><input type="text" inputmode="numeric" id="cOtros" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
     </div>
     <!-- PRORRATEOS -->
     <div>
@@ -635,7 +635,7 @@ function parseFechaOC(v){
 // ==============================================================
 // HELPERS
 // ==============================================================
-function g(id){ return parseFloat(document.getElementById(id)?.value)||0; }
+function g(id){ return parseArgentino(document.getElementById(id)?.value||'')||0; }
 function fc(n,d=0){ return '$'+n.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}); }
 function fm(n){ return n.toLocaleString('es-AR',{maximumFractionDigits:0}); }
 
@@ -2739,7 +2739,10 @@ function saveGastosLS(){
   var mes  = document.getElementById('selMes').value;
   var anio = document.getElementById('selAnio').value;
   var data = {};
-  GASTOS_CAMPOS.forEach(function(id){ data[id] = document.getElementById(id).value; });
+  // Guardar el numero parseado, no el value visual con formato
+  GASTOS_CAMPOS.forEach(function(id){
+    data[id] = parseArgentino(document.getElementById(id).value);
+  });
   try{ localStorage.setItem('gastos_'+mes+'_'+anio, JSON.stringify(data)); }catch(e){}
 }
 
@@ -2750,7 +2753,10 @@ function loadGastosLS(mes, anio){
     var stored = localStorage.getItem('gastos_'+mes+'_'+anio);
     if(!stored) return false;
     var data = JSON.parse(stored);
-    GASTOS_CAMPOS.forEach(function(id){ document.getElementById(id).value = data[id]||''; });
+    GASTOS_CAMPOS.forEach(function(id){
+      var v = parseArgentino(data[id]);
+      document.getElementById(id).value = formatArs(v);
+    });
     return true;
   }catch(e){ return false; }
 }
@@ -2774,7 +2780,7 @@ async function loadGastosManuales(){
     var cargados = 0;
     GASTOS_CAMPOS.forEach(function(campo,i){
       var v = parseArgentino(gasRow[i]||'0');
-      document.getElementById(campo).value = v || '';
+      document.getElementById(campo).value = formatArs(v);
       if(v>0) cargados++;
     });
     if(cargados > 0) saveGastosLS();
