@@ -326,10 +326,8 @@ body.experimental .exp-compare{display:block;}
         <div id="facCargadasResumen" style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:3px;">— sin datos —</div>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;">
-        <button class="btn acc" style="flex:1;font-size:10px;" onclick="procesarFacturasFaltantes()">Verificar faltantes</button>
         <button class="btn ghost" style="flex:1;font-size:10px;" onclick="loadFacturasFromSheet()">Recargar Sheet</button>
       </div>
-      <div id="facStatusDiv" style="margin-top:8px;"></div>
     </div>
     <!-- GRILLA DE FACTURAS -->
     <div id="facGrid" style="margin-top:8px;"></div>
@@ -761,11 +759,8 @@ function renderFacturasGrid(){
       +'<span style="font-family:var(--mono);font-size:10px;color:var(--t2);">'+svc.label+'</span>'
       +'<span class="chip '+(ok?'g':'r')+'" style="font-size:9px;">'+(ok?'$'+Math.round(v).toLocaleString('es-AR'):'Falta factura')+'</span>'
       +'</div>'
-      +'<div style="display:flex;gap:6px;align-items:center;">'
       +'<input type="number" id="fstatus_'+svc.id+'" value="'+(v||'')+'" placeholder="Valor manual (ARS)"'
-      +' style="font-size:11px;padding:5px 8px;flex:1;" oninput="setSvcVal(\''+svc.id+'\',this.value)">'
-      +'<button class="btn ghost sm" id="fbtn_'+svc.id+'" onclick="procesarUnaFactura(\''+svc.id+'\')">Buscar PDF</button>'
-      +'</div>'
+      +' style="font-size:11px;padding:5px 8px;width:100%;" oninput="setSvcVal(\''+svc.id+'\',this.value)">'
       +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:4px;">'+svc.hint+(svc.dividir2?' (div 2)':'')+'</div>'
       +'</div>';
   }).join('');
@@ -831,66 +826,6 @@ async function saveFacturaToSheet(svcId, valor){
       body: JSON.stringify({values:[[valor]]})
     });
   }catch(e){ console.warn('Error guardando en Sheet:', e.message); }
-}
-
-async function findPDFInDrive(folderId, mes, anio){
-  if(!folderId || !accessToken) return null;
-  try{
-    var q1 = encodeURIComponent("'"+folderId+"' in parents and mimeType='application/vnd.google-apps.folder' and name='"+anio+"' and trashed=false");
-    var r1  = await fetch('https://www.googleapis.com/drive/v3/files?q='+q1+'&fields=files(id,name)',{headers:{Authorization:'Bearer '+accessToken}});
-    var d1  = await r1.json();
-    var searchFolder = (d1.files && d1.files[0]) ? d1.files[0].id : folderId;
-    var q2  = encodeURIComponent("'"+searchFolder+"' in parents and mimeType='application/pdf' and name contains '"+mes+"' and trashed=false");
-    var r2  = await fetch('https://www.googleapis.com/drive/v3/files?q='+q2+'&fields=files(id,name,size)',{headers:{Authorization:'Bearer '+accessToken}});
-    var d2  = await r2.json();
-    return (d2.files && d2.files[0]) ? d2.files[0] : null;
-  }catch(e){ console.warn('Error buscando PDF:', e.message); return null; }
-}
-
-async function procesarUnaFactura(svcId){
-  var svc = SERVICIOS_FAC.find(function(s){ return s.id===svcId; });
-  if(!svc || !accessToken){ return; }
-  var mes  = document.getElementById('selMes').value;
-  var anio = document.getElementById('selAnio').value;
-  var btn  = document.getElementById('fbtn_'+svcId);
-  if(btn) btn.textContent = 'Buscando...';
-  var pdf = await findPDFInDrive(svc.folderId, mes, anio);
-  if(!pdf){
-    if(btn) btn.textContent = 'No encontrado';
-    renderFacStatusMsg('PDF de '+svc.label+' no encontrado en Drive para '+mes+' '+anio+'. Verificar nombre de archivo y carpeta.','warn');
-    return;
-  }
-  if(btn) btn.textContent = 'PDF OK';
-  renderFacStatusMsg('PDF de '+svc.label+' encontrado ('+pdf.name+'). El Apps Script lo procesa automaticamente, o carga el valor manualmente.','ok');
-}
-
-async function procesarFacturasFaltantes(){
-  if(!accessToken){ alert('Conecta Drive primero'); return; }
-  await loadFacturasFromSheet();
-  var faltantes = SERVICIOS_FAC.filter(function(s){ return s.val<=0; });
-  if(!faltantes.length){
-    renderFacStatusMsg('Todas las facturas del mes estan cargadas!','ok');
-    return;
-  }
-  var mes  = document.getElementById('selMes').value;
-  var anio = document.getElementById('selAnio').value;
-  var encontrados = 0;
-  renderFacStatusMsg('Verificando PDFs en Drive...','info');
-  for(var i=0; i<faltantes.length; i++){
-    var pdf = await findPDFInDrive(faltantes[i].folderId, mes, anio);
-    if(pdf) encontrados++;
-  }
-  renderFacStatusMsg(
-    'Faltantes: '+faltantes.length+' facturas. '
-    +'PDFs en Drive: '+encontrados+'. '
-    +(encontrados>0?'El Apps Script los procesa automaticamente al ejecutarse.':'Subir los PDFs a las carpetas de Drive.'),
-    faltantes.length===0?'ok':'warn'
-  );
-}
-
-function renderFacStatusMsg(msg, tipo){
-  var el = document.getElementById('facStatusDiv');
-  if(el) el.innerHTML = '<div class="nota '+tipo+'" style="margin-top:4px;">'+msg+'</div>';
 }
 
 // ==============================================================
