@@ -2576,96 +2576,129 @@ function aplicarPreciosMP(){
   else alert('Sin precios para aplicar. Configurá los aliases primero.');
 }
 
-function renderMatConsumibles(ocRows){
+// Cutoff temporal: solo se consideran OCs desde esta fecha hacia adelante.
+// El user "compra cuando lo necesita", asi que con esta ventana inferimos
+// consumo real a partir de la frecuencia/cantidad histórica.
+var CONSUM_CUTOFF = new Date(2024, 11, 1); // 1-Dic-2024 (mes index 11)
+
+// Calcula consumo unitario inferido (Opcion B) a partir de las OCs matched.
+function _consumStats(matched){
+  var sorted = matched.slice().sort(function(a,b){
+    if(a.fecha && b.fecha) return a.fecha - b.fecha; // ascendente
+    return 0;
+  });
+  var primera = sorted[0];
+  var ultima  = sorted[sorted.length-1];
+  var totalCantidad = sorted.reduce(function(s,r){ return s+(parseFloat(r.cantidad)||0); }, 0);
+  var totalARS      = sorted.reduce(function(s,r){ return s+(r.importe_ars||0); }, 0);
+  var precioU       = totalCantidad > 0 ? totalARS / totalCantidad : 0;
+
+  // Span: meses entre primera OC y la ultima, +1 (representa el periodo en
+  // que ese stock se consumio). Solo es interpretable si hay >= 2 compras.
+  var mesesSpan = null;
+  if(sorted.length >= 2 && primera.fecha && ultima.fecha){
+    var diff = (ultima.fecha.getFullYear()-primera.fecha.getFullYear())*12
+             + (ultima.fecha.getMonth()-primera.fecha.getMonth()) + 1;
+    mesesSpan = Math.max(1, diff);
+  }
+  var consumoMensual    = mesesSpan ? totalCantidad / mesesSpan : null;
+  var costoMensualInfer = mesesSpan ? consumoMensual * precioU : null;
+
+  // Unidad: tomar la mas frecuente (en caso de mezcla "KG"/"Unidades")
+  var unidades = {};
+  sorted.forEach(function(r){
+    var u = String(r.unidad||'').trim();
+    if(u) unidades[u] = (unidades[u]||0) + 1;
+  });
+  var arrU = Object.entries(unidades).sort(function(a,b){ return b[1]-a[1]; });
+  var unidad = arrU.length ? arrU[0][0] : '';
+
+  var ultimaFecha = ultima.fecha ? ultima.fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '?';
+  return {
+    count: sorted.length,
+    totalCantidad: totalCantidad,
+    totalARS: totalARS,
+    precioU: precioU,
+    mesesSpan: mesesSpan,
+    consumoMensual: consumoMensual,
+    costoMensualInfer: costoMensualInfer,
+    unidad: unidad,
+    ultimaFecha: ultimaFecha,
+    ultimoPrecio: ultima.importe_ars||0
+  };
+}
+
+// Render de una fila de consumible (default o custom).
+function _consumRow(label, matched, manualInputKey){
+  if(!matched.length){
+    return '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+      +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+label+'</span>'
+      +'<span style="font-family:var(--mono);font-size:9px;color:var(--acc3);">sin OC — ingresá valor</span></div>'
+      +_manualInput(manualInputKey, null, '$/mes estimado', '$/mes')
+      +'</div>';
+  }
+  var s = _consumStats(matched);
+  var u = s.unidad || 'u';
+
+  // Linea principal derecha: si hay span -> consumo/mes y costo/mes inferido; si no, "sin promedio aun"
+  var derCha;
+  if(s.mesesSpan){
+    derCha = '<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acc2);">'
+        +s.consumoMensual.toFixed(s.consumoMensual>=10?0:1)+' '+u+'/mes</div>'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">$'+Math.round(s.costoMensualInfer).toLocaleString('es-AR')+'/mes inferido</div>';
+  } else {
+    derCha = '<div style="font-family:var(--mono);font-size:10px;color:var(--warn);">1 sola compra</div>'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">sin promedio aún</div>';
+  }
+
+  // Linea inferior: detalle de inferencia
+  var detalle;
+  if(s.mesesSpan){
+    detalle = s.totalCantidad.toFixed(s.totalCantidad>=10?0:1)+' '+u+' / '+s.mesesSpan+' mes'+(s.mesesSpan>1?'es':'')
+      +' · $'+Math.round(s.precioU).toLocaleString('es-AR')+'/'+u
+      +' · '+s.count+' compras';
+  } else {
+    detalle = s.totalCantidad.toFixed(s.totalCantidad>=10?0:1)+' '+u+' · $'+Math.round(s.precioU).toLocaleString('es-AR')+'/'+u;
+  }
+
+  return '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+    +'<div style="flex:1;min-width:0;">'
+    +'<div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+label+'</div>'
+    +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">Última: '+s.ultimaFecha+' · '+detalle+'</div>'
+    +'</div>'
+    +'<div style="text-align:right;flex-shrink:0;">'+derCha+'</div>'
+    +'</div>'
+    +'</div>';
+}
+
+function renderMatConsumibles(_ignored){
   var el = document.getElementById('matConsumibles');
   if(!el) return;
 
-  // Filtrar solo Pitec (no mantenimiento)
-  var pitecSolo = ocRows.filter(function(r){ return !r.fabrica.toLowerCase().includes('mantenimiento'); });
+  // Universo: TODO el historico de OCs (no el filtrado a 1 año), pero con cutoff propio
+  var universo = (_ocFullData || []).filter(function(r){
+    if(!r.fabrica) return false;
+    if(!r.fabrica.toLowerCase().includes('pitec')) return false;     // Pitec o Mantenimiento Pitec
+    if(!r.fecha || r.fecha < CONSUM_CUTOFF) return false;             // desde enero 2025
+    return true;
+  });
 
   var html = '';
   CONSUMIBLES_ITEMS.forEach(function(item){
     var kws = getConsumKw(item.key, item.defaultKw);
-    var matched = pitecSolo.filter(function(r){ return matchDesc(r.descripcion, kws); });
-
-    if(!matched.length){
-      html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
-        +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+item.label+'</span>'
-        +'<span style="font-family:var(--mono);font-size:9px;color:var(--acc3);">sin OC — ingresá valor</span></div>'
-        +_manualInput('consum_'+item.key, null, '$/mes estimado', '$/mes')
-        +'</div>';
-      return;
-    }
-
-    // Calcular frecuencia de compra y último precio
-    var sorted = matched.slice().sort(function(a,b){
-      if(a.fecha && b.fecha) return b.fecha - a.fecha;
-      return 0;
-    });
-    var lastOC = sorted[0];
-    var ultimoPrecio = lastOC.importe_ars;
-    var ultimaFecha = lastOC.fecha ? lastOC.fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '?';
-
-    // Calcular promedio mensual de gasto (últimas 12 compras o menos)
-    var recientes = sorted.slice(0,12);
-    var totalARS = recientes.reduce(function(s,r){ return s+(r.importe_ars||0); }, 0);
-    var mesesSpan = 1;
-    if(recientes.length > 1 && recientes[0].fecha && recientes[recientes.length-1].fecha){
-      var ms = recientes[0].fecha - recientes[recientes.length-1].fecha;
-      mesesSpan = Math.max(1, Math.round(ms / (30*24*3600*1000)));
-    }
-    var promMensual = Math.round(totalARS / mesesSpan);
-
-    html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
-      +'<div>'
-      +'<div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+item.label+'</div>'
-      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">Última OC: '+ultimaFecha+' · '+matched.length+' compras</div>'
-      +'</div>'
-      +'<div style="text-align:right;">'
-      +'<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acc2);">$'+promMensual.toLocaleString('es-AR')+'/mes</div>'
-      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">último: $'+ultimoPrecio.toLocaleString('es-AR')+'</div>'
-      +'</div>'
-      +'</div>'
-      +'</div>';
+    var matched = universo.filter(function(r){ return matchDesc(r.descripcion, kws); });
+    html += _consumRow(item.label, matched, 'consum_'+item.key);
   });
 
   // Custom consumibles
   var customArr = getCustomConsumibles();
-  customArr.forEach(function(item){
+  customArr.forEach(function(item, idx){
     if(!item.label || !item.kw) return;
     var kws = item.kw.split(',').map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
-    var matched = pitecSolo.filter(function(r){ return matchDesc(r.descripcion, kws); });
-    if(!matched.length){
-      var customKey = 'consum_custom_'+i;
-      html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
-        +'<span style="font-family:var(--mono);font-size:11px;color:var(--t2);">'+item.label+'</span>'
-        +'<span style="font-family:var(--mono);font-size:9px;color:var(--acc3);">sin OC — ingresá valor</span></div>'
-        +_manualInput(customKey, null, '$/mes estimado', '$/mes')
-        +'</div>';
-      return;
-    }
-    var sorted = matched.slice().sort(function(a,b){ if(a.fecha&&b.fecha) return b.fecha-a.fecha; return 0; });
-    var lastOC = sorted[0];
-    var ultimoPrecio = lastOC.importe_ars;
-    var ultimaFecha = lastOC.fecha ? lastOC.fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '?';
-    var recientes = sorted.slice(0,12);
-    var totalARS = recientes.reduce(function(s,r){ return s+(r.importe_ars||0); }, 0);
-    var mesesSpan = 1;
-    if(recientes.length>1 && recientes[0].fecha && recientes[recientes.length-1].fecha){
-      var ms = recientes[0].fecha - recientes[recientes.length-1].fecha;
-      mesesSpan = Math.max(1, Math.round(ms/(30*24*3600*1000)));
-    }
-    var promMensual = Math.round(totalARS/mesesSpan);
-    html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
-      +'<div><div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+item.label+'</div>'
-      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">Última OC: '+ultimaFecha+' · '+matched.length+' compras</div></div>'
-      +'<div style="text-align:right;"><div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acc2);">$'+promMensual.toLocaleString('es-AR')+'/mes</div>'
-      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">último: $'+ultimoPrecio.toLocaleString('es-AR')+'</div></div>'
-      +'</div></div>';
+    var matched = universo.filter(function(r){ return matchDesc(r.descripcion, kws); });
+    html += _consumRow(item.label, matched, 'consum_custom_'+idx);
   });
 
   el.innerHTML = html || '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">Configura los keywords en Config → Consumibles.</div>';
