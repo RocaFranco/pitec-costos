@@ -232,7 +232,7 @@ body.experimental .exp-compare{display:block;}
       <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Sueldos</span></summary>
       <div style="padding-top:6px;">
         <div class="nota info" style="margin-bottom:8px;font-size:9px;line-height:1.3;">Se carga automaticamente desde el Sheet del mes. Configura el ID y la celda en panel Config.</div>
-        <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div>
+        <div class="iu"><input type="number" id="sueldos" value="" placeholder="0" oninput="recalc()"><span class="u">ARS</span></div>
         <div class="fmt-hint" id="hint_sueldos"></div>
       </div>
     </details>
@@ -240,10 +240,10 @@ body.experimental .exp-compare{display:block;}
     <details style="margin-top:6px;">
       <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Produccion del mes (desde Dinamica)</span></summary>
       <div style="padding-top:6px;">
-        <div class="field"><label>Mts totales producidos</label><div class="iu"><input type="number" id="totMts" value="0" oninput="recalc()"><span class="u">mts</span></div><div class="fmt-hint" id="hint_totMts"></div></div>
-        <div class="field"><label>Kg hilo producidos</label><div class="iu"><input type="number" id="totKg" value="0" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_totKg"></div></div>
+        <div class="field"><label>Mts totales producidos</label><div class="iu"><input type="number" id="totMts" value="" placeholder="0" oninput="recalc()"><span class="u">mts</span></div><div class="fmt-hint" id="hint_totMts"></div></div>
+        <div class="field"><label>Kg hilo producidos</label><div class="iu"><input type="number" id="totKg" value="" placeholder="0" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_totKg"></div></div>
         <div id="grumoLamField">
-          <div class="field"><label>Kg grumo laminado (coating)</label><div class="iu"><input type="number" id="grumoLam" value="0" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_grumoLam"></div></div>
+          <div class="field"><label>Kg grumo laminado (coating)</label><div class="iu"><input type="number" id="grumoLam" value="" placeholder="0" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_grumoLam"></div></div>
         </div>
       </div>
     </details>
@@ -251,11 +251,11 @@ body.experimental .exp-compare{display:block;}
     <details style="margin-top:6px;">
       <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Precios MP (ultimo precio OC - sin IVA)</span></summary>
       <div style="padding-top:6px;">
-        <div class="field"><label>Grumo hilo KYD/LYD (USD/kg)</label><div class="iu"><input type="number" id="pGH" value="1.33" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-        <div class="field"><label>Grumo laminado XSD (USD/kg)</label><div class="iu"><input type="number" id="pGL" value="1.33" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-        <div class="field"><label>Polietileno BC818/APP (USD/kg)</label><div class="iu"><input type="number" id="pPE" value="1.36" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-        <div class="field"><label>Carbonato 1001BR/APC (USD/kg)</label><div class="iu"><input type="number" id="pCarb" value="0.75" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-        <div class="field"><label>Masterbatch hilo (USD/kg)</label><div class="iu"><input type="number" id="pMast" value="2.35" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+        <div class="field"><label>Grumo hilo KYD/LYD (USD/kg)</label><div class="iu"><input type="number" id="pGH" value="" placeholder="0.00" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+        <div class="field"><label>Grumo laminado XSD (USD/kg)</label><div class="iu"><input type="number" id="pGL" value="" placeholder="0.00" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+        <div class="field"><label>Polietileno BC818/APP (USD/kg)</label><div class="iu"><input type="number" id="pPE" value="" placeholder="0.00" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+        <div class="field"><label>Carbonato 1001BR/APC (USD/kg)</label><div class="iu"><input type="number" id="pCarb" value="" placeholder="0.00" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+        <div class="field"><label>Masterbatch hilo (USD/kg)</label><div class="iu"><input type="number" id="pMast" value="" placeholder="0.00" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
       </div>
     </details>
   </div><!-- /panel-datos -->
@@ -309,43 +309,68 @@ body.experimental .exp-compare{display:block;}
 
   <!-- PANEL FACTURAS Y GASTOS -->
   <div class="side-panel" id="panel-fac">
-    <!-- SERVICIOS FIJOS - resumen arriba -->
-    <div>
-      <div class="s-head">Servicios fijos (facturas)</div>
-      <div id="facturasResumen" style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px 12px;margin-top:4px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--t2);">Total servicios</span>
-          <span id="facTotalResumen" style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);">$0</span>
+    <!-- GASTOS FIJOS -->
+    <details open style="margin-bottom:8px;">
+      <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Gastos fijos</span></summary>
+      <div style="padding-top:6px;">
+        <div id="facturasResumen" style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:10px 12px;margin-top:4px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--t2);">Total servicios</span>
+            <span id="facTotalResumen" style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);">$0</span>
+          </div>
+          <div id="facCargadasResumen" style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:3px;">— sin datos —</div>
         </div>
-        <div id="facCargadasResumen" style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:3px;">— sin datos —</div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="btn ghost" style="flex:1;font-size:10px;" onclick="loadFacturasFromSheet()">Recargar Sheet</button>
+        </div>
+        <div id="facGrid" style="margin-top:8px;"></div>
       </div>
-      <div style="display:flex;gap:6px;margin-top:8px;">
-        <button class="btn ghost" style="flex:1;font-size:10px;" onclick="loadFacturasFromSheet()">Recargar Sheet</button>
-      </div>
-    </div>
-    <!-- GRILLA DE FACTURAS -->
-    <div id="facGrid" style="margin-top:8px;"></div>
+    </details>
+
     <!-- GASTOS VARIABLES -->
-    <div style="margin-top:8px;">
-      <div class="s-head">Gastos variables del mes</div>
-      <div class="field"><label>Gasoil</label><div class="iu"><input type="text" inputmode="numeric" id="cGasoil" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Almuerzos</label><div class="iu"><input type="text" inputmode="numeric" id="cAlmuerzos" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Fletes internos</label><div class="iu"><input type="text" inputmode="numeric" id="cFletes" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
-    </div>
-    <!-- PRORRATEOS -->
-    <div>
-      <div class="s-head">Prorrateos / Contratos</div>
-      <div class="nota info" style="margin-bottom:8px;font-size:9px;">Gastos periodicos prorrateados mes a mes. La app avisa cuando vence cada uno.</div>
-      <div id="prorrList"></div>
-      <button class="btn ghost sm" style="margin-top:6px;width:100%;" onclick="openAddProrrForm()">+ Agregar prorrateo</button>
-      <div id="addProrrForm" style="display:none;margin-top:8px;">
-        <div class="field" style="margin-bottom:5px;"><label>Descripcion</label><input type="text" id="newProrrDesc" placeholder="Ej: Seguro edilicio"></div>
-        <div class="field" style="margin-bottom:5px;"><label>Monto total (sin IVA)</label><div class="iu"><input type="number" id="newProrrMonto" placeholder="0"><span class="u">ARS</span></div></div>
-        <div class="field" style="margin-bottom:5px;"><label>Duracion (meses)</label><input type="number" id="newProrrVida" value="12" min="1"></div>
-        <div class="field" style="margin-bottom:8px;"><label>Mes inicio (Ej: Marzo 2026)</label><input type="text" id="newProrrInicio" placeholder="Marzo 2026"></div>
-        <button class="btn acc sm" style="width:100%;" onclick="addProrr()">Agregar</button>
+    <details style="margin-bottom:8px;">
+      <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Gastos variables del mes</span></summary>
+      <div style="padding-top:6px;">
+        <div class="field"><label>Gasoil</label><div class="iu"><input type="text" inputmode="numeric" id="cGasoil" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
+        <div class="field"><label>Almuerzos</label><div class="iu"><input type="text" inputmode="numeric" id="cAlmuerzos" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
+        <div class="field"><label>Fletes internos</label><div class="iu"><input type="text" inputmode="numeric" id="cFletes" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
       </div>
-    </div>
+    </details>
+
+    <!-- MANTENIMIENTO PITEC -->
+    <details style="margin-bottom:8px;">
+      <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Mantenimiento Pitec</span></summary>
+      <div style="padding-top:6px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Promedio mensual del último año desde OC.</div>
+        <div id="mantPitecBox"></div>
+      </div>
+    </details>
+
+    <!-- VARIOS PITEC -->
+    <details style="margin-bottom:8px;">
+      <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Varios Pitec</span></summary>
+      <div style="padding-top:6px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Promedio mensual del último año desde OC con categoría "Varios Pitec".</div>
+        <div id="variosPitecBox"></div>
+      </div>
+    </details>
+
+    <!-- PRORRATEOS -->
+    <details style="margin-bottom:8px;">
+      <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Prorrateos / Contratos</span></summary>
+      <div style="padding-top:6px;">
+        <div class="nota info" style="margin-bottom:8px;font-size:9px;">Gastos periodicos prorrateados mes a mes. La app avisa cuando vence cada uno.</div>
+        <div id="prorrList"></div>
+        <button class="btn ghost sm" style="margin-top:6px;width:100%;" onclick="openAddProrrForm()">+ Agregar prorrateo</button>
+        <div id="addProrrForm" style="display:none;margin-top:8px;">
+          <div class="field" style="margin-bottom:5px;"><label>Descripcion</label><input type="text" id="newProrrDesc" placeholder="Ej: Seguro edilicio"></div>
+          <div class="field" style="margin-bottom:5px;"><label>Monto total (sin IVA)</label><div class="iu"><input type="number" id="newProrrMonto" placeholder="0"><span class="u">ARS</span></div></div>
+          <div class="field" style="margin-bottom:5px;"><label>Duracion (meses)</label><input type="number" id="newProrrVida" value="12" min="1"></div>
+          <div class="field" style="margin-bottom:8px;"><label>Mes inicio (Ej: Marzo 2026)</label><input type="text" id="newProrrInicio" placeholder="Marzo 2026"></div>
+          <button class="btn acc sm" style="width:100%;" onclick="addProrr()">Agregar</button>
+        </div>
+      </div>
+    </details>
   </div><!-- /panel-fac -->
 
   <!-- PANEL MATERIALES -->
@@ -366,11 +391,6 @@ body.experimental .exp-compare{display:block;}
     <div class="s-head">Consumibles del proceso</div>
     <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Frecuencia y último precio de insumos de proceso. Configura en Config → Consumibles.</div>
     <div id="matConsumibles" style="margin-bottom:14px;"></div>
-
-    <!-- MANTENIMIENTO -->
-    <div class="s-head">Mantenimiento Pitec</div>
-    <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Promedio histórico mensual desde OC.</div>
-    <div id="matMant"></div>
   </div>
 
   <!-- PANEL CONFIG -->
@@ -971,8 +991,8 @@ function buildFtoInputRows(){
   el.innerHTML = FTO_LIST.map(function(fto){
     return '<tr>'
       +'<td style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--t2);padding:4px 8px 4px 0;">'+fto+'</td>'
-      +'<td><input type="number" id="fmts_'+fto+'" value="0" style="font-size:14px;padding:5px 8px;" oninput="recalc()"></td>'
-      +'<td><input type="number" id="fkg_'+fto+'" value="0" style="font-size:14px;padding:5px 8px;" oninput="recalc()"></td>'
+      +'<td><input type="number" id="fmts_'+fto+'" value="" placeholder="0" style="font-size:14px;padding:5px 8px;" oninput="recalc()"></td>'
+      +'<td><input type="number" id="fkg_'+fto+'" value="" placeholder="0" style="font-size:14px;padding:5px 8px;" oninput="recalc()"></td>'
       +'</tr>';
   }).join('')
   +'<tr style="border-top:2px solid var(--b2);">'
@@ -1664,7 +1684,10 @@ function recalc(){
   // MANTENIMIENTO PITEC - promedio mensual ultimo año desde OCs
   var mant         = calculateMantenimientoCost();
   var totalMant    = mant.total;
-  var totalVarProd = cGasoil+cAlm+cFletes+totalInsumos+totalMant;
+  // VARIOS PITEC - promedio mensual de OCs con categoria "Varios Pitec"
+  var varios       = calculateVariosPitecCost();
+  var totalVarios  = varios.total;
+  var totalVarProd = cGasoil+cAlm+cFletes+totalInsumos+totalMant+totalVarios;
 
   var totalGeneral = totalFijos+totalMPHilo+totalMPLam+totalVarProd;
   var costoPorKg   = totKg>0  ? totalGeneral/totKg  : 0;
@@ -1691,7 +1714,7 @@ function recalc(){
     sueldos:sueldos,edesur:edesur,mpDetalle:mpDetalle,lamDetalle:lamDetalle,
     cGasoil:cGasoil,cAlm:cAlm,cFletes:cFletes,
     totalInsumos:totalInsumos,insumosDetalle:insumosDetalle,
-    totalMant:totalMant};
+    totalMant:totalMant,totalVarios:totalVarios};
 
   renderKPIs(costoPorKg,costoPorMts,grM2Prom,totalGeneral,ftoResults['47'],dolar);
   renderCostBreakdown(totalFijos,totalMPHilo,totalMPLam,totalVarProd,totalGeneral,_calc);
@@ -1810,6 +1833,7 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
     +row('Fletes internos',c.cFletes||0,'var(--ok)')
     +row('Almuerzos',c.cAlm||0,'var(--ok)')
     +row('Mantenimiento Pitec',c.totalMant||0,'var(--ok)')
+    +row('Varios Pitec',c.totalVarios||0,'var(--ok)')
     +rowDesplegable('Insumos del proceso', c.totalInsumos||0, c.insumosDetalle||[], 'var(--ok)')+'</div>'
     +'<div style="padding:10px 14px;background:var(--surf2);border-radius:6px;border:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;margin-top:4px;">'
     +'<span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;">TOTAL MENSUAL</span>'
@@ -2521,10 +2545,11 @@ async function loadMateriales(){
       return r.fecha && r.fecha >= hace1Anio;
     });
 
-    // Renderizar las 3 secciones
+    // Renderizar las secciones
     renderMatPreciosMP(ocFiltradas);
     renderMatConsumibles(ocFiltradas);
     renderMatMant(ocFiltradas);
+    renderVariosPitec();
 
     if(statusEl){
       statusEl.textContent = ocFiltradas.length+' OC del ultimo año procesadas · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
@@ -2730,27 +2755,12 @@ function _consumRow(label, matched, manualInputKey){
     +'</div>';
 }
 
-// Calcula el promedio mensual de Mantenimiento Pitec a partir de OCs del
-// ultimo año (filtra fabrica='mantenimiento pitec' exacto, excluyendo otras
-// fabricas tipo "Mantenimiento Alamo"). Retorna {total, count, ultimoMes, topCats}.
-function calculateMantenimientoCost(){
-  if(!_ocFullData) return {total:0, count:0, ultimoMes:null, topCats:[]};
-
-  var hoy        = new Date();
-  var hace1Anio  = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
-  var mantOC     = _ocFullData.filter(function(r){
-    if(!r.fabrica || !r.fecha) return false;
-    var f = r.fabrica.toLowerCase();
-    // Tolera typos como "Mantenimineto Pitec" (faltan/sobran letras en mantenimiento)
-    if(!f.includes('manten') || !f.includes('pitec')) return false;
-    if(r.fecha < hace1Anio) return false;
-    return true;
-  });
-  if(!mantOC.length) return {total:0, count:0, ultimoMes:null, topCats:[]};
-
-  // Agrupar por mes para calcular promedio
+// Helper generico: calcula promedio mensual desde un set de OCs del ultimo año.
+// Retorna {total, count, ultimoMes, topCats}.
+function _statsOCs(filteredOC){
+  if(!filteredOC.length) return {total:0, count:0, ultimoMes:null, topCats:[]};
   var porMes = {};
-  mantOC.forEach(function(r){
+  filteredOC.forEach(function(r){
     var key = r.fecha.getFullYear()+'-'+String(r.fecha.getMonth()+1).padStart(2,'0');
     if(!porMes[key]) porMes[key] = 0;
     porMes[key] += (r.importe_ars||0);
@@ -2759,17 +2769,54 @@ function calculateMantenimientoCost(){
   var totalGasto   = Object.values(porMes).reduce(function(s,v){ return s+v; }, 0);
   var promMensual  = meses.length > 0 ? Math.round(totalGasto / meses.length) : 0;
   var ultimoMes    = meses.sort().reverse()[0] || null;
-
-  // Top categorías
   var porCat = {};
-  mantOC.forEach(function(r){
+  filteredOC.forEach(function(r){
     var cat = r.categoria || 'Sin categoría';
     if(!porCat[cat]) porCat[cat] = 0;
     porCat[cat] += (r.importe_ars||0);
   });
   var topCats = Object.entries(porCat).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  return {total:promMensual, count:filteredOC.length, ultimoMes:ultimoMes, topCats:topCats};
+}
 
-  return {total:promMensual, count:mantOC.length, ultimoMes:ultimoMes, topCats:topCats};
+// Calcula el promedio mensual de Mantenimiento Pitec del ultimo año.
+// Filtra fabrica que contenga "manten" Y "pitec" (tolerante a typos como
+// "Mantenimineto Pitec"). Excluye categoria "Varios" para evitar doble conteo
+// con calculateVariosPitecCost().
+function calculateMantenimientoCost(){
+  if(!_ocFullData) return {total:0, count:0, ultimoMes:null, topCats:[]};
+
+  var hoy        = new Date();
+  var hace1Anio  = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
+  var mantOC     = _ocFullData.filter(function(r){
+    if(!r.fabrica || !r.fecha) return false;
+    var f = r.fabrica.toLowerCase();
+    if(!f.includes('manten') || !f.includes('pitec')) return false;
+    if(r.fecha < hace1Anio) return false;
+    var cat = (r.categoria||'').toLowerCase();
+    if(cat.includes('varios')) return false; // se cuenta aparte en Varios Pitec
+    return true;
+  });
+  return _statsOCs(mantOC);
+}
+
+// Calcula el promedio mensual de gastos de categoria "Varios Pitec" del ultimo año.
+// Filtra fabrica que contenga "pitec" Y categoria que contenga "varios".
+function calculateVariosPitecCost(){
+  if(!_ocFullData) return {total:0, count:0, ultimoMes:null, topCats:[]};
+
+  var hoy        = new Date();
+  var hace1Anio  = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
+  var variosOC   = _ocFullData.filter(function(r){
+    if(!r.fabrica || !r.fecha) return false;
+    var f = r.fabrica.toLowerCase();
+    if(!f.includes('pitec')) return false;
+    if(r.fecha < hace1Anio) return false;
+    var cat = (r.categoria||'').toLowerCase();
+    if(!cat.includes('varios')) return false;
+    return true;
+  });
+  return _statsOCs(variosOC);
 }
 
 // Calcula el costo mensual total de los Consumibles del proceso a partir
@@ -2849,16 +2896,14 @@ function renderMatConsumibles(_ignored){
   el.innerHTML = html || '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">Configura los keywords en Config → Consumibles.</div>';
 }
 
-function renderMatMant(_ignored){
-  var el = document.getElementById('matMant');
+// Helper compartido: renderiza un bloque de stats (Mantenimiento o Varios Pitec)
+function _renderStatsBox(elId, m, sinDataMsg){
+  var el = document.getElementById(elId);
   if(!el) return;
-
-  var m = calculateMantenimientoCost();
   if(!m.count){
-    el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">Sin OC de Mantenimiento Pitec.</div>';
+    el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">'+sinDataMsg+'</div>';
     return;
   }
-
   var html = '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'
     +'<div style="font-family:var(--mono);font-size:10px;color:var(--t2);">Promedio mensual</div>'
     +'<div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--acc2);">$'+m.total.toLocaleString('es-AR')+'</div>'
@@ -2868,15 +2913,20 @@ function renderMatMant(_ignored){
     +'<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">'+(m.ultimoMes||'—')+'</div>'
     +'</div>'
     +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;">Top categorías</div>';
-
   m.topCats.forEach(function(entry){
     html += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-family:var(--mono);font-size:10px;">'
       +'<span style="color:var(--t2);">'+entry[0]+'</span>'
       +'<span style="color:var(--t1);">$'+Math.round(entry[1]).toLocaleString('es-AR')+'</span>'
       +'</div>';
   });
-
   el.innerHTML = html;
+}
+
+function renderMatMant(_ignored){
+  _renderStatsBox('mantPitecBox', calculateMantenimientoCost(), 'Sin OC de Mantenimiento Pitec.');
+}
+function renderVariosPitec(){
+  _renderStatsBox('variosPitecBox', calculateVariosPitecCost(), 'Sin OC con categoría "Varios Pitec".');
 }
 
 // ==============================================================
