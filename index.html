@@ -2801,7 +2801,7 @@ function calculateMantenimientoCost(){
 }
 
 // Calcula el promedio mensual de gastos de categoria "Varios Pitec" del ultimo año.
-// Filtra fabrica que contenga "pitec" Y categoria que contenga "varios".
+// Filtra fabrica = "Pitec" (excluye "Mantenimiento Pitec") Y categoria que contenga "varios".
 function calculateVariosPitecCost(){
   if(!_ocFullData) return {total:0, count:0, ultimoMes:null, topCats:[]};
 
@@ -2811,6 +2811,7 @@ function calculateVariosPitecCost(){
     if(!r.fabrica || !r.fecha) return false;
     var f = r.fabrica.toLowerCase();
     if(!f.includes('pitec')) return false;
+    if(f.includes('manten')) return false; // excluir "Mantenimiento Pitec"
     if(r.fecha < hace1Anio) return false;
     var cat = (r.categoria||'').toLowerCase();
     if(!cat.includes('varios')) return false;
