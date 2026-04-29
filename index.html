@@ -1719,15 +1719,28 @@ function recalc(){
 // RENDER FUNCTIONS
 // ==============================================================
 function renderKPIs(cPorKg,cPorMts,grM2,total,r47,dolar){
-  var marg = r47 ? r47.diff : null;
-  var mCls = marg===null?'':marg>0?'green':marg>-20?'warn':'red';
+  // Mts y Kg totales del mes
+  var totMts = g('totMts');
+  var totKg  = g('totKg');
+
+  // Gramaje por tipo de formato
+  // Tubulares: 40, 47, 53, 57, 60. Planos: 71, 82, 102, 120.
+  var TUBULAR_FMTS = ['40','47','53','57','60'];
+  var PLANO_FMTS   = ['71','82','102','120'];
+  function _gramajeDe(ftos){
+    var m=0, k=0;
+    ftos.forEach(function(f){ m+=g('fmts_'+f); k+=g('fkg_'+f); });
+    return m>0 ? (k/m)*1000 : 0;
+  }
+  var grTubular = _gramajeDe(TUBULAR_FMTS);
+  var grPlano   = _gramajeDe(PLANO_FMTS);
+
   document.getElementById('kpiStrip').innerHTML=
     '<div class="kpi"><div class="kpi-lbl">Costo / kg</div><div class="kpi-val" style="color:var(--acc);">'+fc(cPorKg,2)+'</div><div class="kpi-sub">u$s'+(cPorKg/dolar).toFixed(3)+'/kg</div></div>'
-    +'<div class="kpi"><div class="kpi-lbl">Costo / mts (prom.)</div><div class="kpi-val" style="color:var(--acc2);">'+fc(cPorMts,3)+'</div><div class="kpi-sub">u$s'+(cPorMts/dolar).toFixed(4)+'/mts</div></div>'
-    +'<div class="kpi"><div class="kpi-lbl">Gramaje prom. real</div><div class="kpi-val" style="color:var(--warn);">'+grM2.toFixed(2)+'</div><div class="kpi-sub">gr/m2 del mes</div></div>'
-    +'<div class="kpi"><div class="kpi-lbl">Total mensual</div><div class="kpi-val" style="color:var(--acc3);">'+fc(total/1000000,1)+'M</div><div class="kpi-sub">ARS sin IVA</div></div>'
-    +'<div class="kpi"><div class="kpi-lbl">Margen vs Nav. F47</div><div class="kpi-val '+mCls+'">'+(marg!==null?(marg>0?'+':'')+fc(marg,2)+'/mts':'-')+'</div>'
-    +'<div class="kpi-sub">'+(r47&&r47.diffPct!==null&&r47.diffPct!==undefined?(r47.diffPct>0?'mas barato ':'mas caro ')+Math.abs(r47.diffPct).toFixed(1)+'%':'')+'</div></div>';
+    +'<div class="kpi"><div class="kpi-lbl">Mts producidos</div><div class="kpi-val" style="color:var(--acc2);">'+(totMts>0?totMts.toLocaleString('es-AR'):'—')+'</div><div class="kpi-sub">mts del mes</div></div>'
+    +'<div class="kpi"><div class="kpi-lbl">Kg producidos</div><div class="kpi-val" style="color:var(--acc2);">'+(totKg>0?totKg.toLocaleString('es-AR'):'—')+'</div><div class="kpi-sub">kg del mes</div></div>'
+    +'<div class="kpi"><div class="kpi-lbl">Gramaje tubular</div><div class="kpi-val" style="color:var(--warn);">'+grTubular.toFixed(2)+'</div><div class="kpi-sub">gr/m² (40-60)</div></div>'
+    +'<div class="kpi"><div class="kpi-lbl">Gramaje plano</div><div class="kpi-val" style="color:var(--warn);">'+grPlano.toFixed(2)+'</div><div class="kpi-sub">gr/m² (71-120)</div></div>';
 }
 
 function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
