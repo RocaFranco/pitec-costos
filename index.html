@@ -323,13 +323,6 @@ body.experimental .exp-compare{display:block;}
       <div class="field"><label>Gasoil</label><div class="iu"><input type="text" inputmode="numeric" id="cGasoil" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
       <div class="field"><label>Almuerzos</label><div class="iu"><input type="text" inputmode="numeric" id="cAlmuerzos" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
       <div class="field"><label>Fletes internos</label><div class="iu"><input type="text" inputmode="numeric" id="cFletes" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Gastos varios</label><div class="iu"><input type="text" inputmode="numeric" id="cVarios" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
-    </div>
-    <!-- MANTENIMIENTO -->
-    <div>
-      <div class="s-head">Mantenimiento</div>
-      <div class="field"><label>Mantenimiento extra</label><div class="iu"><input type="text" inputmode="numeric" id="cMant" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
-      <div class="field"><label>Otros</label><div class="iu"><input type="text" inputmode="numeric" id="cOtros" placeholder="0" style="font-family:var(--mono);" oninput="saveGastosLS();recalc()" onblur="formatFactInput(this);recalc()"><span class="u">ARS</span></div></div>
     </div>
     <!-- PRORRATEOS -->
     <div>
@@ -1656,10 +1649,14 @@ function recalc(){
   var cGasoil   = g('cGasoil');
   var cAlm      = g('cAlmuerzos');
   var cFletes   = g('cFletes');
-  var cVarios   = g('cVarios');
-  var cMant     = g('cMant');
-  var cOtros    = g('cOtros');
-  var totalVarProd = cGasoil+cAlm+cFletes+cVarios+cMant+cOtros;
+  // INSUMOS DEL PROCESO - costo mensual inferido a partir de OCs (o manual)
+  var insumos        = calculateInsumosCost();
+  var totalInsumos   = insumos.total;
+  var insumosDetalle = insumos.items;
+  // MANTENIMIENTO PITEC - promedio mensual ultimo año desde OCs
+  var mant         = calculateMantenimientoCost();
+  var totalMant    = mant.total;
+  var totalVarProd = cGasoil+cAlm+cFletes+totalInsumos+totalMant;
 
   var totalGeneral = totalFijos+totalMPHilo+totalMPLam+totalVarProd;
   var costoPorKg   = totKg>0  ? totalGeneral/totKg  : 0;
@@ -1683,7 +1680,10 @@ function recalc(){
   _calc = {dolar:dolar,totMts:totMts,totKg:totKg,grM2Prom:grM2Prom,totalGeneral:totalGeneral,
     costoPorKg:costoPorKg,costoPorMts:costoPorMts,ftoResults:ftoResults,
     totalFijos:totalFijos,totalMPHilo:totalMPHilo,totalMPLam:totalMPLam,totalVarProd:totalVarProd,
-    sueldos:sueldos,edesur:edesur,mpDetalle:mpDetalle,lamDetalle:lamDetalle,cGasoil:cGasoil,cAlm:cAlm,cFletes:cFletes};
+    sueldos:sueldos,edesur:edesur,mpDetalle:mpDetalle,lamDetalle:lamDetalle,
+    cGasoil:cGasoil,cAlm:cAlm,cFletes:cFletes,
+    totalInsumos:totalInsumos,insumosDetalle:insumosDetalle,
+    totalMant:totalMant};
 
   renderKPIs(costoPorKg,costoPorMts,grM2Prom,totalGeneral,ftoResults['47'],dolar);
   renderCostBreakdown(totalFijos,totalMPHilo,totalMPLam,totalVarProd,totalGeneral,_calc);
@@ -1765,6 +1765,27 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
   function secHead(label,color){
     return '<div style="font-family:var(--mono);font-size:13px;font-weight:800;color:'+color+';text-transform:uppercase;letter-spacing:.07em;padding:8px 0 3px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:2px;">'+label+'</div>';
   }
+  // Fila colapsable con detalle (usa <details>/<summary> nativo)
+  function rowDesplegable(lbl, val, items, color){
+    var detallesHtml = (items||[]).map(function(it){
+      var srcLbl = it.fuente==='manual' ? ' <span style="color:var(--warn);">(manual)</span>' : '';
+      return '<div style="display:flex;align-items:center;gap:6px;padding:2px 0 2px 24px;font-family:var(--mono);font-size:11px;color:var(--t3);">'
+        +'<span style="flex:1;">'+it.nombre+srcLbl+'</span>'
+        +'<span>'+fc(it.costo/1000,0)+'K</span>'
+        +'</div>';
+    }).join('');
+    var pct  = (val/total*100||0).toFixed(1);
+    var bar  = '<div style="flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;margin:0 8px;"><div style="width:'+Math.min(100,pct)+'%;height:100%;background:'+color+';border-radius:2px;"></div></div>';
+    return '<details style="padding:0;">'
+      +'<summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:3px 0;">'
+      +'<span style="font-family:var(--mono);font-size:15px;color:var(--t2);min-width:180px;">▸ '+lbl+'</span>'
+      +bar
+      +'<span style="font-family:var(--mono);font-size:12px;color:var(--t3);min-width:44px;text-align:right;">'+pct+'%</span>'
+      +'<span style="font-family:var(--mono);font-size:15px;font-weight:600;min-width:80px;text-align:right;color:'+color+';">'+fc(val/1000,0)+'K</span>'
+      +'</summary>'
+      +detallesHtml
+      +'</details>';
+  }
   var html = '<div style="margin-bottom:6px;">'+secHead('FIJOS','var(--acc)')
     +row('Sueldos',c.sueldos,'var(--acc)')
     +row('Edesur',c.edesur,'var(--acc)')
@@ -1774,8 +1795,11 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
     +(tipo==='lam'?'<div style="margin-bottom:6px;">'+secHead('COATING LAMINADO','var(--warn)')
       +(c.lamDetalle||[]).map(function(m){ return row(m.nombre,m.cost,'var(--warn)'); }).join('')+'</div>':'')
     +'<div style="margin-bottom:6px;">'+secHead('PRODUCCIÓN / VARIABLES','var(--ok)')
-    +row('Gasoil + fletes',c.cGasoil+c.cFletes,'var(--ok)')
-    +row('Almuerzos + varios',c.cAlm,'var(--ok)')+'</div>'
+    +row('Gasoil',c.cGasoil||0,'var(--ok)')
+    +row('Fletes internos',c.cFletes||0,'var(--ok)')
+    +row('Almuerzos',c.cAlm||0,'var(--ok)')
+    +row('Mantenimiento Pitec',c.totalMant||0,'var(--ok)')
+    +rowDesplegable('Insumos del proceso', c.totalInsumos||0, c.insumosDetalle||[], 'var(--ok)')+'</div>'
     +'<div style="padding:10px 14px;background:var(--surf2);border-radius:6px;border:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;margin-top:4px;">'
     +'<span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;">TOTAL MENSUAL</span>'
     +'<span style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--acc);">'+fc(total/1000000,2)+'M ARS</span></div>';
@@ -2687,6 +2711,92 @@ function _consumRow(label, matched, manualInputKey){
     +'</div>';
 }
 
+// Calcula el promedio mensual de Mantenimiento Pitec a partir de OCs del
+// ultimo año (filtra fabrica='mantenimiento pitec' exacto, excluyendo otras
+// fabricas tipo "Mantenimiento Alamo"). Retorna {total, count, ultimoMes, topCats}.
+function calculateMantenimientoCost(){
+  if(!_ocFullData) return {total:0, count:0, ultimoMes:null, topCats:[]};
+
+  var hoy        = new Date();
+  var hace1Anio  = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
+  var mantOC     = _ocFullData.filter(function(r){
+    if(!r.fabrica || !r.fecha) return false;
+    if(!r.fabrica.toLowerCase().includes('mantenimiento pitec')) return false;
+    if(r.fecha < hace1Anio) return false;
+    return true;
+  });
+  if(!mantOC.length) return {total:0, count:0, ultimoMes:null, topCats:[]};
+
+  // Agrupar por mes para calcular promedio
+  var porMes = {};
+  mantOC.forEach(function(r){
+    var key = r.fecha.getFullYear()+'-'+String(r.fecha.getMonth()+1).padStart(2,'0');
+    if(!porMes[key]) porMes[key] = 0;
+    porMes[key] += (r.importe_ars||0);
+  });
+  var meses        = Object.keys(porMes);
+  var totalGasto   = Object.values(porMes).reduce(function(s,v){ return s+v; }, 0);
+  var promMensual  = meses.length > 0 ? Math.round(totalGasto / meses.length) : 0;
+  var ultimoMes    = meses.sort().reverse()[0] || null;
+
+  // Top categorías
+  var porCat = {};
+  mantOC.forEach(function(r){
+    var cat = r.categoria || 'Sin categoría';
+    if(!porCat[cat]) porCat[cat] = 0;
+    porCat[cat] += (r.importe_ars||0);
+  });
+  var topCats = Object.entries(porCat).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+
+  return {total:promMensual, count:mantOC.length, ultimoMes:ultimoMes, topCats:topCats};
+}
+
+// Calcula el costo mensual total de los Consumibles del proceso a partir
+// de las OCs (consumo unitario inferido) o input manual cuando no hay datos.
+// Retorna {total, items:[{nombre, costo, fuente}]}
+function calculateInsumosCost(){
+  if(!_ocFullData) return {total:0, items:[]};
+
+  var universo = _ocFullData.filter(function(r){
+    if(!r.fabrica) return false;
+    if(!r.fabrica.toLowerCase().includes('pitec')) return false;
+    if(!r.fecha || r.fecha < CONSUM_CUTOFF) return false;
+    return true;
+  });
+  var manual = getMatManual();
+  var total = 0;
+  var items = [];
+
+  function addItem(label, kws, manualKey){
+    var matched = universo.filter(function(r){ return matchDesc(r.descripcion, kws); });
+    var costo = 0;
+    var fuente = 'inferido';
+    if(matched.length >= 2){
+      var s = _consumStats(matched);
+      costo = s.costoMensualInfer || 0;
+    } else {
+      costo  = parseFloat(manual[manualKey]) || 0;
+      fuente = 'manual';
+    }
+    if(costo > 0){
+      total += costo;
+      items.push({nombre:label, costo:costo, fuente:fuente});
+    }
+  }
+
+  CONSUMIBLES_ITEMS.forEach(function(item){
+    var kws = getConsumKw(item.key, item.defaultKw);
+    addItem(item.label, kws, 'consum_'+item.key);
+  });
+  getCustomConsumibles().forEach(function(item, idx){
+    if(!item.label || !item.kw) return;
+    var kws = item.kw.split(',').map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
+    addItem(item.label, kws, 'consum_custom_'+idx);
+  });
+
+  return {total:total, items:items};
+}
+
 function renderMatConsumibles(_ignored){
   var el = document.getElementById('matConsumibles');
   if(!el) return;
@@ -2718,52 +2828,27 @@ function renderMatConsumibles(_ignored){
   el.innerHTML = html || '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">Configura los keywords en Config → Consumibles.</div>';
 }
 
-function renderMatMant(ocRows){
+function renderMatMant(_ignored){
   var el = document.getElementById('matMant');
   if(!el) return;
 
-  var mantOC = ocRows.filter(function(r){ return r.fabrica.toLowerCase().includes('mantenimiento'); });
-  if(!mantOC.length){
+  var m = calculateMantenimientoCost();
+  if(!m.count){
     el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">Sin OC de Mantenimiento Pitec.</div>';
     return;
   }
 
-  // Agrupar por mes para calcular promedio
-  var porMes = {};
-  mantOC.forEach(function(r){
-    if(!r.fecha) return;
-    var key = r.fecha.getFullYear()+'-'+String(r.fecha.getMonth()+1).padStart(2,'0');
-    if(!porMes[key]) porMes[key] = 0;
-    porMes[key] += (r.importe_ars||0);
-  });
-  var meses = Object.keys(porMes);
-  var totalMeses = meses.length;
-  var totalGasto = Object.values(porMes).reduce(function(s,v){ return s+v; }, 0);
-  var promMensual = totalMeses > 0 ? Math.round(totalGasto / totalMeses) : 0;
-
-  // Último mes con compras
-  var ultimoMes = meses.sort().reverse()[0] || '—';
-
-  // Agrupar por categoría
-  var porCat = {};
-  mantOC.forEach(function(r){
-    var cat = r.categoria || 'Sin categoría';
-    if(!porCat[cat]) porCat[cat] = 0;
-    porCat[cat] += (r.importe_ars||0);
-  });
-  var topCats = Object.entries(porCat).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
-
   var html = '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'
     +'<div style="font-family:var(--mono);font-size:10px;color:var(--t2);">Promedio mensual</div>'
-    +'<div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--acc2);">$'+promMensual.toLocaleString('es-AR')+'</div>'
+    +'<div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--acc2);">$'+m.total.toLocaleString('es-AR')+'</div>'
     +'</div>'
     +'<div style="display:flex;justify-content:space-between;margin-bottom:10px;">'
     +'<div style="font-family:var(--mono);font-size:10px;color:var(--t2);">Último mes c/ compras</div>'
-    +'<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">'+ultimoMes+'</div>'
+    +'<div style="font-family:var(--mono);font-size:10px;color:var(--t3);">'+(m.ultimoMes||'—')+'</div>'
     +'</div>'
     +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;">Top categorías</div>';
 
-  topCats.forEach(function(entry){
+  m.topCats.forEach(function(entry){
     html += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-family:var(--mono);font-size:10px;">'
       +'<span style="color:var(--t2);">'+entry[0]+'</span>'
       +'<span style="color:var(--t1);">$'+Math.round(entry[1]).toLocaleString('es-AR')+'</span>'
@@ -2780,7 +2865,7 @@ function renderMatMant(ocRows){
 // ─── EXPERIMENTAL MODE ────────────────────────────────────
 var EXP_INPUTS = ['dolar','sueldos','totMts','totKg','grumoLam','peLam',
   'pGH','pGL','pPE','pCarb','pMast',
-  'cGasoil','cAlmuerzos','cFletes','cVarios','cMant','cOtros'];
+  'cGasoil','cAlmuerzos','cFletes'];
 
 function captureSnapshot(){
   var snap = { inputs:{}, servicios:[], composicion:[] };
@@ -2995,7 +3080,7 @@ function renderGramajeSim(){
   }).join('');
 }
 
-var GASTOS_CAMPOS = ['cGasoil','cAlmuerzos','cFletes','cVarios','cMant','cOtros'];
+var GASTOS_CAMPOS = ['cGasoil','cAlmuerzos','cFletes'];
 
 function saveGastosLS(){
   var mes  = document.getElementById('selMes').value;
@@ -3036,8 +3121,8 @@ async function loadGastosManuales(){
     var fila    = 7 + mesIdx; // fila 7=Enero, 8=Feb...
     var gasData = null;
     // intentar nombre de pestaña con guion bajo, luego con espacio
-    try{ gasData = await readSheet(SHEET_IDS.gastos, 'Gastos_Manuales!C'+fila+':H'+fila); }
-    catch(e1){ gasData = await readSheet(SHEET_IDS.gastos, 'Gastos Manuales!C'+fila+':H'+fila); }
+    try{ gasData = await readSheet(SHEET_IDS.gastos, 'Gastos_Manuales!C'+fila+':E'+fila); }
+    catch(e1){ gasData = await readSheet(SHEET_IDS.gastos, 'Gastos Manuales!C'+fila+':E'+fila); }
     var gasRow  = (gasData && gasData[0]) || [];
     var cargados = 0;
     GASTOS_CAMPOS.forEach(function(campo,i){
