@@ -203,7 +203,7 @@ body.experimental .exp-compare{display:block;}
 <!-- ========== SIDEBAR ========== -->
 <div class="side">
   <div class="side-tabs">
-    <div class="side-tab active" onclick="showSidePanel('datos',this)">Datos</div>
+    <div class="side-tab active" onclick="showSidePanel('datos',this)">Datos y Experimental</div>
     <div class="side-tab" onclick="showSidePanel('formula',this)">Formula</div>
     <div class="side-tab" onclick="showSidePanel('nav',this)">Competencias</div>
     <div class="side-tab" onclick="showSidePanel('fac',this)">Facturas y Gastos</div>
@@ -225,31 +225,39 @@ body.experimental .exp-compare{display:block;}
       </div>
       <button onclick="loadAllFromDrive()" id="btnRefresh" class="btn ghost" style="width:100%;font-size:10px;display:none;">Actualizar desde Drive</button>
     </div>
-    <!-- SUELDOS -->
-    <div>
-      <div class="s-head">Sueldos</div>
-      <div class="nota info" style="margin-bottom:8px;font-size:9px;line-height:1.3;">Se carga automaticamente desde el Sheet del mes. Configura el ID y la celda en panel Config.</div>
-      <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div>
-      <div class="fmt-hint" id="hint_sueldos"></div>
-    </div>
-    <!-- PRODUCCION -->
-    <div>
-      <div class="s-head">Produccion del mes (desde Dinamica)</div>
-      <div class="field"><label>Mts totales producidos</label><div class="iu"><input type="number" id="totMts" value="0" oninput="recalc()"><span class="u">mts</span></div><div class="fmt-hint" id="hint_totMts"></div></div>
-      <div class="field"><label>Kg hilo producidos</label><div class="iu"><input type="number" id="totKg" value="0" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_totKg"></div></div>
-      <div id="grumoLamField">
-        <div class="field"><label>Kg grumo laminado (coating)</label><div class="iu"><input type="number" id="grumoLam" value="0" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_grumoLam"></div></div>
+    <!-- EXPERIMENTAL: header + secciones desplegables -->
+    <div class="s-head" style="margin-top:14px;color:var(--acc3);">Experimental</div>
+
+    <details style="margin-top:6px;">
+      <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Sueldos</span></summary>
+      <div style="padding-top:6px;">
+        <div class="nota info" style="margin-bottom:8px;font-size:9px;line-height:1.3;">Se carga automaticamente desde el Sheet del mes. Configura el ID y la celda en panel Config.</div>
+        <div class="iu"><input type="number" id="sueldos" value="42692051" oninput="recalc()"><span class="u">ARS</span></div>
+        <div class="fmt-hint" id="hint_sueldos"></div>
       </div>
-    </div>
-    <!-- PRECIOS MP -->
-    <div>
-      <div class="s-head">Precios MP (ultimo precio OC - sin IVA)</div>
-      <div class="field"><label>Grumo hilo KYD/LYD (USD/kg)</label><div class="iu"><input type="number" id="pGH" value="1.33" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-      <div class="field"><label>Grumo laminado XSD (USD/kg)</label><div class="iu"><input type="number" id="pGL" value="1.33" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-      <div class="field"><label>Polietileno BC818/APP (USD/kg)</label><div class="iu"><input type="number" id="pPE" value="1.36" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-      <div class="field"><label>Carbonato 1001BR/APC (USD/kg)</label><div class="iu"><input type="number" id="pCarb" value="0.75" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-      <div class="field"><label>Masterbatch hilo (USD/kg)</label><div class="iu"><input type="number" id="pMast" value="2.35" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
-    </div>
+    </details>
+
+    <details style="margin-top:6px;">
+      <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Produccion del mes (desde Dinamica)</span></summary>
+      <div style="padding-top:6px;">
+        <div class="field"><label>Mts totales producidos</label><div class="iu"><input type="number" id="totMts" value="0" oninput="recalc()"><span class="u">mts</span></div><div class="fmt-hint" id="hint_totMts"></div></div>
+        <div class="field"><label>Kg hilo producidos</label><div class="iu"><input type="number" id="totKg" value="0" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_totKg"></div></div>
+        <div id="grumoLamField">
+          <div class="field"><label>Kg grumo laminado (coating)</label><div class="iu"><input type="number" id="grumoLam" value="0" oninput="recalc()"><span class="u">kg</span></div><div class="fmt-hint" id="hint_grumoLam"></div></div>
+        </div>
+      </div>
+    </details>
+
+    <details style="margin-top:6px;">
+      <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Precios MP (ultimo precio OC - sin IVA)</span></summary>
+      <div style="padding-top:6px;">
+        <div class="field"><label>Grumo hilo KYD/LYD (USD/kg)</label><div class="iu"><input type="number" id="pGH" value="1.33" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+        <div class="field"><label>Grumo laminado XSD (USD/kg)</label><div class="iu"><input type="number" id="pGL" value="1.33" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+        <div class="field"><label>Polietileno BC818/APP (USD/kg)</label><div class="iu"><input type="number" id="pPE" value="1.36" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+        <div class="field"><label>Carbonato 1001BR/APC (USD/kg)</label><div class="iu"><input type="number" id="pCarb" value="0.75" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+        <div class="field"><label>Masterbatch hilo (USD/kg)</label><div class="iu"><input type="number" id="pMast" value="2.35" step="0.01" oninput="recalc()"><span class="u">USD/kg</span></div></div>
+      </div>
+    </details>
   </div><!-- /panel-datos -->
 
   <!-- PANEL GASTOS -->
@@ -1736,7 +1744,7 @@ function renderKPIs(cPorKg,cPorMts,grM2,total,r47,dolar){
   var grPlano   = _gramajeDe(PLANO_FMTS);
 
   document.getElementById('kpiStrip').innerHTML=
-    '<div class="kpi"><div class="kpi-lbl">Costo / kg</div><div class="kpi-val" style="color:var(--acc);">'+fc(cPorKg,2)+'</div><div class="kpi-sub">u$s'+(cPorKg/dolar).toFixed(3)+'/kg</div></div>'
+    '<div class="kpi"><div class="kpi-lbl">Costo / kg</div><div class="kpi-val" style="color:var(--acc);">u$s'+(cPorKg/dolar).toFixed(3)+'</div><div class="kpi-sub">'+fc(cPorKg,2)+' ARS/kg</div></div>'
     +'<div class="kpi"><div class="kpi-lbl">Mts producidos</div><div class="kpi-val" style="color:var(--acc2);">'+(totMts>0?totMts.toLocaleString('es-AR'):'—')+'</div><div class="kpi-sub">mts del mes</div></div>'
     +'<div class="kpi"><div class="kpi-lbl">Kg producidos</div><div class="kpi-val" style="color:var(--acc2);">'+(totKg>0?totKg.toLocaleString('es-AR'):'—')+'</div><div class="kpi-sub">kg del mes</div></div>'
     +'<div class="kpi"><div class="kpi-lbl">Gramaje tubular</div><div class="kpi-val" style="color:var(--warn);">'+grTubular.toFixed(2)+'</div><div class="kpi-sub">gr/m² (40-60)</div></div>'
@@ -1805,7 +1813,10 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
     +rowDesplegable('Insumos del proceso', c.totalInsumos||0, c.insumosDetalle||[], 'var(--ok)')+'</div>'
     +'<div style="padding:10px 14px;background:var(--surf2);border-radius:6px;border:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;margin-top:4px;">'
     +'<span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;">TOTAL MENSUAL</span>'
-    +'<span style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--acc);">'+fc(total/1000000,2)+'M ARS</span></div>';
+    +'<div style="text-align:right;">'
+    +'<div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--acc);">'+fc(total/1000000,2)+'M ARS</div>'
+    +'<div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--acc2);">u$s'+((c.dolar||1)>0?(total/c.dolar).toLocaleString('es-AR',{maximumFractionDigits:0}):'0')+'</div>'
+    +'</div></div>';
   document.getElementById('costBreakdown').innerHTML = html;
 }
 
