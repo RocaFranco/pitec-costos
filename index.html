@@ -2595,13 +2595,12 @@ function _consumStats(matched){
   var ultimaCant    = parseFloat(ultima.cantidad)||0;
   var precioU       = ultimaCant > 0 ? (ultima.importe_ars||0) / ultimaCant : 0;
 
-  // Span: meses entre primera OC y la ultima, +1 (representa el periodo en
-  // que ese stock se consumio). Solo es interpretable si hay >= 2 compras.
+  // Span en dias entre la primera y la ultima OC, convertido a meses (1 mes = 30 dias).
+  // Solo es interpretable si hay >= 2 compras y al menos 1 dia entre ellas.
   var mesesSpan = null;
   if(sorted.length >= 2 && primera.fecha && ultima.fecha){
-    var diff = (ultima.fecha.getFullYear()-primera.fecha.getFullYear())*12
-             + (ultima.fecha.getMonth()-primera.fecha.getMonth()) + 1;
-    mesesSpan = Math.max(1, diff);
+    var diasSpan = (ultima.fecha - primera.fecha) / (1000*60*60*24);
+    if(diasSpan >= 1) mesesSpan = diasSpan / 30;
   }
   var consumoMensual    = mesesSpan ? totalCantidad / mesesSpan : null;
   var costoMensualInfer = mesesSpan ? consumoMensual * precioU : null;
@@ -2657,7 +2656,8 @@ function _consumRow(label, matched, manualInputKey){
   // Linea inferior: detalle de inferencia
   var detalle;
   if(s.mesesSpan){
-    detalle = s.totalCantidad.toFixed(s.totalCantidad>=10?0:1)+' '+u+' / '+s.mesesSpan+' mes'+(s.mesesSpan>1?'es':'')
+    var mesesTxt = s.mesesSpan.toFixed(1);
+    detalle = s.totalCantidad.toFixed(s.totalCantidad>=10?0:1)+' '+u+' / '+mesesTxt+' mes'+(s.mesesSpan>1?'es':'')
       +' · $'+Math.round(s.precioU).toLocaleString('es-AR')+'/'+u
       +' · '+s.count+' compras';
   } else {
