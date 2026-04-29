@@ -2591,7 +2591,9 @@ function _consumStats(matched){
   var ultima  = sorted[sorted.length-1];
   var totalCantidad = sorted.reduce(function(s,r){ return s+(parseFloat(r.cantidad)||0); }, 0);
   var totalARS      = sorted.reduce(function(s,r){ return s+(r.importe_ars||0); }, 0);
-  var precioU       = totalCantidad > 0 ? totalARS / totalCantidad : 0;
+  // Precio unitario: tomado de la ULTIMA OC (refleja precio actual, no mezcla con valores viejos)
+  var ultimaCant    = parseFloat(ultima.cantidad)||0;
+  var precioU       = ultimaCant > 0 ? (ultima.importe_ars||0) / ultimaCant : 0;
 
   // Span: meses entre primera OC y la ultima, +1 (representa el periodo en
   // que ese stock se consumio). Solo es interpretable si hay >= 2 compras.
