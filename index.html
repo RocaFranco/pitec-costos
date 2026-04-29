@@ -2018,7 +2018,6 @@ var SCOPES    = 'https://www.googleapis.com/auth/spreadsheets https://www.google
 var SHEET_IDS = {
   oc:       '1EHWoF4WzSPypZ66zbs9JEjv4kzVKCcrwHdnHRDsHeJE',
   prod:     '1__VAhSwaLtF4xGjtuMI_Gw2yWpBzsNKZNy0tgBEAYJA',
-  gastos:   '1UR_b8lEpZ0H8vEkfzFcIa1V7IF2nEwoUGgh6SC0bDEU',
   facturas: '1cWKvSWw9tEpRWnbnFEpb7WBkee_9xwspuAMhqBY4kAM',
 };
 
@@ -3190,11 +3189,13 @@ async function loadGastosManuales(){
   if(!accessToken){ loadGastosLS(mes,anio); recalc(); return 0; }
 
   try{
-    var fila    = 7 + mesIdx; // fila 7=Enero, 8=Feb...
+    // Pestaña "Gastos_Manuales" en el Sheet de Facturas. Cols: A=Año, B=Mes,
+    // C=Gasoil, D=Almuerzos, E=Fletes. Datos desde fila 3 (Enero=3, Dic=14).
+    var fila    = 3 + mesIdx;
     var gasData = null;
-    // intentar nombre de pestaña con guion bajo, luego con espacio
-    try{ gasData = await readSheet(SHEET_IDS.gastos, 'Gastos_Manuales!C'+fila+':E'+fila); }
-    catch(e1){ gasData = await readSheet(SHEET_IDS.gastos, 'Gastos Manuales!C'+fila+':E'+fila); }
+    // intentar nombre de pestaña con guion bajo, luego con espacio (compatibilidad)
+    try{ gasData = await readSheet(SHEET_IDS.facturas, 'Gastos_Manuales!C'+fila+':E'+fila); }
+    catch(e1){ gasData = await readSheet(SHEET_IDS.facturas, 'Gastos Manuales!C'+fila+':E'+fila); }
     var gasRow  = (gasData && gasData[0]) || [];
     var cargados = 0;
     GASTOS_CAMPOS.forEach(function(campo,i){
