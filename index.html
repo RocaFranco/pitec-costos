@@ -1765,7 +1765,9 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
   function secHead(label,color){
     return '<div style="font-family:var(--mono);font-size:13px;font-weight:800;color:'+color+';text-transform:uppercase;letter-spacing:.07em;padding:8px 0 3px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:2px;">'+label+'</div>';
   }
-  // Fila colapsable con detalle (usa <details>/<summary> nativo)
+  // Fila colapsable con detalle (usa <details>/<summary> nativo).
+  // Importante: el <summary> NO puede ser display:flex directamente porque
+  // rompe el click en varios navegadores. Usamos un wrapper interno.
   function rowDesplegable(lbl, val, items, color){
     var detallesHtml = (items||[]).map(function(it){
       var srcLbl = it.fuente==='manual' ? ' <span style="color:var(--warn);">(manual)</span>' : '';
@@ -1773,15 +1775,16 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
         +'<span style="flex:1;">'+it.nombre+srcLbl+'</span>'
         +'<span>'+fc(it.costo/1000,0)+'K</span>'
         +'</div>';
-    }).join('');
-    var pct  = (val/total*100||0).toFixed(1);
-    var bar  = '<div style="flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;margin:0 8px;"><div style="width:'+Math.min(100,pct)+'%;height:100%;background:'+color+';border-radius:2px;"></div></div>';
+    }).join('') || '<div style="padding:2px 0 2px 24px;font-family:var(--mono);font-size:10px;color:var(--t3);">— sin OCs ni valores manuales —</div>';
+    var pct = (val/total*100||0).toFixed(1);
     return '<details style="padding:0;">'
-      +'<summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:3px 0;">'
+      +'<summary style="cursor:pointer;list-style:none;">'
+      +'<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">'
       +'<span style="font-family:var(--mono);font-size:15px;color:var(--t2);min-width:180px;">▸ '+lbl+'</span>'
-      +bar
+      +'<div style="flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;margin:0 8px;"><div style="width:'+Math.min(100,pct)+'%;height:100%;background:'+color+';border-radius:2px;"></div></div>'
       +'<span style="font-family:var(--mono);font-size:12px;color:var(--t3);min-width:44px;text-align:right;">'+pct+'%</span>'
       +'<span style="font-family:var(--mono);font-size:15px;font-weight:600;min-width:80px;text-align:right;color:'+color+';">'+fc(val/1000,0)+'K</span>'
+      +'</div>'
       +'</summary>'
       +detallesHtml
       +'</details>';
@@ -2248,6 +2251,9 @@ async function loadAllFromDrive(){
   updateDriveStatus(results, errors);
   recalc();
   refreshFmtHints();
+  // Cargar Materiales (OCs completas) en background para que totalMant
+  // y totalInsumos del breakdown se calculen sin requerir click manual.
+  loadMateriales();
 }
 
 function updateDriveStatus(results, errors){
@@ -2513,6 +2519,8 @@ async function loadMateriales(){
       statusEl.textContent = ocFiltradas.length+' OC del ultimo año procesadas · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
       statusEl.style.color='var(--ok)';
     }
+    // Refrescar el breakdown principal — totalInsumos y totalMant dependen de _ocFullData
+    recalc();
   }catch(e){
     if(statusEl){ statusEl.textContent='Error: '+e.message; statusEl.style.color='var(--acc3)'; }
   }
@@ -2721,7 +2729,9 @@ function calculateMantenimientoCost(){
   var hace1Anio  = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
   var mantOC     = _ocFullData.filter(function(r){
     if(!r.fabrica || !r.fecha) return false;
-    if(!r.fabrica.toLowerCase().includes('mantenimiento pitec')) return false;
+    var f = r.fabrica.toLowerCase();
+    // Tolera typos como "Mantenimineto Pitec" (faltan/sobran letras en mantenimiento)
+    if(!f.includes('manten') || !f.includes('pitec')) return false;
     if(r.fecha < hace1Anio) return false;
     return true;
   });
