@@ -304,12 +304,12 @@ body.experimental .exp-compare{display:block;}
       <summary style="cursor:pointer;padding:4px 0;"><span class="s-head" style="display:inline;border:none;padding:0;margin:0;">Producción</span></summary>
       <div style="padding-top:6px;">
         <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:8px;">Velocidades y rendimientos por trama. Se usan en el simulador para calcular el factor de tiempo entre tramas distintas.</div>
-        <div class="field"><label>Velocidad Trama 3 (Convencional)</label><div class="iu"><input type="number" id="prodVelT3" step="0.1" oninput="_PROD_PARAMS.velT3=parseFloat(this.value)||0;saveProdParams();renderGramajeSim();syncProdParamsUI()"><span class="u">m/min</span></div></div>
-        <div class="field"><label>Rendimiento Trama 3</label><div class="iu"><input type="number" id="prodRendT3" step="0.5" min="0" max="100" oninput="_PROD_PARAMS.rendT3=parseFloat(this.value)||0;saveProdParams();renderGramajeSim();syncProdParamsUI()"><span class="u">%</span></div></div>
-        <div class="field"><label>Velocidad Trama 5 (Laminado)</label><div class="iu"><input type="number" id="prodVelT5" step="0.1" oninput="_PROD_PARAMS.velT5=parseFloat(this.value)||0;saveProdParams();renderGramajeSim();syncProdParamsUI()"><span class="u">m/min</span></div></div>
-        <div class="field"><label>Rendimiento Trama 5</label><div class="iu"><input type="number" id="prodRendT5" step="0.5" min="0" max="100" oninput="_PROD_PARAMS.rendT5=parseFloat(this.value)||0;saveProdParams();renderGramajeSim();syncProdParamsUI()"><span class="u">%</span></div></div>
-        <div class="field"><label>Velocidad Trama 5.5 (Laminado)</label><div class="iu"><input type="number" id="prodVelT55" step="0.1" oninput="_PROD_PARAMS.velT55=parseFloat(this.value)||0;saveProdParams();renderGramajeSim();syncProdParamsUI()"><span class="u">m/min</span></div></div>
-        <div class="field"><label>Rendimiento Trama 5.5</label><div class="iu"><input type="number" id="prodRendT55" step="0.5" min="0" max="100" oninput="_PROD_PARAMS.rendT55=parseFloat(this.value)||0;saveProdParams();renderGramajeSim();syncProdParamsUI()"><span class="u">%</span></div></div>
+        <div class="field"><label>Velocidad Trama 3 (Convencional)</label><div class="iu"><input type="number" id="prodVelT3" step="0.1" oninput="_PROD_PARAMS.velT3=parseFloat(this.value)||0;saveProdParams();syncProdParamsUI()"><span class="u">m/min</span></div></div>
+        <div class="field"><label>Rendimiento Trama 3</label><div class="iu"><input type="number" id="prodRendT3" step="0.5" min="0" max="100" oninput="_PROD_PARAMS.rendT3=parseFloat(this.value)||0;saveProdParams();syncProdParamsUI()"><span class="u">%</span></div></div>
+        <div class="field"><label>Velocidad Trama 5 (Laminado)</label><div class="iu"><input type="number" id="prodVelT5" step="0.1" oninput="_PROD_PARAMS.velT5=parseFloat(this.value)||0;saveProdParams();syncProdParamsUI()"><span class="u">m/min</span></div></div>
+        <div class="field"><label>Rendimiento Trama 5</label><div class="iu"><input type="number" id="prodRendT5" step="0.5" min="0" max="100" oninput="_PROD_PARAMS.rendT5=parseFloat(this.value)||0;saveProdParams();syncProdParamsUI()"><span class="u">%</span></div></div>
+        <div class="field"><label>Velocidad Trama 5.5 (Laminado)</label><div class="iu"><input type="number" id="prodVelT55" step="0.1" oninput="_PROD_PARAMS.velT55=parseFloat(this.value)||0;saveProdParams();syncProdParamsUI()"><span class="u">m/min</span></div></div>
+        <div class="field"><label>Rendimiento Trama 5.5</label><div class="iu"><input type="number" id="prodRendT55" step="0.5" min="0" max="100" oninput="_PROD_PARAMS.rendT55=parseFloat(this.value)||0;saveProdParams();syncProdParamsUI()"><span class="u">%</span></div></div>
         <div id="prodVelResumen" style="font-family:var(--mono);font-size:10px;color:var(--t3);margin-top:6px;"></div>
       </div>
     </details>
@@ -510,52 +510,6 @@ body.experimental .exp-compare{display:block;}
         <div style="grid-column:1/-1;padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--t3);">Activá el modo experimental para ver la comparativa</div>
       </div>
     </div>
-    <!-- SIMULADOR DE GRAMAJE -->
-    <div class="card">
-      <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--ok)"></div>Simulador de costo por gramaje</div></div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:12px;">
-        Elegí formato y gramaje, calcula el $/m y $/kg con MO incluida (según el toggle Laminada/Convencional del header).
-      </div>
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <label style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;">Formato</label>
-          <select id="simFto" onchange="renderGramajeSim()" style="background:var(--surf2);color:var(--text);border:1px solid var(--b2);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:11px;">
-            <option value="40">F40 — Tubular 80cm</option>
-            <option value="47" selected>F47 — Tubular 94cm</option>
-            <option value="53">F53 — Tubular 106cm</option>
-            <option value="57">F57 — Tubular 114cm</option>
-            <option value="60">F60 — Tubular 120cm</option>
-            <option value="71">F71 — Plana 71cm</option>
-            <option value="82">F82 — Plana 82cm</option>
-            <option value="102">F102 — Plana 102cm</option>
-            <option value="120">F120 — Plana 120cm</option>
-          </select>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <label style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;">Gramaje</label>
-          <div class="iu" style="width:110px;"><input type="number" id="simGrActual" placeholder="0" step="1" oninput="renderGramajeSim()" style="width:100%;"><span class="u">gr/m²</span></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <label style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;">Trama</label>
-          <select id="simTrama" onchange="renderGramajeSim()" style="background:var(--surf2);color:var(--text);border:1px solid var(--b2);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:11px;">
-            <option value="3">Trama 3 — Convencional</option>
-            <option value="5">Trama 5 — Laminado</option>
-            <option value="55">Trama 5.5 — Laminado</option>
-          </select>
-        </div>
-      </div>
-      <div id="gramSimBody"></div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:8px;">
-        Fórmula: kg/m = ancho(m) × gr/m² / 1000 &nbsp;·&nbsp; $/m = $/kg × kg/m + MO $/m del maquinista
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc3)"></div>Historial 2026</div><button class="btn ghost sm" onclick="saveCurrentMonth()">Guardar mes actual</button></div>
-      <table>
-        <thead><tr><th>Mes</th><th class="r">Mts</th><th class="r">Kg</th><th class="r">gr/m2</th><th class="r">$/kg</th><th class="r">$/mts F47</th><th class="r">Nav. F47</th><th class="r">Margen</th></tr></thead>
-        <tbody id="histBody"></tbody>
-      </table>
-    </div>
   </div>
 </div>
 </div><!-- /wrap -->
@@ -565,7 +519,6 @@ body.experimental .exp-compare{display:block;}
 // ESTADO GLOBAL
 // ==============================================================
 let tipo = 'lam';
-const HIST = {};
 var mastLamColores = []; // biblioteca: [{codigo, color, precio}]
 var competidores   = []; // [{nombre, precios_conv:{fto:{precio,gr}}, precios_lam:{fto:{precio,gr}}}]
 var compActivos    = []; // índices de competidores activos en la comparativa
@@ -576,7 +529,7 @@ var modoExp  = false;
 var snapReal = null; // snapshot of real input values
 var calcReal = null; // real calculation results for comparison
 let prorrateos  = [];
-let _calc       = {}; // Ultimo calculo completo, usado por saveCurrentMonth()
+let _calc       = {}; // Ultimo calculo completo del mes (usado por renders)
 let _DESP       = 1.05; // factor de desperdicio (1.05 = 5% extra). Se actualiza desde Sheet.
 let _DESP_INFO  = '';   // texto descriptivo para mostrar en la UI ("7.60% (Abril 2026)")
 
@@ -1880,7 +1833,7 @@ function recalc(){
   var costoFijoPorMts = totMts > 0 ? totalFijos / totMts : 0;
   var costoVarPorKg   = totKg  > 0 ? (totalMPHilo + totalMPLam + totalVarProd) / totKg : 0;
 
-  // Guardar para saveCurrentMonth()
+  // Guardar el cálculo completo para que los renders lean de _calc
   _calc = {dolar:dolar,totMts:totMts,totKg:totKg,grM2Prom:grM2Prom,totalGeneral:totalGeneral,
     costoPorKg:costoPorKg,costoPorMts:costoPorMts,ftoResults:ftoResults,
     costoFijoPorMts:costoFijoPorMts,costoVarPorKg:costoVarPorKg,
@@ -1906,7 +1859,6 @@ function recalc(){
   refreshFmtHints();
   // Sync experimental comparison if active
   if(modoExp) renderExpComparativa();
-  renderGramajeSim();
   syncProdParamsUI();
 
   document.getElementById('mesLabel').textContent  = document.getElementById('selMes').value+' '+document.getElementById('selAnio').value;
@@ -2312,37 +2264,6 @@ function renderComparativa(){
   }
 }
 
-// ==============================================================
-// HISTORIAL
-// FIX: antes duplicaba toda la logica de recalc() lo que podia dar resultados distintos.
-// Ahora usa _calc que se actualiza en cada recalc().
-// ==============================================================
-function saveCurrentMonth(){
-  if(!_calc.totalGeneral && _calc.totalGeneral!==0){ alert('Ejecuta el calculo primero'); return; }
-  var mes   = document.getElementById('selMes').value;
-  var r47   = _calc.ftoResults ? _calc.ftoResults['47'] : null;
-  var cMts47= r47 && r47.cPorMts ? r47.cPorMts : (_calc.grM2Prom?_calc.grM2Prom/1000*_calc.costoPorKg:0);
-  var nav47 = g('nv47');
-  HIST[mes] = {mts:_calc.totMts, kg:_calc.totKg, grM2:_calc.grM2Prom, cPorKg:_calc.costoPorKg, cMts47:cMts47, nav47:nav47};
-  renderHistorial();
-}
-
-function renderHistorial(){
-  var rows = MESES.map(function(mes){
-    var h = HIST[mes];
-    if(!h) return '<tr><td style="color:var(--t3);">'+mes+'</td><td class="r" colspan="7" style="color:var(--t3);font-family:var(--mono);font-size:10px;">-</td></tr>';
-    var diff = h.nav47>0 ? h.nav47-h.cMts47 : null;
-    var cls  = diff===null?'':diff>0?'g':'r';
-    return '<tr><td><strong>'+mes+'</strong></td>'
-      +'<td class="r">'+fm(h.mts)+'</td><td class="r">'+fm(h.kg)+'</td>'
-      +'<td class="r">'+fn(h.grM2,2)+'</td>'
-      +'<td class="r" style="color:var(--acc);">'+fc(h.cPorKg,2)+'</td>'
-      +'<td class="r" style="color:var(--acc2);">'+fc(h.cMts47,3)+'</td>'
-      +'<td class="r" style="color:var(--t2);">'+(h.nav47>0?fc(h.nav47,2):'-')+'</td>'
-      +'<td class="r">'+(diff!==null?'<span class="chip '+cls+'">'+(diff>0?'+':'')+fc(diff,2)+'</span>':'-')+'</td></tr>';
-  }).join('');
-  document.getElementById('histBody').innerHTML = rows;
-}
 
 // ==============================================================
 // DOLAR BNA — lee directamente bna.com.ar/Personas via proxy
@@ -3456,69 +3377,6 @@ var FTO_DATA = {
 // aplica un factor proporcional a las velocidades reales (vel x rendimiento).
 // Asi el laminado real cuesta menos por metro que el convencional, sin sumar
 // dinero nuevo (no duplica el sueldo del maquinista que ya esta en cPorKg).
-function renderGramajeSim(){
-  var body = document.getElementById('gramSimBody');
-  if(!body) return;
-
-  var ftoKey   = document.getElementById('simFto')    ? document.getElementById('simFto').value    : '47';
-  var simTrama = document.getElementById('simTrama')  ? document.getElementById('simTrama').value  : '3';
-  var grm2     = parseFloat(document.getElementById('simGrActual')?.value) || 0;
-  var ftoInfo  = FTO_DATA[ftoKey] || {tipo:'tubular', ancho:94};
-  var calc     = _calc;
-  var cPorKg   = calc ? calc.costoPorKg : 0;
-
-  if(!grm2 || !cPorKg){
-    body.innerHTML = '<div style="padding:14px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--t3);">'
-      +(!grm2 ? 'Ingresá un gramaje para simular' : 'Cargá producción del mes para tener el $/kg base')
-      +'</div>';
-    return;
-  }
-
-  var anchoM   = ftoInfo.ancho / 100;
-  var kgM      = grm2 * anchoM / 1000;
-  // Misma fórmula que la tabla por formato: fijos por mts + variables por kg.
-  var fijoMts  = (calc && calc.costoFijoPorMts) ? calc.costoFijoPorMts : 0;
-  var varKg    = (calc && calc.costoVarPorKg)   ? calc.costoVarPorKg   : cPorKg;
-  var cBaseMt  = fijoMts + varKg * kgM;
-
-  // Factor de tiempo: si la trama del simulador difiere de la del mes,
-  // aplicamos factor = velReal_mes / velReal_simulada
-  var tramaMes = tramaDelMes();
-  var velMes   = velRealEfectiva(tramaMes);
-  var velSim   = velRealEfectiva(simTrama);
-  var factor   = (velMes > 0 && velSim > 0) ? velMes / velSim : 1;
-  var cTotMt   = cBaseMt * factor;
-  var cTotKg   = kgM > 0 ? cTotMt / kgM : 0;
-
-  var nombreTrama = simTrama==='3' ? 'Trama 3 (Convencional)' : (simTrama==='5' ? 'Trama 5 (Laminado)' : 'Trama 5.5 (Laminado)');
-  var infoFactor = '';
-  if(tramaMes !== simTrama && velMes > 0 && velSim > 0){
-    var pct = ((factor - 1) * 100);
-    var sign = pct >= 0 ? '+' : '';
-    var color = pct >= 0 ? 'var(--acc3)' : 'var(--ok)';
-    infoFactor = ' · Factor vs mes (T'+(tramaMes==='55'?'5.5':tramaMes)+'): <strong style="color:'+color+';">'+sign+fn(pct,1)+'%</strong>';
-  } else {
-    infoFactor = ' · trama del mes — factor 1.00';
-  }
-
-  var card = function(lbl, val, color){
-    return '<div style="background:var(--surf2);border:1px solid var(--b);border-radius:6px;padding:12px 14px;flex:1;min-width:140px;">'
-      +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">'+lbl+'</div>'
-      +'<div style="font-family:var(--mono);font-size:18px;font-weight:700;color:'+color+';">'+val+'</div>'
-      +'</div>';
-  };
-  body.innerHTML =
-    '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:10px;">'
-      +'F'+ftoKey+' ('+ftoInfo.tipo+', ancho '+ftoInfo.ancho+'cm) · gramaje '+grm2+' g/m² · '+nombreTrama+infoFactor
-    +'</div>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      +card('kg / metro', fn(kgM,4)+' kg', 'var(--t2)')
-      +card('$/m base', fc(cBaseMt,2), 'var(--t2)')
-      +card('Factor', fn(factor,3), factor>1?'var(--acc3)':factor<1?'var(--ok)':'var(--t3)')
-      +card('$/m total', fc(cTotMt,2), 'var(--acc)')
-      +card('$/kg', fc(cTotKg,2), 'var(--t2)')
-    +'</div>';
-}
 
 var GASTOS_CAMPOS = ['cGasoil','cAlmuerzos','cFletes'];
 
