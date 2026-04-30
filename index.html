@@ -1878,7 +1878,7 @@ function recalc(){
   var _tlKg   = document.getElementById('totalKgLabel');
   if(_tlMts) _tlMts.textContent = _totMts>0 ? _totMts.toLocaleString('es-AR') : '—';
   if(_tlKg)  _tlKg.textContent  = _totKg>0  ? _totKg.toLocaleString('es-AR')  : '—';
-  renderSens(ftoResults['47']?.kgPorMts||0.0658, totalFijos,totalVarProd,totKg,composicion,preciosGrupo,grumoLam,g('pGL'),peLam,g('pPE'));
+  renderSens();
   renderNavChart(ftoResults);
   renderUSD(ftoResults,dolar);
   renderAlerts();
@@ -2110,19 +2110,51 @@ function renderFtoTable(results, cPorKg){
   }
 }
 
-function renderSens(kgMts47,totFijos,totVarProd,kgActual,comp,precios,grumoLam,pGL,peLam,pPE){
-  var varMPporKg = comp.reduce(function(s,c){ return s+(c.pct/100)*(precios[c.grupo]||0); },0);
-  var ratioCoat  = kgActual>0 ? (grumoLam*pGL+peLam*pPE)/kgActual : 0;
-  var rows = [20,30,40,50,60,70,80,100].map(function(vk){
-    var kg   = vk*1000;
-    var tot  = totFijos+kg*varMPporKg+kg*ratioCoat+totVarProd;
-    var cPKg = tot/kg;
-    var cPMts= cPKg*kgMts47;
-    var isCur= Math.abs(kg-kgActual)<5001;
-    return '<div class="sens-row'+(isCur?' cur':'')+'"><div class="sens-cell" style="color:var(--t2);">'+(isCur?'> ':'')+'<strong>'+vk+'K</strong> kg</div>'
-      +'<div class="sens-cell">'+fc(cPKg,2)+'/kg</div><div class="sens-cell">'+fc(cPMts,3)+'/mts F47</div></div>';
+// Simulador de sensibilidad: cómo varía el $/kg al cambiar el volumen.
+// Categorización:
+//   FIJOS (no escalan con volumen): sueldos + servicios + prorrateos +
+//     almuerzos + mantenimiento Pitec + varios Pitec.
+//   VARIABLES (escalan proporcional a kg): MP hilo + coating laminado +
+//     gasoil + fletes internos + insumos del proceso.
+// El desperdicio (DESP) ya está incluido en totalMPHilo y totalMPLam.
+function renderSens(){
+  var calc = _calc;
+  var el   = document.getElementById('sensDiv');
+  if(!el) return;
+  if(!calc || !calc.totalGeneral){
+    el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);padding:10px;text-align:center;">Sin datos del mes</div>';
+    return;
+  }
+  // Fijos del mes (sueldos + servicios + prorrateos) + almuerzos + mant + varios
+  var fijosMes = (calc.totalFijos||0)
+               + (calc.cAlm||0)
+               + (calc.totalMant||0)
+               + (calc.totalVarios||0);
+  // Variables que escalan con kg
+  var totVar = (calc.totalMPHilo||0)
+             + (calc.totalMPLam||0)
+             + (calc.cGasoil||0)
+             + (calc.cFletes||0)
+             + (calc.totalInsumos||0);
+  var kgActual = calc.totKg || 0;
+  var varPorKg = kgActual > 0 ? totVar / kgActual : 0;
+  if(varPorKg === 0){
+    el.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);padding:10px;text-align:center;">Sin kg producidos en el mes</div>';
+    return;
+  }
+  var rangos = [20,30,40,50,60,70,80,100,150,200];
+  // Asegurar que el actual aparezca destacado aunque caiga fuera de la grilla
+  var rows = rangos.map(function(vk){
+    var kg     = vk*1000;
+    var totSim = fijosMes + varPorKg*kg;
+    var cPKg   = totSim / kg;
+    var isCur  = Math.abs(kg - kgActual) < 5001;
+    return '<div class="sens-row'+(isCur?' cur':'')+'">'
+      +'<div class="sens-cell" style="color:var(--t2);">'+(isCur?'> ':'')+'<strong>'+vk+'K</strong> kg</div>'
+      +'<div class="sens-cell">'+fc(cPKg,2)+'/kg</div>'
+      +'</div>';
   }).join('');
-  document.getElementById('sensDiv').innerHTML = rows;
+  el.innerHTML = rows;
 }
 
 function renderNavChart(results){
