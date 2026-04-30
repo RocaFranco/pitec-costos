@@ -617,45 +617,28 @@ var _GRAMAJE_HIST = { conv: null, tubularLam: null, planoLam: null };
 async function loadGramajesHistoricos(){
   if(!accessToken) return;
   try{
-    // Telares!B13:L20000 — B=Fecha, F(idx 4)=Formato, J(idx 8)=Trama, L(idx 10)=GR Calculado
-    var data = await readSheet(SHEET_IDS.prod, 'Telares!B13:L20000');
-    console.log('[Gramajes] filas leidas de Telares:', (data||[]).length);
-    if(data && data.length > 0){
-      console.log('[Gramajes] primera fila:', data[0]);
-      console.log('[Gramajes] muestra fila 10:', data[9]);
-    }
+    // Telares!B13:K20000 — B(0)=Fecha, E(3)=Formato, I(7)=Trama, K(9)=GR Calculado
+    var data = await readSheet(SHEET_IDS.prod, 'Telares!B13:K20000');
     var hoy        = new Date();
     var hace1Anio  = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
     var TUB_FMTS   = ['40','47','53','57','60'];
     var PLA_FMTS   = ['71','82','102','120'];
     var grsConv = [], grsTubLam = [], grsPlanoLam = [];
-    var stats = {fechaInvalida:0, fechaVieja:0, sinTrama:0, sinGramaje:0, fmtNoMatch:0, tramaOtros:0, total:0};
-    var tramasVistas = {}, formatosVistos = {};
     (data||[]).forEach(function(r){
-      if(!r || r.length < 11) return;
-      stats.total++;
+      if(!r || r.length < 10) return;
       var fecha = parseFechaOC(r[0]);
-      if(!fecha){ stats.fechaInvalida++; return; }
-      if(fecha < hace1Anio){ stats.fechaVieja++; return; }
-      var trama = parseFloat(String(r[8]||'').replace(',','.'));
-      if(isNaN(trama)){ stats.sinTrama++; return; }
-      tramasVistas[trama] = (tramasVistas[trama]||0)+1;
-      var gr = parseFloat(String(r[10]||'').replace(',','.'));
-      if(!gr || isNaN(gr) || gr <= 0){ stats.sinGramaje++; return; }
-      var fmt = String(r[4]||'').trim();
-      formatosVistos[fmt] = (formatosVistos[fmt]||0)+1;
+      if(!fecha || fecha < hace1Anio) return;
+      var trama = parseFloat(String(r[7]||'').replace(',','.'));
+      if(isNaN(trama)) return;
+      var gr = parseFloat(String(r[9]||'').replace(',','.'));
+      if(!gr || isNaN(gr) || gr <= 0) return;
+      var fmt = String(r[3]||'').trim();
       var esTubular = TUB_FMTS.indexOf(fmt) >= 0;
       var esPlano   = PLA_FMTS.indexOf(fmt) >= 0;
-      if(!esTubular && !esPlano){ stats.fmtNoMatch++; return; }
       if(trama === 3 && esTubular)                       grsConv.push(gr);
       else if(trama === 5 && esTubular)                  grsTubLam.push(gr);
       else if((trama === 5 || trama === 5.5) && esPlano) grsPlanoLam.push(gr);
-      else stats.tramaOtros++;
     });
-    console.log('[Gramajes] stats:', stats);
-    console.log('[Gramajes] tramas vistas (último año):', tramasVistas);
-    console.log('[Gramajes] formatos vistos (último año):', formatosVistos);
-    console.log('[Gramajes] matched: conv='+grsConv.length+' tubLam='+grsTubLam.length+' planoLam='+grsPlanoLam.length);
     var avg = function(arr){ return arr.length ? arr.reduce(function(s,v){return s+v;},0)/arr.length : null; };
     _GRAMAJE_HIST.conv       = avg(grsConv);
     _GRAMAJE_HIST.tubularLam = avg(grsTubLam);
