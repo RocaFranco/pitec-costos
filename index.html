@@ -619,26 +619,43 @@ async function loadGramajesHistoricos(){
   try{
     // Telares!B13:L20000 — B=Fecha, F(idx 4)=Formato, J(idx 8)=Trama, L(idx 10)=GR Calculado
     var data = await readSheet(SHEET_IDS.prod, 'Telares!B13:L20000');
+    console.log('[Gramajes] filas leidas de Telares:', (data||[]).length);
+    if(data && data.length > 0){
+      console.log('[Gramajes] primera fila:', data[0]);
+      console.log('[Gramajes] muestra fila 10:', data[9]);
+    }
     var hoy        = new Date();
     var hace1Anio  = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
     var TUB_FMTS   = ['40','47','53','57','60'];
     var PLA_FMTS   = ['71','82','102','120'];
     var grsConv = [], grsTubLam = [], grsPlanoLam = [];
+    var stats = {fechaInvalida:0, fechaVieja:0, sinTrama:0, sinGramaje:0, fmtNoMatch:0, tramaOtros:0, total:0};
+    var tramasVistas = {}, formatosVistos = {};
     (data||[]).forEach(function(r){
       if(!r || r.length < 11) return;
-      var trama = parseFloat(String(r[8]||'').replace(',','.'));
-      if(isNaN(trama)) return;
+      stats.total++;
       var fecha = parseFechaOC(r[0]);
-      if(!fecha || fecha < hace1Anio) return;
+      if(!fecha){ stats.fechaInvalida++; return; }
+      if(fecha < hace1Anio){ stats.fechaVieja++; return; }
+      var trama = parseFloat(String(r[8]||'').replace(',','.'));
+      if(isNaN(trama)){ stats.sinTrama++; return; }
+      tramasVistas[trama] = (tramasVistas[trama]||0)+1;
       var gr = parseFloat(String(r[10]||'').replace(',','.'));
-      if(!gr || isNaN(gr) || gr <= 0) return;
+      if(!gr || isNaN(gr) || gr <= 0){ stats.sinGramaje++; return; }
       var fmt = String(r[4]||'').trim();
+      formatosVistos[fmt] = (formatosVistos[fmt]||0)+1;
       var esTubular = TUB_FMTS.indexOf(fmt) >= 0;
       var esPlano   = PLA_FMTS.indexOf(fmt) >= 0;
+      if(!esTubular && !esPlano){ stats.fmtNoMatch++; return; }
       if(trama === 3 && esTubular)                       grsConv.push(gr);
       else if(trama === 5 && esTubular)                  grsTubLam.push(gr);
       else if((trama === 5 || trama === 5.5) && esPlano) grsPlanoLam.push(gr);
+      else stats.tramaOtros++;
     });
+    console.log('[Gramajes] stats:', stats);
+    console.log('[Gramajes] tramas vistas (último año):', tramasVistas);
+    console.log('[Gramajes] formatos vistos (último año):', formatosVistos);
+    console.log('[Gramajes] matched: conv='+grsConv.length+' tubLam='+grsTubLam.length+' planoLam='+grsPlanoLam.length);
     var avg = function(arr){ return arr.length ? arr.reduce(function(s,v){return s+v;},0)/arr.length : null; };
     _GRAMAJE_HIST.conv       = avg(grsConv);
     _GRAMAJE_HIST.tubularLam = avg(grsTubLam);
@@ -2000,18 +2017,19 @@ function renderFtoTable(results, cPorKg){
     ftos.forEach(function(f){ m += g('fmts_'+f); k += g('fkg_'+f); });
     return m > 0 ? (k / m) * 1000 : 0;
   }
-  // Gramaje base del hilo (sin laminado), por categoría
-  var grTubularBase = (
-    _GRAMAJE_HIST.conv       != null ? _GRAMAJE_HIST.conv :
-    _GRAMAJE_HIST.tubularLam != null ? _GRAMAJE_HIST.tubularLam - LAM_EXTRA_DEFAULT :
-    grPromedio(TUBULARES)
-  );
-  var grPlanoBase = (
-    _GRAMAJE_HIST.planoLam != null ? _GRAMAJE_HIST.planoLam - LAM_EXTRA_DEFAULT :
-    Math.max(0, grPromedio(PLANOS) - LAM_EXTRA_DEFAULT)
-  );
-
+  // Gramaje base = gramaje real del producto tal cual (con laminado incluido si
+  // es laminado). La columna "Lam +g/m²" suma adicional ENCIMA si el usuario
+  // quiere simular agregar más laminado.
   var esLam = (tipo === 'lam');
+  // Tubular conv → Trama 3 histórico (fallback: tubularLam histórico → mes).
+  // Tubular lam → Trama 5 histórico (fallback: mes).
+  var grTubularBase = esLam
+    ? (_GRAMAJE_HIST.tubularLam != null ? _GRAMAJE_HIST.tubularLam : grPromedio(TUBULARES))
+    : (_GRAMAJE_HIST.conv       != null ? _GRAMAJE_HIST.conv :
+       _GRAMAJE_HIST.tubularLam != null ? _GRAMAJE_HIST.tubularLam :
+       grPromedio(TUBULARES));
+  // Plano (siempre laminado): Trama 5/5.5 histórico (fallback: mes).
+  var grPlanoBase = _GRAMAJE_HIST.planoLam != null ? _GRAMAJE_HIST.planoLam : grPromedio(PLANOS);
 
   var rows = '';
   function rowFmt(fto){
