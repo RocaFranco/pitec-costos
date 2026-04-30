@@ -2027,6 +2027,8 @@ function renderFtoTable(results, cPorKg){
   var grPlanoBase = grPromedio(PLANOS);
 
   var rows = '';
+  var dolar = (_calc && _calc.dolar) ? _calc.dolar : g('dolar') || 1;
+
   function rowFmt(fto){
     var info = FTO_DATA[fto];
     if(!info) return '';
@@ -2038,8 +2040,10 @@ function renderFtoTable(results, cPorKg){
     var anchoM    = info.ancho / 100;
     var kgM       = grTotal * anchoM / 1000;
     var cTot      = fijoMts + varKg * kgM;
+    var cTotUsd   = dolar > 0 ? cTot / dolar : 0;
     var color     = esTubular ? 'var(--acc2)' : 'var(--ok)';
     var ftoCell   = '<td><strong style="color:'+color+';font-size:14px;">F'+fto+'</strong></td>';
+    var usdCell   = '<td class="r" style="font-size:13px;color:var(--acc2);font-weight:600;">'+(cTotUsd>0?'u$s'+cTotUsd.toFixed(3):'-')+'</td>';
 
     if(esLam){
       var lamInput = '<div class="iu" style="width:110px;">'
@@ -2054,6 +2058,7 @@ function renderFtoTable(results, cPorKg){
         +'<td class="r" style="font-size:13px;color:var(--warn);font-weight:600;">'+(grTotal>0?grTotal.toFixed(1):'-')+' g</td>'
         +'<td class="r" style="font-size:12px;color:var(--t3);">'+(kgM>0?kgM.toFixed(4):'-')+'</td>'
         +'<td class="r" style="font-size:14px;color:var(--acc);font-weight:600;">'+(cTot>0?fc(cTot,2):'-')+'</td>'
+        +usdCell
         +'</tr>';
     } else {
       return '<tr class="hi">'
@@ -2061,6 +2066,7 @@ function renderFtoTable(results, cPorKg){
         +'<td class="r" style="font-size:13px;color:var(--t2);">'+(grBase>0?grBase.toFixed(1):'-')+' g</td>'
         +'<td class="r" style="font-size:12px;color:var(--t3);">'+(kgM>0?kgM.toFixed(4):'-')+'</td>'
         +'<td class="r" style="font-size:14px;color:var(--acc);font-weight:600;">'+(cTot>0?fc(cTot,2):'-')+'</td>'
+        +usdCell
         +'</tr>';
     }
   }
@@ -2076,16 +2082,18 @@ function renderFtoTable(results, cPorKg){
       +'<th>Total g/m²</th>'
       +'<th>kg/m</th>'
       +'<th>$/m total</th>'
+      +'<th>u$s/m</th>'
       +'</tr>';
-    colspan = 6;
+    colspan = 7;
   } else {
     thead = '<tr>'
       +'<th>Fto</th>'
       +'<th>Gramaje</th>'
       +'<th>kg/m</th>'
       +'<th>$/m total</th>'
+      +'<th>u$s/m</th>'
       +'</tr>';
-    colspan = 4;
+    colspan = 5;
   }
   var ftoBody = document.getElementById('ftoBody');
   if(ftoBody){
