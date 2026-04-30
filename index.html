@@ -2017,15 +2017,14 @@ function renderFtoTable(results, cPorKg){
   // es laminado). La columna "Lam +g/m²" suma adicional ENCIMA si el usuario
   // quiere simular agregar más laminado.
   var esLam = (tipo === 'lam');
-  // Tubular conv → Trama 3 histórico (fallback: tubularLam histórico → mes).
-  // Tubular lam → Trama 5 histórico (fallback: mes).
+  // Modo Lam (tubular + plano): promedio del mes (igual que los KPIs Gramaje tubular/plano).
+  // Modo Conv: gramaje histórico Trama 3 → fallback a tubularLam histórico → fallback al mes.
   var grTubularBase = esLam
-    ? (_GRAMAJE_HIST.tubularLam != null ? _GRAMAJE_HIST.tubularLam : grPromedio(TUBULARES))
+    ? grPromedio(TUBULARES)
     : (_GRAMAJE_HIST.conv       != null ? _GRAMAJE_HIST.conv :
        _GRAMAJE_HIST.tubularLam != null ? _GRAMAJE_HIST.tubularLam :
        grPromedio(TUBULARES));
-  // Plano (siempre laminado): Trama 5/5.5 histórico (fallback: mes).
-  var grPlanoBase = _GRAMAJE_HIST.planoLam != null ? _GRAMAJE_HIST.planoLam : grPromedio(PLANOS);
+  var grPlanoBase = grPromedio(PLANOS);
 
   var rows = '';
   function rowFmt(fto){
