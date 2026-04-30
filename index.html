@@ -768,6 +768,12 @@ function parseFechaOC(v){
 function g(id){ return parseArgentino(document.getElementById(id)?.value||'')||0; }
 function fc(n,d=0){ return '$'+n.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}); }
 function fm(n){ return n.toLocaleString('es-AR',{maximumFractionDigits:0}); }
+// fn = formatNumber argentino (coma decimal, punto miles). Reemplaza .toFixed(N) en display.
+function fn(n, d){
+  if(n===null || n===undefined || isNaN(n)) return '-';
+  d = (d===undefined) ? 2 : d;
+  return Number(n).toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d});
+}
 
 // UNICA definicion de getFacturaVal - lee de SERVICIOS_FAC[].val
 // FIX: antes habia dos definiciones que se pisaban; la segunda leia del DOM (manual_*) que
@@ -867,9 +873,9 @@ function syncProdParamsUI(){
   });
   var res = document.getElementById('prodVelResumen');
   if(res){
-    res.innerHTML = 'Vel real: T3 <strong style="color:var(--acc2);">'+velRealEfectiva('3').toFixed(2)+'</strong>'
-      +' · T5 <strong style="color:var(--warn);">'+velRealEfectiva('5').toFixed(2)+'</strong>'
-      +' · T5.5 <strong style="color:var(--warn);">'+velRealEfectiva('55').toFixed(2)+'</strong> m/min';
+    res.innerHTML = 'Vel real: T3 <strong style="color:var(--acc2);">'+fn(velRealEfectiva('3'),2)+'</strong>'
+      +' · T5 <strong style="color:var(--warn);">'+fn(velRealEfectiva('5'),2)+'</strong>'
+      +' · T5.5 <strong style="color:var(--warn);">'+fn(velRealEfectiva('55'),2)+'</strong> m/min';
   }
 }
 
@@ -1167,7 +1173,7 @@ function buildCompRows(){
 function updateCompTotal(){
   var total = composicion.reduce(function(s,c){ return s+c.pct; },0);
   var el = document.getElementById('compTotal');
-  el.textContent = 'Total: '+total.toFixed(1)+'%';
+  el.textContent = 'Total: '+fn(total,1)+'%';
   el.className = 'pct-total '+(Math.abs(total-100)<0.1?'ok':'err');
 }
 
@@ -1259,7 +1265,7 @@ function updateLamCompTotal(){
   var total = composicionLam.reduce(function(s,c){ return s+(parseFloat(c.pct)||0); },0);
   var el = document.getElementById('lamCompTotal');
   if(!el) return;
-  el.textContent = 'Total: '+total.toFixed(1)+'%';
+  el.textContent = 'Total: '+fn(total,1)+'%';
   el.className = 'pct-total '+(Math.abs(total-100)<0.1?'ok':'err');
 }
 
@@ -1912,12 +1918,12 @@ function renderKPIs(cPorKg,cPorMts,grM2,total,r47,dolar){
   var grConvHist = _GRAMAJE_HIST.conv;
 
   document.getElementById('kpiStrip').innerHTML=
-    '<div class="kpi"><div class="kpi-lbl">Costo / kg</div><div class="kpi-val" style="color:var(--acc);">u$s'+(cPorKg/dolar).toFixed(3)+'</div><div class="kpi-sub">'+fc(cPorKg,2)+' ARS/kg</div></div>'
+    '<div class="kpi"><div class="kpi-lbl">Costo / kg</div><div class="kpi-val" style="color:var(--acc);">u$s'+fn(cPorKg/dolar,3)+'</div><div class="kpi-sub">'+fc(cPorKg,2)+' ARS/kg</div></div>'
     +'<div class="kpi"><div class="kpi-lbl">Mts producidos</div><div class="kpi-val" style="color:var(--acc2);">'+(totMts>0?totMts.toLocaleString('es-AR'):'—')+'</div><div class="kpi-sub">mts del mes</div></div>'
     +'<div class="kpi"><div class="kpi-lbl">Kg producidos</div><div class="kpi-val" style="color:var(--acc2);">'+(totKg>0?totKg.toLocaleString('es-AR'):'—')+'</div><div class="kpi-sub">kg del mes</div></div>'
-    +'<div class="kpi"><div class="kpi-lbl">Gramaje tubular</div><div class="kpi-val" style="color:var(--warn);">'+grTubular.toFixed(2)+'</div><div class="kpi-sub">gr/m² (40-60)</div></div>'
-    +'<div class="kpi"><div class="kpi-lbl">Gramaje plano</div><div class="kpi-val" style="color:var(--warn);">'+grPlano.toFixed(2)+'</div><div class="kpi-sub">gr/m² (71-120)</div></div>'
-    +'<div class="kpi"><div class="kpi-lbl">Gramaje convencional</div><div class="kpi-val" style="color:var(--warn);">'+(grConvHist!=null?grConvHist.toFixed(2):'0.00')+'</div><div class="kpi-sub">gr/m² (Trama 3 últ. año)</div></div>';
+    +'<div class="kpi"><div class="kpi-lbl">Gramaje tubular</div><div class="kpi-val" style="color:var(--warn);">'+fn(grTubular,2)+'</div><div class="kpi-sub">gr/m² (40-60)</div></div>'
+    +'<div class="kpi"><div class="kpi-lbl">Gramaje plano</div><div class="kpi-val" style="color:var(--warn);">'+fn(grPlano,2)+'</div><div class="kpi-sub">gr/m² (71-120)</div></div>'
+    +'<div class="kpi"><div class="kpi-lbl">Gramaje convencional</div><div class="kpi-val" style="color:var(--warn);">'+(grConvHist!=null?fn(grConvHist,2):'0,00')+'</div><div class="kpi-sub">gr/m² (Trama 3 últ. año)</div></div>';
 }
 
 function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
@@ -1926,7 +1932,7 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
     return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
       +'<div style="flex:1;height:4px;background:var(--b2);border-radius:2px;overflow:hidden;">'
       +'<div style="width:'+pct+'%;height:100%;background:'+color+';border-radius:2px;"></div></div>'
-      +'<span style="font-family:var(--mono);font-size:9px;color:var(--t3);min-width:44px;text-align:right;">'+pct.toFixed(1)+'%</span>'
+      +'<span style="font-family:var(--mono);font-size:9px;color:var(--t3);min-width:44px;text-align:right;">'+fn(pct,1)+'%</span>'
       +'<span style="font-family:var(--mono);font-size:10px;min-width:70px;text-align:right;">'+fc(val/1000,0)+'K</span>'
       +'</div>';
   }
@@ -1935,7 +1941,7 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
       +'<span style="font-family:var(--mono);font-size:15px;color:var(--t2);min-width:180px;">'+lbl+'</span>'
       +'<div style="flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;margin:0 8px;">'
       +'<div style="width:'+Math.min(100,(val/total*100)||0).toFixed(1)+'%;height:100%;background:'+color+';border-radius:2px;"></div></div>'
-      +'<span style="font-family:var(--mono);font-size:12px;color:var(--t3);min-width:44px;text-align:right;">'+(val/total*100||0).toFixed(1)+'%</span>'
+      +'<span style="font-family:var(--mono);font-size:12px;color:var(--t3);min-width:44px;text-align:right;">'+fn((val/total*100||0),1)+'%</span>'
       +'<span style="font-family:var(--mono);font-size:15px;font-weight:600;min-width:80px;text-align:right;color:'+color+';">'+fc(val/1000,0)+'K</span>'
       +'</div>';
   }
@@ -1953,13 +1959,13 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
         +'<span>'+fc(it.costo/1000,0)+'K</span>'
         +'</div>';
     }).join('') || '<div style="padding:2px 0 2px 24px;font-family:var(--mono);font-size:10px;color:var(--t3);">— sin OCs ni valores manuales —</div>';
-    var pct = (val/total*100||0).toFixed(1);
+    var pctNum = (val/total*100)||0;
     return '<details style="padding:0;">'
       +'<summary style="cursor:pointer;list-style:none;">'
       +'<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">'
       +'<span style="font-family:var(--mono);font-size:15px;color:var(--t2);min-width:180px;">▸ '+lbl+'</span>'
-      +'<div style="flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;margin:0 8px;"><div style="width:'+Math.min(100,pct)+'%;height:100%;background:'+color+';border-radius:2px;"></div></div>'
-      +'<span style="font-family:var(--mono);font-size:12px;color:var(--t3);min-width:44px;text-align:right;">'+pct+'%</span>'
+      +'<div style="flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;margin:0 8px;"><div style="width:'+Math.min(100,pctNum).toFixed(1)+'%;height:100%;background:'+color+';border-radius:2px;"></div></div>'
+      +'<span style="font-family:var(--mono);font-size:12px;color:var(--t3);min-width:44px;text-align:right;">'+fn(pctNum,1)+'%</span>'
       +'<span style="font-family:var(--mono);font-size:15px;font-weight:600;min-width:80px;text-align:right;color:'+color+';">'+fc(val/1000,0)+'K</span>'
       +'</div>'
       +'</summary>'
@@ -2043,7 +2049,7 @@ function renderFtoTable(results, cPorKg){
     var cTotUsd   = dolar > 0 ? cTot / dolar : 0;
     var color     = esTubular ? 'var(--acc2)' : 'var(--ok)';
     var ftoCell   = '<td><strong style="color:'+color+';font-size:14px;">F'+fto+'</strong></td>';
-    var usdCell   = '<td class="r" style="font-size:13px;color:var(--acc2);font-weight:600;">'+(cTotUsd>0?'u$s'+cTotUsd.toFixed(3):'-')+'</td>';
+    var usdCell   = '<td class="r" style="font-size:13px;color:var(--acc2);font-weight:600;">'+(cTotUsd>0?'u$s'+fn(cTotUsd,3):'-')+'</td>';
 
     if(esLam){
       var lamInput = '<div class="iu" style="width:110px;">'
@@ -2053,18 +2059,18 @@ function renderFtoTable(results, cPorKg){
         +'</div>';
       return '<tr class="hi">'
         +ftoCell
-        +'<td class="r" style="font-size:12px;color:var(--t2);">'+(grBase>0?grBase.toFixed(1):'-')+' g</td>'
+        +'<td class="r" style="font-size:12px;color:var(--t2);">'+(grBase>0?fn(grBase,1):'-')+' g</td>'
         +'<td class="r" style="white-space:nowrap;">'+lamInput+'</td>'
-        +'<td class="r" style="font-size:13px;color:var(--warn);font-weight:600;">'+(grTotal>0?grTotal.toFixed(1):'-')+' g</td>'
-        +'<td class="r" style="font-size:12px;color:var(--t3);">'+(kgM>0?kgM.toFixed(4):'-')+'</td>'
+        +'<td class="r" style="font-size:13px;color:var(--warn);font-weight:600;">'+(grTotal>0?fn(grTotal,1):'-')+' g</td>'
+        +'<td class="r" style="font-size:12px;color:var(--t3);">'+(kgM>0?fn(kgM,4):'-')+'</td>'
         +'<td class="r" style="font-size:14px;color:var(--acc);font-weight:600;">'+(cTot>0?fc(cTot,2):'-')+'</td>'
         +usdCell
         +'</tr>';
     } else {
       return '<tr class="hi">'
         +ftoCell
-        +'<td class="r" style="font-size:13px;color:var(--t2);">'+(grBase>0?grBase.toFixed(1):'-')+' g</td>'
-        +'<td class="r" style="font-size:12px;color:var(--t3);">'+(kgM>0?kgM.toFixed(4):'-')+'</td>'
+        +'<td class="r" style="font-size:13px;color:var(--t2);">'+(grBase>0?fn(grBase,1):'-')+' g</td>'
+        +'<td class="r" style="font-size:12px;color:var(--t3);">'+(kgM>0?fn(kgM,4):'-')+'</td>'
         +'<td class="r" style="font-size:14px;color:var(--acc);font-weight:600;">'+(cTot>0?fc(cTot,2):'-')+'</td>'
         +usdCell
         +'</tr>';
@@ -2146,11 +2152,11 @@ function renderUSD(results,dolar){
     var pct  = uNav&&uMts>0 ? ((uNav-uMts)/uNav*100) : null;
     var cls  = pct===null?'':pct>0?'g':pct>-10?'w':'r';
     return '<tr><td><strong>'+fto+'</strong></td>'
-      +'<td class="r">u$s'+uMts.toFixed(4)+'</td>'
-      +'<td class="r">u$s'+uKg.toFixed(4)+'</td>'
-      +'<td class="r">'+(uNav?'u$s'+uNav.toFixed(4):'-')+'</td>'
-      +'<td class="r">'+(uDif!==null?'<span style="color:'+(uDif>0?'var(--ok)':'var(--acc3)')+';">u$s'+(uDif>0?'+':'')+uDif.toFixed(4)+'</span>':'-')+'</td>'
-      +'<td class="r">'+(pct!==null?'<span class="chip '+cls+'">'+(pct>0?'+':'')+pct.toFixed(1)+'%</span>':'-')+'</td></tr>';
+      +'<td class="r">u$s'+fn(uMts,4)+'</td>'
+      +'<td class="r">u$s'+fn(uKg,4)+'</td>'
+      +'<td class="r">'+(uNav?'u$s'+fn(uNav,4):'-')+'</td>'
+      +'<td class="r">'+(uDif!==null?'<span style="color:'+(uDif>0?'var(--ok)':'var(--acc3)')+';">u$s'+(uDif>0?'+':'')+fn(uDif,4)+'</span>':'-')+'</td>'
+      +'<td class="r">'+(pct!==null?'<span class="chip '+cls+'">'+(pct>0?'+':'')+fn(pct,1)+'%</span>':'-')+'</td></tr>';
   }).join('');
   document.getElementById('usdBody').innerHTML = rows;
 }
@@ -2178,7 +2184,7 @@ function renderHistorial(){
     var cls  = diff===null?'':diff>0?'g':'r';
     return '<tr><td><strong>'+mes+'</strong></td>'
       +'<td class="r">'+fm(h.mts)+'</td><td class="r">'+fm(h.kg)+'</td>'
-      +'<td class="r">'+h.grM2.toFixed(2)+'</td>'
+      +'<td class="r">'+fn(h.grM2,2)+'</td>'
       +'<td class="r" style="color:var(--acc);">'+fc(h.cPorKg,2)+'</td>'
       +'<td class="r" style="color:var(--acc2);">'+fc(h.cMts47,3)+'</td>'
       +'<td class="r" style="color:var(--t2);">'+(h.nav47>0?fc(h.nav47,2):'-')+'</td>'
@@ -2478,7 +2484,7 @@ async function loadAllFromDrive(){
       if(p){
         var el = document.getElementById(mp.campo);
         if(el) el.value = p.toFixed(4);
-        results.push('OK '+mp.label+': USD '+p.toFixed(2)+'/kg');
+        results.push('OK '+mp.label+': USD '+fn(p,2)+'/kg');
       } else {
         errors.push(mp.label+': sin OC en ultimo año');
       }
@@ -2494,9 +2500,9 @@ async function loadAllFromDrive(){
   // 7b. GRAMAJES HISTORICOS - bobinas del ultimo año por trama (3 conv, 5/5.5 lam)
   try{
     await loadGramajesHistoricos();
-    var gcInfo  = _GRAMAJE_HIST.conv       != null ? _GRAMAJE_HIST.conv.toFixed(2)       : '—';
-    var gtlInfo = _GRAMAJE_HIST.tubularLam != null ? _GRAMAJE_HIST.tubularLam.toFixed(2) : '—';
-    var gplInfo = _GRAMAJE_HIST.planoLam   != null ? _GRAMAJE_HIST.planoLam.toFixed(2)   : '—';
+    var gcInfo  = _GRAMAJE_HIST.conv       != null ? fn(_GRAMAJE_HIST.conv,2)       : '—';
+    var gtlInfo = _GRAMAJE_HIST.tubularLam != null ? fn(_GRAMAJE_HIST.tubularLam,2) : '—';
+    var gplInfo = _GRAMAJE_HIST.planoLam   != null ? fn(_GRAMAJE_HIST.planoLam,2)   : '—';
     results.push('OK Gramajes hist: conv '+gcInfo+' · tubLam '+gtlInfo+' · planoLam '+gplInfo+' g/m²');
   }catch(e){ errors.push('Gramajes hist: '+e.message); }
 
@@ -2505,8 +2511,8 @@ async function loadAllFromDrive(){
     var desp = await loadDesperdicio(mes, anio);
     if(desp !== null && !isNaN(desp)){
       _DESP = 1 + desp;
-      _DESP_INFO = (desp*100).toFixed(2)+'% ('+mes+' '+anio+')';
-      results.push('OK Desperdicio: '+(desp*100).toFixed(2)+'%');
+      _DESP_INFO = fn(desp*100,2)+'% ('+mes+' '+anio+')';
+      results.push('OK Desperdicio: '+fn(desp*100,2)+'%');
     } else {
       _DESP = 1.05;
       _DESP_INFO = '5.00% (default, sin dato)';
@@ -2861,7 +2867,7 @@ function renderMatPreciosMP(ocRows){
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);">'
         +'<div><div style="font-family:var(--mono);font-size:11px;color:var(--t1);">'+mp.label+'</div>'
         +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">OC #'+last.oc+' · '+fechaStr+' · "'+last.descripcion+'" · '+last.cantidad.toLocaleString('es-AR')+' '+last.unidad+'</div></div>'
-        +'<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--acc2);">USD '+precioUSD.toFixed(2)+'/kg</div>'
+        +'<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--acc2);">USD '+fn(precioUSD,2)+'/kg</div>'
         +'</div>';
     } else {
       html += '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
@@ -2958,7 +2964,7 @@ function _consumRow(label, matched, manualInputKey){
   var derCha;
   if(s.mesesSpan){
     derCha = '<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acc2);">'
-        +s.consumoMensual.toFixed(s.consumoMensual>=10?0:1)+' '+u+'/mes</div>'
+        +fn(s.consumoMensual,s.consumoMensual>=10?0:1)+' '+u+'/mes</div>'
       +'<div style="font-family:var(--mono);font-size:9px;color:var(--t3);">$'+Math.round(s.costoMensualInfer).toLocaleString('es-AR')+'/mes inferido</div>';
   } else {
     derCha = '<div style="font-family:var(--mono);font-size:10px;color:var(--warn);">1 sola compra</div>'
@@ -2968,12 +2974,12 @@ function _consumRow(label, matched, manualInputKey){
   // Linea inferior: detalle de inferencia
   var detalle;
   if(s.mesesSpan){
-    var mesesTxt = s.mesesSpan.toFixed(1);
-    detalle = s.totalCantidad.toFixed(s.totalCantidad>=10?0:1)+' '+u+' / '+mesesTxt+' mes'+(s.mesesSpan>1?'es':'')
+    var mesesTxt = fn(s.mesesSpan,1);
+    detalle = fn(s.totalCantidad,s.totalCantidad>=10?0:1)+' '+u+' / '+mesesTxt+' mes'+(s.mesesSpan>1?'es':'')
       +' · $'+Math.round(s.precioU).toLocaleString('es-AR')+'/'+u
       +' · '+s.count+' compras';
   } else {
-    detalle = s.totalCantidad.toFixed(s.totalCantidad>=10?0:1)+' '+u+' · $'+Math.round(s.precioU).toLocaleString('es-AR')+'/'+u;
+    detalle = fn(s.totalCantidad,s.totalCantidad>=10?0:1)+' '+u+' · $'+Math.round(s.precioU).toLocaleString('es-AR')+'/'+u;
   }
 
   return '<div style="padding:6px 0;border-bottom:1px solid var(--brd);">'
@@ -3263,7 +3269,7 @@ function renderExpComparativa(){
       +'<div class="exp-cmp-cell lbl">'+lbl+'</div>'
       +'<div class="exp-cmp-cell">'+fmt(realVal)+'</div>'
       +'<div class="exp-cmp-cell">'+fmt(expVal)+'</div>'
-      +'<div class="exp-cmp-cell '+cls+'">'+(delta!==0?sign+fmt(Math.abs(delta))+(pct?' <span style="font-size:9px;opacity:.7;">('+sign+pct.toFixed(1)+'%)</span>':''):'-')+'</div>'
+      +'<div class="exp-cmp-cell '+cls+'">'+(delta!==0?sign+fmt(Math.abs(delta))+(pct?' <span style="font-size:9px;opacity:.7;">('+sign+fn(pct,1)+'%)</span>':''):'-')+'</div>'
       +'</div>';
   }
   var r47r = real.ftoResults&&real.ftoResults['47'] ? real.ftoResults['47'] : null;
@@ -3272,7 +3278,7 @@ function renderExpComparativa(){
     + cmpRow('Total mensual',   real.totalGeneral,  exp.totalGeneral,  function(v){ return fc(v/1000000,2)+'M'; }, true)
     + cmpRow('Costo / kg',      real.costoPorKg,    exp.costoPorKg,    function(v){ return fc(v,2); }, true)
     + cmpRow('Costo / mt (F47)',r47r?r47r.cPorMts:0, r47e?r47e.cPorMts:0, function(v){ return fc(v,3); }, true)
-    + cmpRow('Gramaje prom.',   real.grM2Prom,      exp.grM2Prom,      function(v){ return v.toFixed(2)+' gr'; }, false)
+    + cmpRow('Gramaje prom.',   real.grM2Prom,      exp.grM2Prom,      function(v){ return fn(v,2)+' gr'; }, false)
     + cmpRow('Mts producidos',  real.totMts,        exp.totMts,        function(v){ return v.toLocaleString('es-AR'); }, false)
     + cmpRow('Kg producidos',   real.totKg,         exp.totKg,         function(v){ return v.toLocaleString('es-AR'); }, false)
     + cmpRow('Margen vs Nav F47', r47r?r47r.diff||0:0, r47e?r47e.diff||0:0, function(v){ return (v>0?'+':'')+fc(v,2)+'/mt'; }, false);
@@ -3339,7 +3345,7 @@ function renderGramajeSim(){
     var pct = ((factor - 1) * 100);
     var sign = pct >= 0 ? '+' : '';
     var color = pct >= 0 ? 'var(--acc3)' : 'var(--ok)';
-    infoFactor = ' · Factor vs mes (T'+(tramaMes==='55'?'5.5':tramaMes)+'): <strong style="color:'+color+';">'+sign+pct.toFixed(1)+'%</strong>';
+    infoFactor = ' · Factor vs mes (T'+(tramaMes==='55'?'5.5':tramaMes)+'): <strong style="color:'+color+';">'+sign+fn(pct,1)+'%</strong>';
   } else {
     infoFactor = ' · trama del mes — factor 1.00';
   }
@@ -3355,9 +3361,9 @@ function renderGramajeSim(){
       +'F'+ftoKey+' ('+ftoInfo.tipo+', ancho '+ftoInfo.ancho+'cm) · gramaje '+grm2+' g/m² · '+nombreTrama+infoFactor
     +'</div>'
     +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      +card('kg / metro', kgM.toFixed(4)+' kg', 'var(--t2)')
+      +card('kg / metro', fn(kgM,4)+' kg', 'var(--t2)')
       +card('$/m base', fc(cBaseMt,2), 'var(--t2)')
-      +card('Factor', factor.toFixed(3), factor>1?'var(--acc3)':factor<1?'var(--ok)':'var(--t3)')
+      +card('Factor', fn(factor,3), factor>1?'var(--acc3)':factor<1?'var(--ok)':'var(--t3)')
       +card('$/m total', fc(cTotMt,2), 'var(--acc)')
       +card('$/kg', fc(cTotKg,2), 'var(--t2)')
     +'</div>';
