@@ -2245,7 +2245,7 @@ function renderComparativa(){
     var pitecUsd = dolar > 0 ? pitecArs / dolar : 0;
     var pitecCell = '<td><strong style="color:var(--acc);">F'+fto+'</strong></td>'
       +'<td class="r" style="color:var(--acc);font-weight:600;">'+(pitecArs>0?fc(pitecArs,2):'-')+'</td>'
-      +'<td class="r" style="color:var(--acc2);">'+(pitecUsd>0?'u$s'+fn(pitecUsd,4):'-')+'</td>';
+      +'<td class="r" style="color:var(--acc2);font-weight:600;">'+(pitecUsd>0?'u$s'+fn(pitecUsd,4):'-')+'</td>';
 
     var compCells = activos.map(function(a){
       var datos = (a.c[precioKey] || {})[fto] || {};
@@ -2255,8 +2255,8 @@ function renderComparativa(){
       var pct = (pitecArs > 0 && compArs > 0) ? ((compArs - pitecArs) / pitecArs * 100) : null;
       var pctCls = pct===null ? '' : pct >= 0 ? 'g' : 'r';
       var pctTxt = pct===null ? '-' : (pct>0?'+':'') + fn(pct,1) + '%';
-      return '<td class="r">'+(compArs>0?fc(compArs,2):'-')+'</td>'
-        +'<td class="r" style="color:var(--acc2);">'+(compUsd>0?'u$s'+fn(compUsd,4):'-')+'</td>'
+      return '<td class="r" style="font-weight:600;">'+(compArs>0?fc(compArs,2):'-')+'</td>'
+        +'<td class="r" style="color:var(--acc2);font-weight:600;">'+(compUsd>0?'u$s'+fn(compUsd,4):'-')+'</td>'
         +'<td class="r">'+(pct===null?'-':'<span class="chip '+pctCls+'">'+pctTxt+'</span>')+'</td>';
     }).join('');
 
