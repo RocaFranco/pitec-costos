@@ -176,12 +176,10 @@ body.experimental .exp-compare{display:block;}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
-    <a href="https://rocafranco.github.io/alamo-erp/" style="font-family:var(--mono);font-size:9px;color:var(--t3);text-decoration:none;padding:3px 8px;border:1px solid var(--b);border-radius:4px;">ERP Home</a>
-    <span id="mesLabel" class="hbadge blue">-</span>
-    <span id="tipoLabel" class="hbadge green">-</span>
+    <a href="https://rocafranco.github.io/alamo-erp/" style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--t2);text-decoration:none;padding:7px 14px;border:1px solid var(--b);border-radius:6px;">ERP Home</a>
+    <button class="exp-toggle" id="btnExp" onclick="toggleExp()" title="Modo experimental: jugá con los números sin tocar datos reales" style="font-size:13px;font-weight:600;padding:7px 14px;">⚗ REAL</button>
     <span id="alertLabel" class="hbadge warn" style="display:none;"></span>
-    <button class="exp-toggle" id="btnExp" onclick="toggleExp()" title="Modo experimental: jugá con los números sin tocar datos reales">⚗ REAL</button>
-    <span style="font-family:var(--mono);font-size:10px;color:var(--t3);" id="tsLabel">-</span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--t3);margin-left:6px;" id="tsLabel">-</span>
     <button id="btnLogin" onclick="handleLogin()" class="btn acc" style="font-size:10px;padding:5px 14px;">Conectar Drive</button>
     <button id="btnLogout" onclick="handleLogout()" class="btn ghost" style="font-size:10px;padding:5px 14px;display:none;">Desconectar</button>
     <span id="userLabel" style="font-family:var(--mono);font-size:10px;color:var(--ok);display:none;"></span>
@@ -1861,11 +1859,10 @@ function recalc(){
   if(modoExp) renderExpComparativa();
   syncProdParamsUI();
 
-  document.getElementById('mesLabel').textContent  = document.getElementById('selMes').value+' '+document.getElementById('selAnio').value;
-  document.getElementById('tipoLabel').textContent = tipo==='lam'?'Laminada':'Convencional';
   var dolarHdrEl = document.getElementById('dolarHdr');
   if(dolarHdrEl) dolarHdrEl.textContent = '$'+fm(dolar)+'/USD';
-  document.getElementById('tsLabel').textContent   = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  var tsEl = document.getElementById('tsLabel');
+  if(tsEl) tsEl.textContent = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
 }
 
 // ==============================================================
