@@ -63,8 +63,11 @@ input[type="radio"],input[type="checkbox"]{width:auto;height:auto;padding:0;back
 .alert.warn{background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.25);color:var(--warn);}
 .alert.ok{background:rgba(71,255,178,.07);border:1px solid rgba(71,255,178,.2);color:var(--ok);}
 .alert-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:16px 20px 0;}
-.kpi{background:var(--surf);border:1px solid var(--b);border-radius:var(--r);padding:14px 16px;}
+.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:16px 20px 0;}
+.kpi{background:var(--surf);border:1px solid var(--b);border-radius:var(--r);padding:11px 12px;min-width:0;}
+.kpi .kpi-lbl{font-size:9px;}
+.kpi .kpi-val{font-size:18px;}
+.kpi .kpi-sub{font-size:9px;}
 .kpi-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:4px;}
 .kpi-val{font-family:var(--mono);font-size:18px;font-weight:500;}
 .kpi-sub{font-family:var(--mono);font-size:9px;color:var(--t2);margin-top:2px;}
@@ -466,7 +469,7 @@ body.experimental .exp-compare{display:block;}
       <div class="card">
         <div class="card-hd"><div class="card-hd-left"><div class="dot6" style="background:var(--acc2)"></div>Gramaje y costo por tipo de tela</div></div>
         <table id="ftoTable">
-          <thead><tr><th>Fto</th><th>Tipo</th><th class="r">Ancho</th><th class="r">Gramaje</th><th class="r">kg/m</th><th class="r">MO $/m</th><th class="r">$/m total</th><th class="r">$/kg</th></tr></thead>
+          <thead><tr><th>Fto</th><th class="r">Gramaje</th><th class="r">kg/m</th><th class="r">$/m total</th></tr></thead>
           <tbody id="ftoBody"></tbody>
         </table>
         <!-- KG y MTS reales por formato: ocultos visualmente pero los inputs
@@ -603,6 +606,65 @@ function saveProdParams(){
   localStorage.setItem('pitec_prod_params', JSON.stringify(_PROD_PARAMS));
 }
 
+// Gramaje promedio histórico de bobinas del último año, separado por categoría:
+//   conv       = tubular convencional (Trama 3)
+//   tubularLam = tubular laminado (Trama 5)
+//   planoLam   = plano (Trama 5 o 5.5)
+// Se calcula filtrando además por columna FORMATO del sheet, para distinguir
+// tubulares (40-60) de planos (71-120) cuando ambos comparten Trama 5.
+var _GRAMAJE_HIST = { conv: null, tubularLam: null, planoLam: null };
+
+async function loadGramajesHistoricos(){
+  if(!accessToken) return;
+  try{
+    // Telares!B13:L20000 — B=Fecha, F(idx 4)=Formato, J(idx 8)=Trama, L(idx 10)=GR Calculado
+    var data = await readSheet(SHEET_IDS.prod, 'Telares!B13:L20000');
+    var hoy        = new Date();
+    var hace1Anio  = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate());
+    var TUB_FMTS   = ['40','47','53','57','60'];
+    var PLA_FMTS   = ['71','82','102','120'];
+    var grsConv = [], grsTubLam = [], grsPlanoLam = [];
+    (data||[]).forEach(function(r){
+      if(!r || r.length < 11) return;
+      var trama = parseFloat(String(r[8]||'').replace(',','.'));
+      if(isNaN(trama)) return;
+      var fecha = parseFechaOC(r[0]);
+      if(!fecha || fecha < hace1Anio) return;
+      var gr = parseFloat(String(r[10]||'').replace(',','.'));
+      if(!gr || isNaN(gr) || gr <= 0) return;
+      var fmt = String(r[4]||'').trim();
+      var esTubular = TUB_FMTS.indexOf(fmt) >= 0;
+      var esPlano   = PLA_FMTS.indexOf(fmt) >= 0;
+      if(trama === 3 && esTubular)                       grsConv.push(gr);
+      else if(trama === 5 && esTubular)                  grsTubLam.push(gr);
+      else if((trama === 5 || trama === 5.5) && esPlano) grsPlanoLam.push(gr);
+    });
+    var avg = function(arr){ return arr.length ? arr.reduce(function(s,v){return s+v;},0)/arr.length : null; };
+    _GRAMAJE_HIST.conv       = avg(grsConv);
+    _GRAMAJE_HIST.tubularLam = avg(grsTubLam);
+    _GRAMAJE_HIST.planoLam   = avg(grsPlanoLam);
+  }catch(e){ console.warn('Error cargando gramajes hist:', e.message); }
+}
+
+// Override de gramaje por formato (opcional, persistido en localStorage).
+// Si el usuario edita el gramaje en la tabla por formato, se guarda aqui.
+// Si no hay override, se usa el promedio del tipo (tubular o plano).
+var _FTO_GRAMAJE_OVERRIDE = {};
+function loadFtoGramajes(){
+  try{ _FTO_GRAMAJE_OVERRIDE = JSON.parse(localStorage.getItem('pitec_fto_gramaje')||'{}'); }
+  catch(e){ _FTO_GRAMAJE_OVERRIDE = {}; }
+}
+function saveFtoGramajes(){
+  localStorage.setItem('pitec_fto_gramaje', JSON.stringify(_FTO_GRAMAJE_OVERRIDE));
+}
+function setFtoGramaje(fto, val){
+  var n = parseFloat(val);
+  if(n > 0) _FTO_GRAMAJE_OVERRIDE[fto] = n;
+  else delete _FTO_GRAMAJE_OVERRIDE[fto];
+  saveFtoGramajes();
+  if(_calc) renderFtoTable(_calc.ftoResults, _calc.costoPorKg);
+}
+
 // Velocidad efectiva (mts/min reales) de una trama: vel x rend/100.
 // trama: '3' | '5' | '55'. Retorna 0 si la trama no existe.
 function velRealEfectiva(trama){
@@ -682,6 +744,8 @@ function parseFechaOC(v){
     return isNaN(d.getTime()) ? null : d;
   }
   var s = String(v).trim();
+  // Si viene con hora (ej "24/4/2026 17:30"), tomar solo la fecha
+  if(s.includes(' ')) s = s.split(' ')[0];
   var m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
   if(m){
     var dd = parseInt(m[1],10);
@@ -777,6 +841,7 @@ function init(){
   buildCompPanel();
   loadProdParams();
   syncProdParamsUI();
+  loadFtoGramajes();
   setTipo('lam', document.getElementById('btnLam'));
   fetchDolarBNA();
   setInterval(fetchDolarBNA, 30*60*1000);
@@ -1832,12 +1897,16 @@ function renderKPIs(cPorKg,cPorMts,grM2,total,r47,dolar){
   var grTubular = _gramajeDe(TUBULAR_FMTS);
   var grPlano   = _gramajeDe(PLANO_FMTS);
 
+  // Gramaje convencional histórico (Trama 3 último año)
+  var grConvHist = _GRAMAJE_HIST.conv;
+
   document.getElementById('kpiStrip').innerHTML=
     '<div class="kpi"><div class="kpi-lbl">Costo / kg</div><div class="kpi-val" style="color:var(--acc);">u$s'+(cPorKg/dolar).toFixed(3)+'</div><div class="kpi-sub">'+fc(cPorKg,2)+' ARS/kg</div></div>'
     +'<div class="kpi"><div class="kpi-lbl">Mts producidos</div><div class="kpi-val" style="color:var(--acc2);">'+(totMts>0?totMts.toLocaleString('es-AR'):'—')+'</div><div class="kpi-sub">mts del mes</div></div>'
     +'<div class="kpi"><div class="kpi-lbl">Kg producidos</div><div class="kpi-val" style="color:var(--acc2);">'+(totKg>0?totKg.toLocaleString('es-AR'):'—')+'</div><div class="kpi-sub">kg del mes</div></div>'
     +'<div class="kpi"><div class="kpi-lbl">Gramaje tubular</div><div class="kpi-val" style="color:var(--warn);">'+grTubular.toFixed(2)+'</div><div class="kpi-sub">gr/m² (40-60)</div></div>'
-    +'<div class="kpi"><div class="kpi-lbl">Gramaje plano</div><div class="kpi-val" style="color:var(--warn);">'+grPlano.toFixed(2)+'</div><div class="kpi-sub">gr/m² (71-120)</div></div>';
+    +'<div class="kpi"><div class="kpi-lbl">Gramaje plano</div><div class="kpi-val" style="color:var(--warn);">'+grPlano.toFixed(2)+'</div><div class="kpi-sub">gr/m² (71-120)</div></div>'
+    +'<div class="kpi"><div class="kpi-lbl">Gramaje convencional</div><div class="kpi-val" style="color:var(--warn);">'+(grConvHist!=null?grConvHist.toFixed(2):'—')+'</div><div class="kpi-sub">gr/m² (Trama 3 últ. año)</div></div>';
 }
 
 function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
@@ -1910,10 +1979,10 @@ function renderCostBreakdown(totFijos,totMPH,totMPL,totVarProd,total,c){
   document.getElementById('costBreakdown').innerHTML = html;
 }
 
-// Tabla de costo por formato. Cols: Fto, Tipo, Ancho, Gramaje, kg/m, $/m total, $/kg.
-// El gramaje se toma del tipo (tubular o plano) calculado del mes actual.
-// $/m total = $/kg × kg/m. Los sueldos del maquinista ya estan incluidos en $/kg
-// (vienen sumados al costo total mensual), por eso NO hay columna MO separada.
+// Tabla de costo por formato. Cols: Fto, Gramaje (editable), kg/m, $/m total.
+// Gramaje default = promedio del tipo del mes (tubular o plano). El usuario
+// puede overridearlo por formato en _FTO_GRAMAJE_OVERRIDE para simular.
+// $/m total = cPorKg × kg/m. Los sueldos ya estan incluidos en cPorKg.
 function renderFtoTable(results, cPorKg){
   var TUBULARES = ['40','47','53','57','60'];
   var PLANOS    = ['71','82','102','120'];
@@ -1923,46 +1992,59 @@ function renderFtoTable(results, cPorKg){
     ftos.forEach(function(f){ m += g('fmts_'+f); k += g('fkg_'+f); });
     return m > 0 ? (k / m) * 1000 : 0;
   }
-  var grTubular = grPromedio(TUBULARES);
-  var grPlano   = grPromedio(PLANOS);
+  // Default según el tipo de trama:
+  //   - Tubular en modo Conv  → Trama 3 histórico (o promedio del mes si no hay)
+  //   - Tubular en modo Lam   → Trama 5/5.5 histórico (o promedio del mes si no hay)
+  //   - Plano (siempre lam)   → Trama 5/5.5 histórico (o promedio del mes si no hay)
+  var grTubularConv = _GRAMAJE_HIST.conv != null ? _GRAMAJE_HIST.conv : grPromedio(TUBULARES);
+  var grTubularLam  = _GRAMAJE_HIST.tubularLam != null ? _GRAMAJE_HIST.tubularLam : grPromedio(TUBULARES);
+  var grPlanoLam    = _GRAMAJE_HIST.planoLam   != null ? _GRAMAJE_HIST.planoLam   : grPromedio(PLANOS);
 
   var rows = '';
   function rowFmt(fto){
     var info = FTO_DATA[fto];
     if(!info) return '';
     var esTubular = info.tipo === 'tubular';
-    var grM2   = esTubular ? grTubular : grPlano;
-    var anchoM = info.ancho / 100;
-    var kgM    = grM2 * anchoM / 1000;
-    var cTot   = cPorKg * kgM;
-    var color  = esTubular ? 'var(--acc2)' : 'var(--ok)';
+    // Gramaje default según tipo + toggle (sin sumar +15: ya viene del histórico)
+    var grDefault = esTubular
+      ? (tipo === 'lam' ? grTubularLam : grTubularConv)
+      : grPlanoLam;
+    var grOver    = _FTO_GRAMAJE_OVERRIDE[fto];
+    var grUsado   = grOver || grDefault;
+    var anchoM    = info.ancho / 100;
+    var kgM       = grUsado * anchoM / 1000;
+    var cTot      = cPorKg * kgM;
+    var color     = esTubular ? 'var(--acc2)' : 'var(--ok)';
+    var phDefault = grDefault > 0 ? grDefault.toFixed(1) : '0';
     return '<tr class="hi">'
       +'<td style="font-size:14px;"><strong style="color:'+color+';">F'+fto+'</strong></td>'
-      +'<td style="font-size:11px;color:var(--t3);">'+(esTubular?'Tubular':'Plano')+'</td>'
-      +'<td class="r" style="font-size:12px;color:var(--t3);">'+info.ancho+' cm</td>'
-      +'<td class="r" style="font-size:13px;color:var(--t2);">'+(grM2>0?grM2.toFixed(1):'-')+' g</td>'
+      +'<td class="r" style="white-space:nowrap;">'
+        +'<div class="iu" style="display:inline-flex;width:110px;">'
+          +'<input type="number" step="0.1" placeholder="'+phDefault+'" value="'+(grOver||'')+'"'
+          +' onchange="setFtoGramaje(\''+fto+'\',this.value)" style="font-size:13px;padding:4px 6px;text-align:right;">'
+          +'<span class="u" style="font-size:10px;">g/m²</span>'
+        +'</div>'
+      +'</td>'
       +'<td class="r" style="font-size:12px;color:var(--t3);">'+(kgM>0?kgM.toFixed(4):'-')+'</td>'
       +'<td class="r" style="font-size:14px;color:var(--acc);font-weight:600;">'+(cTot>0?fc(cTot,2):'-')+'</td>'
-      +'<td class="r" style="font-size:12px;color:var(--t3);">'+(cPorKg>0?fc(cPorKg,2):'-')+'</td>'
       +'</tr>';
   }
-  TUBULARES.concat(PLANOS).forEach(function(fto){ rows += rowFmt(fto); });
+  // En modo Convencional solo se muestran tubulares (los planos son siempre laminados)
+  var ftosVisibles = (tipo === 'conv') ? TUBULARES : TUBULARES.concat(PLANOS);
+  ftosVisibles.forEach(function(fto){ rows += rowFmt(fto); });
 
   var thead = '<tr>'
     +'<th style="text-align:left;">Fto</th>'
-    +'<th style="text-align:left;">Tipo</th>'
-    +'<th class="r">Ancho</th>'
     +'<th class="r">Gramaje</th>'
     +'<th class="r">kg/m</th>'
     +'<th class="r">$/m total</th>'
-    +'<th class="r">$/kg</th>'
     +'</tr>';
   var ftoBody = document.getElementById('ftoBody');
   if(ftoBody){
     var tbl = ftoBody.parentElement;
     var thead0 = tbl.querySelector('thead');
     if(thead0) thead0.innerHTML = thead;
-    ftoBody.innerHTML = rows || '<tr><td colspan="7" style="color:var(--t3);text-align:center;padding:16px;">Sin datos — conectá Drive para cargar producción</td></tr>';
+    ftoBody.innerHTML = rows || '<tr><td colspan="4" style="color:var(--t3);text-align:center;padding:16px;">Sin datos — conectá Drive para cargar producción</td></tr>';
   }
 }
 
@@ -2352,6 +2434,15 @@ async function loadAllFromDrive(){
     await loadProrrateosFromSheet();
     results.push('OK Prorrateos: '+prorrateos.length+' activos');
   }catch(e){ errors.push('Prorrateos: '+e.message); }
+
+  // 7b. GRAMAJES HISTORICOS - bobinas del ultimo año por trama (3 conv, 5/5.5 lam)
+  try{
+    await loadGramajesHistoricos();
+    var gcInfo  = _GRAMAJE_HIST.conv       != null ? _GRAMAJE_HIST.conv.toFixed(2)       : '—';
+    var gtlInfo = _GRAMAJE_HIST.tubularLam != null ? _GRAMAJE_HIST.tubularLam.toFixed(2) : '—';
+    var gplInfo = _GRAMAJE_HIST.planoLam   != null ? _GRAMAJE_HIST.planoLam.toFixed(2)   : '—';
+    results.push('OK Gramajes hist: conv '+gcInfo+' · tubLam '+gtlInfo+' · planoLam '+gplInfo+' g/m²');
+  }catch(e){ errors.push('Gramajes hist: '+e.message); }
 
   // 7. DESPERDICIO - % del mes desde "Reportes Mes" de Producción
   try{
