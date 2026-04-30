@@ -42,7 +42,7 @@ header{background:var(--surf);border-bottom:1px solid var(--b);padding:0 24px;di
 .side-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
 .side-panel{padding:16px;display:none;flex-direction:column;gap:12px;}
 .side-panel.active{display:flex;}
-.s-head{font-family:var(--mono);font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text);padding-bottom:7px;border-bottom:1px solid var(--b);margin-bottom:8px;}
+.s-head{font-family:var(--mono);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--text);padding-bottom:7px;border-bottom:1px solid var(--b);margin-bottom:8px;}
 .field{display:flex;flex-direction:column;gap:4px;}
 .field label{font-family:var(--mono);font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);}
 .iu{position:relative;}
@@ -65,21 +65,23 @@ input[type="radio"],input[type="checkbox"]{width:auto;height:auto;padding:0;back
 .alert-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 .kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:16px 20px 0;}
 .kpi{background:var(--surf);border:1px solid var(--b);border-radius:var(--r);padding:11px 12px;min-width:0;}
-.kpi .kpi-lbl{font-size:9px;}
-.kpi .kpi-val{font-size:18px;}
-.kpi .kpi-sub{font-size:9px;}
-.kpi-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:4px;}
-.kpi-val{font-family:var(--mono);font-size:18px;font-weight:500;}
-.kpi-sub{font-family:var(--mono);font-size:9px;color:var(--t2);margin-top:2px;}
+.kpi .kpi-lbl{font-size:12px;font-weight:800;}
+.kpi .kpi-val{font-size:20px;font-weight:700;}
+.kpi .kpi-sub{font-size:10px;}
+.kpi-lbl{font-family:var(--mono);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--t2);margin-bottom:4px;}
+.kpi-val{font-family:var(--mono);font-size:20px;font-weight:700;}
+.kpi-sub{font-family:var(--mono);font-size:10px;color:var(--t2);margin-top:2px;}
 .main{padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
 .card{background:var(--surf);border:1px solid var(--b);border-radius:var(--r);padding:16px;}
-.card-hd{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:7px;}
+.card-hd{font-family:var(--mono);font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:7px;}
 .card-hd-left{display:flex;align-items:center;gap:7px;}
 .dot6{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 table{width:100%;border-collapse:collapse;}
 th{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);text-align:left;padding:5px 8px;border-bottom:1px solid var(--b);}
 th.r{text-align:right;}
+/* Headers de la tabla por formato — más grandes, bold y centrados */
+#ftoTable th{font-size:12px;font-weight:800;text-align:center !important;color:var(--t2);padding:8px;}
 td{padding:7px 8px;font-size:12px;border-bottom:1px solid rgba(42,45,53,.5);}
 td.r{text-align:right;font-family:var(--mono);}
 td.c{text-align:center;}
@@ -2058,20 +2060,20 @@ function renderFtoTable(results, cPorKg){
   var thead, colspan;
   if(esLam){
     thead = '<tr>'
-      +'<th style="text-align:left;">Fto</th>'
-      +'<th class="r">Gramaje base</th>'
-      +'<th class="r">Lam +g/m²</th>'
-      +'<th class="r">Total g/m²</th>'
-      +'<th class="r">kg/m</th>'
-      +'<th class="r">$/m total</th>'
+      +'<th>Fto</th>'
+      +'<th>Gramaje base</th>'
+      +'<th style="color:var(--acc3);">Gr Especial</th>'
+      +'<th>Total g/m²</th>'
+      +'<th>kg/m</th>'
+      +'<th>$/m total</th>'
       +'</tr>';
     colspan = 6;
   } else {
     thead = '<tr>'
-      +'<th style="text-align:left;">Fto</th>'
-      +'<th class="r">Gramaje</th>'
-      +'<th class="r">kg/m</th>'
-      +'<th class="r">$/m total</th>'
+      +'<th>Fto</th>'
+      +'<th>Gramaje</th>'
+      +'<th>kg/m</th>'
+      +'<th>$/m total</th>'
       +'</tr>';
     colspan = 4;
   }
