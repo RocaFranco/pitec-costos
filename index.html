@@ -663,7 +663,10 @@ function setFtoLamExtra(fto, val){
   if(n > 0) _FTO_LAM_EXTRA_OVERRIDE[fto] = n;
   else delete _FTO_LAM_EXTRA_OVERRIDE[fto];
   saveFtoLamExtras();
-  if(_calc) renderFtoTable(_calc.ftoResults, _calc.costoPorKg);
+  if(_calc){
+    renderFtoTable(_calc.ftoResults, _calc.costoPorKg);
+    renderComparativa();
+  }
 }
 
 // Velocidad efectiva (mts/min reales) de una trama: vel x rend/100.
@@ -2096,7 +2099,22 @@ function renderFtoTable(results, cPorKg){
     }
   }
   var ftosVisibles = esLam ? TUBULARES.concat(PLANOS) : TUBULARES;
-  ftosVisibles.forEach(function(fto){ rows += rowFmt(fto); });
+  // Recalcular precios por formato y guardarlos en _calc.preciosFto para que
+  // renderComparativa los use (mismos números que en esta tabla).
+  if(_calc) _calc.preciosFto = {};
+  ftosVisibles.forEach(function(fto){
+    rows += rowFmt(fto);
+    var info = FTO_DATA[fto];
+    if(!info || !_calc) return;
+    var esTubular = info.tipo === 'tubular';
+    var grBase    = esTubular ? grTubularBase : grPlanoBase;
+    var lamOver   = _FTO_LAM_EXTRA_OVERRIDE[fto];
+    var lamExtra  = esLam ? (lamOver != null ? lamOver : LAM_EXTRA_DEFAULT) : 0;
+    var grTotal   = grBase + lamExtra;
+    var kgM       = grTotal * (info.ancho/100) / 1000;
+    var cTot      = fijoMts + varKg * kgM;
+    _calc.preciosFto[fto] = {ars: cTot, kgM: kgM, gr: grTotal};
+  });
 
   var thead, colspan;
   if(esLam){
@@ -2219,9 +2237,11 @@ function renderComparativa(){
 
   // Filas
   var precioKey = compTipoTab === 'conv' ? 'precios_conv' : 'precios_lam';
+  var preciosFto = calc.preciosFto || {};
   var rows = ftosVisibles.map(function(fto){
-    var r = calc.ftoResults[fto];
-    var pitecArs = r ? (r.cPorMts || 0) : 0;
+    // Precio Pitec: leer del _calc.preciosFto (calculado en renderFtoTable con la misma fórmula)
+    var p = preciosFto[fto] || {};
+    var pitecArs = p.ars || 0;
     var pitecUsd = dolar > 0 ? pitecArs / dolar : 0;
     var pitecCell = '<td><strong style="color:var(--acc);">F'+fto+'</strong></td>'
       +'<td class="r" style="color:var(--acc);font-weight:600;">'+(pitecArs>0?fc(pitecArs,2):'-')+'</td>'
