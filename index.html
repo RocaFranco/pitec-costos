@@ -2410,6 +2410,106 @@ async function readSheet(sheetId, range, unformatted){
 }
 
 // ==============================================================
+// CONFIG COMPARTIDA — espejo de la config en una pestaña "CONFIG" del Sheet
+// de Producción (celda A1 = JSON con todas las claves pitec_* y gastos_*).
+// Antes toda la config vivía en localStorage (por navegador): no se compartía
+// entre usuarios y se perdía al limpiar el navegador. Ahora:
+//   - pullConfigFromSheet(): al conectar Drive, lee CONFIG!A1 e hidrata
+//     localStorage + re-ejecuta los loaders de las variables globales.
+//   - pushConfigToSheet(): interceptando localStorage.setItem/removeItem,
+//     cada cambio de config se reescribe en el Sheet (debounced).
+// Escribir requiere permiso de EDICIÓN (Franco/admins). Usuarios con solo
+// LECTURA consumen la config igual (pull); su push falla en silencio y su
+// cambio queda solo local. La pestaña se crea oculta la 1ª vez que se guarda.
+// ==============================================================
+var CFG_SHEET_TAB   = 'CONFIG';
+var _origSetItem    = window.localStorage.setItem.bind(window.localStorage);
+var _origRemoveItem = window.localStorage.removeItem.bind(window.localStorage);
+var _cfgPushTimer   = null;
+var _cfgPulling     = false; // evita que la hidratación dispare un push (loop)
+
+function _cfgIsSyncKey(k){
+  return typeof k === 'string' && (k.indexOf('pitec_') === 0 || k.indexOf('gastos_') === 0);
+}
+// Interceptar escrituras a localStorage para autosincronizar al Sheet.
+// try/catch: si el navegador no permite reasignar el método, el pull sigue
+// andando (la config igual se hereda al conectar Drive), solo se pierde el
+// autoguardado en vivo — no rompe nada.
+try{
+  window.localStorage.setItem = function(k, v){
+    _origSetItem(k, v);
+    if(!_cfgPulling && _cfgIsSyncKey(k)) _scheduleCfgPush();
+  };
+  window.localStorage.removeItem = function(k){
+    _origRemoveItem(k);
+    if(!_cfgPulling && _cfgIsSyncKey(k)) _scheduleCfgPush();
+  };
+}catch(e){ console.warn('No se pudo interceptar localStorage; config sin autoguardado en vivo:', e); }
+function _scheduleCfgPush(){
+  clearTimeout(_cfgPushTimer);
+  _cfgPushTimer = setTimeout(function(){ pushConfigToSheet(); }, 1500);
+}
+function _collectLocalConfig(){
+  var obj = {};
+  for(var i=0; i<localStorage.length; i++){
+    var k = localStorage.key(i);
+    if(_cfgIsSyncKey(k)) obj[k] = localStorage.getItem(k);
+  }
+  return obj;
+}
+async function _writeCfgCell(text){
+  var res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_IDS.prod+'/values/'+encodeURIComponent(CFG_SHEET_TAB+'!A1')+'?valueInputOption=RAW',{
+    method:'PUT',
+    headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
+    body: JSON.stringify({values:[[text]]})
+  });
+  if(!res.ok){ var e=await res.json().catch(function(){return {};}); throw new Error(e.error&&e.error.message?e.error.message:'HTTP '+res.status); }
+}
+async function _createCfgTab(){
+  var res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_IDS.prod+':batchUpdate',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
+    body: JSON.stringify({requests:[{addSheet:{properties:{title:CFG_SHEET_TAB, hidden:true}}}]})
+  });
+  if(!res.ok){ var e=await res.json().catch(function(){return {};}); throw new Error(e.error&&e.error.message?e.error.message:'HTTP '+res.status); }
+}
+async function pushConfigToSheet(){
+  if(!accessToken) return;
+  var payload = JSON.stringify(_collectLocalConfig());
+  try{
+    await _writeCfgCell(payload);
+  }catch(e){
+    // Posiblemente la pestaña no existe todavía -> crearla y reintentar
+    try{ await _createCfgTab(); await _writeCfgCell(payload); }
+    catch(e2){ console.warn('Config no guardada en Sheet (posible solo-lectura):', e2.message); }
+  }
+}
+async function pullConfigFromSheet(){
+  if(!accessToken) return false;
+  var text = '';
+  try{
+    var data = await readSheet(SHEET_IDS.prod, CFG_SHEET_TAB+'!A1');
+    text = (data && data[0] && data[0][0]) ? String(data[0][0]) : '';
+  }catch(e){ return false; } // la pestaña no existe aún
+  if(!text || text.charAt(0) !== '{') return false;
+  var obj;
+  try{ obj = JSON.parse(text); }catch(e){ return false; }
+  _cfgPulling = true;
+  try{
+    Object.keys(obj).forEach(function(k){
+      if(_cfgIsSyncKey(k)) _origSetItem(k, obj[k]); // hidrata sin disparar push
+    });
+  } finally { _cfgPulling = false; }
+  // Re-ejecutar loaders de las variables globales pobladas al inicio
+  try{ loadProdParams(); }catch(e){}
+  try{ loadFtoLamExtras(); }catch(e){}
+  try{ loadMastLam(); }catch(e){}
+  try{ loadCompLam(); }catch(e){}
+  try{ loadCompetidores(); }catch(e){}
+  return true;
+}
+
+// ==============================================================
 // CARGAR TODO DESDE DRIVE
 // FIXES aplicados:
 // - parseArgentino() global en lugar de inline (fix multi-grupos de miles)
@@ -2438,6 +2538,19 @@ async function loadAllFromDrive(){
   var errors  = [];
   var mes     = document.getElementById('selMes').value;
   var mesIdx  = MESES.indexOf(mes);
+
+  // 0. CONFIG COMPARTIDA - hidratar desde la pestaña CONFIG del Sheet ANTES de
+  // leer sueldos/aliases (que dependen de pitec_cfg). Si el Sheet aún no tiene
+  // config, subir la local para inicializar la pestaña (requiere edición).
+  try{
+    var cfgOk = await pullConfigFromSheet();
+    if(cfgOk){
+      results.push('OK Config compartida cargada');
+      if(typeof loadCfg === 'function') loadCfg();
+    } else {
+      pushConfigToSheet(); // fire-and-forget: crea la pestaña y sube la config local
+    }
+  }catch(e){ errors.push('Config: '+e.message); }
 
   // 1. SUELDOS
   var anio = document.getElementById('selAnio').value;
