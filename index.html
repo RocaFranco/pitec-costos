@@ -2457,11 +2457,44 @@ function _collectLocalConfig(){
   }
   return obj;
 }
-async function _writeCfgCell(text){
+// Descripción amigable por clave (solo visual, columna B de la pestaña)
+function _cfgDesc(k){
+  if(k.indexOf('gastos_')===0) return 'Gastos manuales del mes '+k.replace('gastos_','').replace('_',' ');
+  var M = {
+    'pitec_cfg':'IDs de Sheets de sueldos por mes, aliases de MP y keywords',
+    'pitec_prod_params':'Parámetros de producción (desperdicio, etc.)',
+    'pitec_fto_lam_extra':'Gramaje laminado extra por formato',
+    'pitec_mast_lam':'Biblioteca de masterbatch del laminado',
+    'pitec_comp_lam':'Composición del laminado',
+    'pitec_competidores':'Competidores y sus precios',
+    'pitec_comp_activos':'Competidores activos en la comparativa',
+    'pitec_comp_activo':'Competidor activo (formato viejo)',
+    'pitec_consumibles_custom':'Consumibles personalizados',
+    'pitec_mat_manual':'Precios de material cargados a mano'
+  };
+  return M[k] || '';
+}
+function _buildCfgRows(){
+  var rows = [
+    ['⚙️ CONFIGURACIÓN DEL COSTEADOR — se guarda sola al usar la app. NO editar a mano.', '', ''],
+    ['', '', ''],
+    ['Clave', 'Qué guarda', 'Valor (uso interno)']
+  ];
+  var cfg = _collectLocalConfig();
+  Object.keys(cfg).sort().forEach(function(k){ rows.push([k, _cfgDesc(k), cfg[k]]); });
+  return rows;
+}
+async function _clearCfgRange(){
+  var res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_IDS.prod+'/values/'+encodeURIComponent(CFG_SHEET_TAB+'!A1:C1000')+':clear',{
+    method:'POST', headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'}, body:'{}'
+  });
+  if(!res.ok){ var e=await res.json().catch(function(){return {};}); throw new Error(e.error&&e.error.message?e.error.message:'HTTP '+res.status); }
+}
+async function _writeCfgRows(rows){
   var res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_IDS.prod+'/values/'+encodeURIComponent(CFG_SHEET_TAB+'!A1')+'?valueInputOption=RAW',{
     method:'PUT',
     headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
-    body: JSON.stringify({values:[[text]]})
+    body: JSON.stringify({values:rows})
   });
   if(!res.ok){ var e=await res.json().catch(function(){return {};}); throw new Error(e.error&&e.error.message?e.error.message:'HTTP '+res.status); }
 }
@@ -2469,37 +2502,38 @@ async function _createCfgTab(){
   var res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_IDS.prod+':batchUpdate',{
     method:'POST',
     headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
-    body: JSON.stringify({requests:[{addSheet:{properties:{title:CFG_SHEET_TAB, hidden:true}}}]})
+    body: JSON.stringify({requests:[{addSheet:{properties:{title:CFG_SHEET_TAB}}}]})
   });
   if(!res.ok){ var e=await res.json().catch(function(){return {};}); throw new Error(e.error&&e.error.message?e.error.message:'HTTP '+res.status); }
 }
 async function pushConfigToSheet(){
   if(!accessToken) return;
-  var payload = JSON.stringify(_collectLocalConfig());
+  var rows = _buildCfgRows();
   try{
-    await _writeCfgCell(payload);
+    await _clearCfgRange();
+    await _writeCfgRows(rows);
   }catch(e){
-    // Posiblemente la pestaña no existe todavía -> crearla y reintentar
-    try{ await _createCfgTab(); await _writeCfgCell(payload); }
+    // Posiblemente la pestaña no existe todavía -> crearla y reintentar (sin clear)
+    try{ await _createCfgTab(); await _writeCfgRows(rows); }
     catch(e2){ console.warn('Config no guardada en Sheet (posible solo-lectura):', e2.message); }
   }
 }
 async function pullConfigFromSheet(){
   if(!accessToken) return false;
-  var text = '';
-  try{
-    var data = await readSheet(SHEET_IDS.prod, CFG_SHEET_TAB+'!A1');
-    text = (data && data[0] && data[0][0]) ? String(data[0][0]) : '';
-  }catch(e){ return false; } // la pestaña no existe aún
-  if(!text || text.charAt(0) !== '{') return false;
-  var obj;
-  try{ obj = JSON.parse(text); }catch(e){ return false; }
+  var data;
+  try{ data = await readSheet(SHEET_IDS.prod, CFG_SHEET_TAB+'!A1:C1000'); }
+  catch(e){ return false; } // la pestaña no existe aún
+  if(!data || !data.length) return false;
+  var found = false;
   _cfgPulling = true;
   try{
-    Object.keys(obj).forEach(function(k){
-      if(_cfgIsSyncKey(k)) _origSetItem(k, obj[k]); // hidrata sin disparar push
+    data.forEach(function(r){
+      var k = (r && r[0]) ? String(r[0]).trim() : '';
+      var v = (r && r[2] !== undefined && r[2] !== null) ? String(r[2]) : '';
+      if(_cfgIsSyncKey(k) && v !== ''){ _origSetItem(k, v); found = true; } // hidrata sin disparar push
     });
   } finally { _cfgPulling = false; }
+  if(!found) return false;
   // Re-ejecutar loaders de las variables globales pobladas al inicio
   try{ loadProdParams(); }catch(e){}
   try{ loadFtoLamExtras(); }catch(e){}
